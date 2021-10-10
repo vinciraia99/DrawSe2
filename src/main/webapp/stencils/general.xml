@@ -1,0 +1,128 @@
+<shapes name="mxgraph.general">
+    <shape name="rectangle" h="100" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+        </background>
+        <foreground>
+            <fillstroke/>
+            <rect x="0" y="0" w="100" h="100"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="square" h="100" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+        </background>
+        <foreground>
+            <fillstroke/>
+            <rect x="0" y="0" w="100" h="100"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="circle" h="100" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+        </background>
+        <foreground>
+            <fillstroke/>
+            <ellipse x="0" y="0" w="100" h="100"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="triangle" h="60" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+            <path>
+                <move x="3.64" y="61.02"/>
+                <line x="91.64" y="61.02"/>
+                <arc large-arc-flag="0" rx="6" ry="4" sweep-flag="0" x="94.64" x-axis-rotation="30" y="56.02"/>
+                <line x="49.64" y="1.02"/>
+                <arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="45.64" x-axis-rotation="0" y="1.02"/>
+                <line x="0.64" y="56.02"/>
+                <arc large-arc-flag="0" rx="6" ry="4" sweep-flag="0" x="3.64" x-axis-rotation="-35" y="61.02"/>
+                <close/>
+            </path>
+        </background>
+        <foreground>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="nuovo" h="60" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+            <path>
+                <move x="3.64" y="1.02"/>
+                <line x="91.64" y="1.02"/>
+                <arc large-arc-flag="0" rx="6" ry="4" sweep-flag="1" x="94.64" x-axis-rotation="30" y="6.02"/>
+                <line x="49.64" y="61.02"/>
+                <arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="45.64" x-axis-rotation="0" y="61.02"/>
+                <line x="0.64" y="6.02"/>
+                <arc large-arc-flag="0" rx="6" ry="4" sweep-flag="1" x="3.64" x-axis-rotation="-35" y="1.02"/>
+                <close/>
+            </path>
+        </background>
+        <foreground>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape aspect="variable" h="57.43" name="rumble" strokewidth="inherit" w="98">
+        <background>
+            <path>
+                <move x="51" y="0.71"/>
+                <line x="97" y="26.71"/>
+
+                <line x="51" y="56.71"/>
+
+                <line x="1" y="30.71"/>
+
+                <line x="47" y="0.71"/>
+
+                <close/>
+            </path>
+        </background>
+        <foreground>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape aspect="variable"  h="60.24" name="parallelogram" strokewidth="inherit" w="98.77">
+        <background>
+            <path>
+                <move x="19.37" y="5.12"/>
+                <arc large-arc-flag="0" rx="2.5" ry="5" sweep-flag="1" x="24.37" x-axis-rotation="30" y="0.12"/>
+                <line x="93.37" y="0.12"/>
+                <arc large-arc-flag="0" rx="5" ry="4" sweep-flag="1" x="98.37" x-axis-rotation="0" y="5.12"/>
+                <line x="79.37" y="55.12"/>
+                <arc large-arc-flag="0" rx="2.5" ry="5" sweep-flag="1" x="74.37" x-axis-rotation="30" y="60.12"/>
+                <line x="4.37" y="60.12"/>
+                <arc large-arc-flag="0" rx="5" ry="4" sweep-flag="1" x="0.37" x-axis-rotation="0" y="55.12"/>
+                <close/>
+            </path>
+        </background>
+        <foreground>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape aspect="variable" h="70" name="actor" strokewidth="inherit" w="37.22">
+        <background>
+            <rect h="70" w="37.22" x="0" y="0"/>
+            <fillstroke/>
+        </background>
+        <foreground>
+            <ellipse h="16.32" w="16.32" x="9.95" y="0"/>
+            <fillstroke/>
+            <path>
+                <move x="18.47" y="55.34"/>
+                <line x="18.47" y="15.75"/>
+                <close/>
+                <move x="8" y="35"/>
+                <line x="28" y="35"/>
+                <close/>
+                <move x="28" y="65"/>
+                <line x="18" y="55"/>
+                <close/>
+                <move x="8" y="65"/>
+                <line x="18" y="55"/>
+                <close/>
+
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+
+
+</shapes>

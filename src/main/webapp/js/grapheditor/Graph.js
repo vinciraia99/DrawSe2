@@ -927,6 +927,545 @@ Graph = function(container, model, renderHint, stylesheet, themes, standalone)
 	    	}
 	    };
 
+
+		/**
+		 * Specifica la modalità dell'editor (di default la modalità è quella di modifica dei simboli)
+		 */
+		Graph.prototype.editorMode = 'Shape Editor Mode';
+
+		Graph.prototype.isShapeMode = function() {
+			if(this.editorMode == mxResources.get('shapeMode') ) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		Graph.prototype.isConstraintMode = function() {
+			if(this.editorMode == mxResources.get('connectionMode') ) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		/**
+		 *	Questa funzione nasconde tutti i punti di attacco
+		 */
+		Graph.prototype.hideConstraints = function() {
+
+			var shapeCreator = this.stencilManager;
+
+			//Ricavo tutti i simboli
+			var allCells = this.getModel().filterDescendants(function(cell) {
+				if((cell.vertex || cell.edge) && !cell.isConstraintType() && (cell.getShapeType()!='line'||cell.isConstraint()) && (cell.getShapeType()!='curve'||cell.isConstraint())) {
+					return true;
+				}
+			});
+			//Ricavo tutti i simboli (non punti di attacco e non testo)
+			var cells = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+				if((cell.vertex || cell.edge) && !cell.isConstraint() && !cell.isConstraintType() && !cell.style.includes('text') && cell.getShapeType()!='line' && cell.getShapeType()!='curve') {
+					return true;
+				}
+			}));
+
+
+			// to front di quelli che sono attack type in questa funzione li ricavo
+			var attacktypes = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+				if(cell.isConstraintType()) {
+					return true;
+				}
+			}));
+
+			// ricavo tutte i simboli che sono edges (curved e line)
+			var edgeCells = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+					if ((cell.vertex || cell.edge) && (cell.getShapeType() == 'line' || cell.getShapeType() == 'curve') && !cell.isConstraint()) {
+						return true;
+					}
+			}));
+			shapeCreator.typingEdges(edgeCells);
+
+
+
+			var i;
+			var k;
+			/*
+				Per ogni simbolo parent mi ricavo tutti gli altri simboli che si intersecano con esso, presumendo
+				che tali simboli andranno a far parte di un unico simbolo.
+			*/
+			var intersectattacktype = new Array();
+			var intersectCells = new Array();
+			for(i=0; i<cells.length; i++) {
+				intersectCells = new Array();
+				if(allCells.indexOf(cells[i]>=0)) {
+					if(this.view.getState(cells[i])!=null) {
+
+						intersectCells.push(cells[i]);
+						intersectCells = intersectCells.concat(this.getClosestCells(cells[i], allCells, new Array()));
+						if(intersectCells.length>1 || (intersectCells.length==1 && intersectCells[0].isOutlineConstraint())) {
+							var attr = shapeCreator.mergeShapes(intersectCells, false, false);
+							//Inserisco il nuovo simbolo creato
+							var groupProp = attr.shapeGeo;
+							var xmlBase64 = attr.base64;
+							this.getModel().beginUpdate();
+							try {
+								v1 = this.insertVertex(this.getDefaultParent(), null, null, groupProp.x, groupProp.y, groupProp.w, groupProp.h, 'shape=stencil('+xmlBase64+');');
+								//Rimuovo gli elementi che ora fanno parte del simbolo
+								this.removeCells(intersectCells);
+							} finally {
+								this.getModel().endUpdate();
+							}
+							//Per evitare che il testo venga nascosto dal simbolo
+							var vertexToGroup = attr.text;
+							if(vertexToGroup.length>0) {
+
+								var i;
+								//Rendo il testo immobile
+								for(i=0; i<vertexToGroup.length; i++) {
+									vertexToGroup[i].style = mxUtils.setStyle(vertexToGroup[i].style, mxConstants.STYLE_MOVABLE, 0);
+									vertexToGroup[i].style = mxUtils.setStyle(vertexToGroup[i].style, mxConstants.STYLE_ROTATABLE, 0);
+									vertexToGroup[i].style = mxUtils.setStyle(vertexToGroup[i].style, mxConstants.STYLE_RESIZABLE, 0);
+								}
+
+								vertexToGroup.push(v1);
+								this.setSelectionCell(this.groupCells(null, 0, vertexToGroup.reverse()));
+							}
+/*
+							intersectattacktype = this.getClosestCells(v1, attacktypes, new Array());
+							console.log(v1);
+							console.log(intersectattacktype);
+							intersectattacktype.concat(v1);
+							this.groupCells(null, null , intersectattacktype);
+*/
+						}
+					}
+				}
+			}
+
+
+
+
+
+			//Ricavo tutti i punti di attacco non associati e li rendo invisibili
+			var constraints = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+				if((cell.vertex || cell.edge) && cell.isConstraint()) {
+					return true;
+				}
+			}));
+			var i;
+			for(i=0; i<constraints.length; i++) {
+				constraints[i].visible = false;
+			}
+			this.refresh();
+
+
+			// to front di quelli che sono attack type in questa funzione li ricavo
+			var tofrontcells = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+				if(cell.isConstraintType()) {
+					return true;
+				}
+			}));
+			this.orderCells(false , tofrontcells);
+			this.refresh();
+
+			this.groupAttackType();
+
+		}
+
+		Graph.prototype.groupAttackType = function (){
+
+			var shp = this.stencilManager;
+			var toGroup = new Array();
+
+			//Ricavo tutti i simboli
+			var allCells = this.getModel().filterDescendants(function(cell) {
+				if((cell.vertex || cell.edge) && !cell.isConstraintType()) {
+					return true;
+				}
+			});
+			//Ricavo tutti i simboli (non punti di attacco e non testo)
+			var cells = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+
+				if((cell.vertex || cell.edge) && !cell.isConstraint() && !cell.isConstraintType() && !cell.style.includes('text')) {
+					return true;
+				}
+			}));
+
+
+			// to front di quelli che sono attack type in questa funzione li ricavo
+			var attacktypes = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+				if(cell.isConstraintType()) {
+					return true;
+				}
+			}));
+
+			var j;
+			var i;
+			var intersectattacktype;
+			var toIntersectType = new Array();
+			for(i=0; i<cells.length; i++) {
+				if(allCells.indexOf(cells[i]>=0)) {
+					if(this.view.getState(cells[i])!=null) {
+								var toGroup = new Array();
+								intersectattacktype = this.getClosestCells(cells[i], attacktypes, new Array());
+								for(j=0; j<intersectattacktype.length; j++) {
+									if(intersectattacktype[j].isToBeGrouped()) {
+										toIntersectType.push(intersectattacktype[j])
+										intersectattacktype[j].setNotToBeGrouped();
+									}
+								}
+								/*console.log(cells[i]);
+								var stencil = cells[i].getStyle();
+								var base64 = stencil.substring(14, stencil.length-2);
+								var desc = this.decompress(base64);
+								shapeXml = mxUtils.parseXml(desc).documentElement;
+								console.log(shapeXml)
+								var connectionsNode = shapeXml.getElementsByTagName('connections')[0];
+								var connectionChildNodes = shp.getAllElementChildNodes(connectionsNode);
+								console.log(connectionChildNodes);*/
+								//console.log(intersectattacktype);
+								toGroup.push(cells[i]);
+								//toGroup = toGroup.concat(intersectattacktype);
+								toGroup = toGroup.concat(toIntersectType);
+								console.log(toGroup);
+								this.groupCells(null, null, toGroup);
+						}
+					}
+				}
+			}
+
+
+
+		/**
+		 Questa funzione, dato un simbolo, restituisce i simboli più vicini
+		 */
+		Graph.prototype.getClosestCells = function(cellToCompare, cellList, cellGroup) {
+			delete cellList[cellList.indexOf(cellToCompare)];
+
+			var flagConstraint = false;
+			//Rendo il simbolo visible per poter leggere lo stato
+			if(cellToCompare.isConstraint() && !cellToCompare.visible) {
+				flagConstraint = true;
+				cellToCompare.visible = true;
+				this.refresh();
+			}
+
+			var closestCells = new Array();
+			var i;
+			for(i=0; i<cellList.length; i++) {
+				if (cellList[i] != null) {
+					var flag = false;
+					if (cellList[i].isConstraint() && !cellList[i].visible) {
+						flag = true;
+						cellList[i].visible = true;
+						this.refresh();
+					}
+					var perimeter1 = this.view.getState(cellList[i]).getPerimeterBounds(5);
+					var perimeter2 = this.view.getState(cellToCompare).getPerimeterBounds(5);
+					if (mxUtils.intersects(perimeter1, perimeter2)) {
+						closestCells.push(cellList[i]);
+						delete cellList[i];
+					}
+					if (flag && cellList[i] != null) {
+						flag = false;
+						cellList[i].visible = false;
+						this.refresh();
+					}
+				}
+			}
+
+			if(flagConstraint) {
+				flagConstraint = false;
+				cellToCompare.visible = false;
+				this.refresh();
+			}
+
+			var j;
+			var cs = new Array();
+			//Per ogni simbolo vicino, trovo ricorsivamente i simboli vicini
+			for(j=0; j<closestCells.length; j++) {
+				cs = cs.concat(this.getClosestCells(closestCells[j], cellList, cellGroup));
+
+			}
+			cellGroup = closestCells.concat(cs);
+			return cellGroup;
+		}
+
+
+		/**Override delle funzioni per la modifica dei simboli*/
+
+		Graph.prototype.isCellEditable = function(cell) {
+			if((cell.style.includes('text') && this.isShapeMode()) || cell.isConstraint() ) {
+				return true;
+			} else {
+				return false;
+			}
+		};
+
+		Graph.prototype.isCellMovable = function(cell) {
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint() && !cell.isConstraintType()) {
+					return false;
+				} else {
+					if(cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				if(cell.isConstraintType())
+					return false
+				if(this.getCellStyle(cell)[mxConstants.STYLE_MOVABLE]=='0') {
+					return false;
+				} else {
+					return true;
+				}
+			}
+		};
+		Graph.prototype.isCellRotatable = function(cell) {
+			if(cell.isConstraintType())
+				return false;
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint()) {
+					return false;
+				} else {
+					if(cell.getStyle().includes('shape=') || cell.getStyle().includes('ellipse') || cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				if(cell.getStyle().includes('shape=') || this.getCellStyle(cell)[mxConstants.STYLE_ROTATABLE]=='0') {
+					return false;
+				} else {
+					return true;
+				}
+			}
+		};
+		Graph.prototype.isTerminalPointMovable = function(cell) {
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint() || cell.getAttribute('areaConstraint',false)) {
+					return false;
+				} else {
+					if(cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				return true;
+			}
+		};
+		Graph.prototype.isCellDeletable = function(cell) {
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint()) {
+					return false;
+				} else {
+					if(cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				return true;
+			}
+		};
+		Graph.prototype.isCellCloneable = function(cell) {
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint()) {
+					return false;
+				} else {
+					if(cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				return true;
+			}
+		};
+		Graph.prototype.isCellBendable = function(cell) {
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint()) {
+					return false;
+				} else {
+					if(cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				return true;
+			}
+
+		};
+		mxGraph.prototype.isCellResizable = function(cell) {
+			if(cell.isConstraintType())
+				return false;
+			if(this.isConstraintMode()) {
+				if(!cell.isConstraint()) {
+					return false;
+				} else {
+					if(cell.getStyle().includes('ellipse') || cell.getParent()!=this.getDefaultParent()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			} else {
+				if(this.getCellStyle(cell)[mxConstants.STYLE_RESIZABLE]=='0') {
+					return false;
+				} else {
+					return true;
+				}
+			}
+		};
+
+		/**
+		 *	Questa funzione mostra tutti i punti di attacco nascosti
+		 */
+		Graph.prototype.showConstraints = function() {
+			var connectedEdges = this.getModel().filterDescendants(function(cell) {
+				if(cell.edge==true && (cell.source!=null || cell.target!=null)){
+					return true;
+				}
+			});
+
+			this.disconnectEdges(connectedEdges);
+			var stencils = this.getModel().filterDescendants(function(cell) {
+				if(cell.vertex==true && !cell.isConstraint() && cell.getAttribute('locked','0')=='0' && (cell.getStyle().includes('stencil(') || cell.getStyle().includes('group'))) {
+					return true;
+				}
+			});
+			var shapeCreator = this.stencilManager;
+			var i;
+			for(i=0; i<stencils.length; i++) {
+
+				if(stencils[i].style.includes('stencil(') && stencils[i].getAttribute('locked','0')!='1') {
+					shapeCreator.unmergeShape(stencils[i]);
+
+				} else {
+					this.setSelectionCell(stencils[i]);
+					this.ungroupCells();
+				}
+				this.getModel().remove(stencils[i]);
+			}
+
+			var cells = this.getModel().filterDescendants(function(cell) {
+				if(cell.isConstraint()) {
+					return true;
+				}
+			})
+
+			var i;
+			for(i=0; i<cells.length; i++) {
+				cells[i].setVisible(true);
+			}
+			this.refresh();
+
+			// to front di quelli che sono attack type
+			var tofrontcells = this.getModel().filterDescendants(mxUtils.bind(this, function(cell) {
+				if(cell.isConstraintType()) {
+					return true;
+				}
+			}));
+			var i;
+			this.orderCells(false , tofrontcells);
+			this.refresh();
+
+		}
+
+		Graph.prototype.disconnectEdges = function(edgesConn) {
+			var edges = [];
+			var i;
+
+			for(i=0; i<edgesConn.length; i++) {
+				var edgeStyle = this.getCellStyle(edgesConn[i]);
+				if(edgesConn[i].getTerminal(true) !=null) {
+					var cellBounds= this.view.getState(edgesConn[i].getTerminal(true)).getCellBounds();
+					var sourcePoint = new mxPoint();
+					edgesConn[i].setTerminal(null, true);
+					var exit_x = edgeStyle[mxConstants.STYLE_EXIT_X];
+					var exit_y = edgeStyle[mxConstants.STYLE_EXIT_Y];
+					sourcePoint.x = exit_x*cellBounds.width+cellBounds.x;
+					sourcePoint.y = exit_y*cellBounds.height+cellBounds.y;
+					edgesConn[i].getGeometry().sourcePoint = sourcePoint;
+				}
+				if(edgesConn[i].getTerminal(false) != null) {
+					var cellBounds= this.view.getState(edgesConn[i].getTerminal(false)).getCellBounds();
+					var targetPoint = new mxPoint();
+					edgesConn[i].setTerminal(null, false);
+					var entry_x = edgeStyle[mxConstants.STYLE_ENTRY_X];
+					var entry_y = edgeStyle[mxConstants.STYLE_ENTRY_Y];
+					targetPoint.x = entry_x*cellBounds.width+cellBounds.x;
+					targetPoint.y = entry_y*cellBounds.height+cellBounds.y;
+					edgesConn[i].getGeometry().targetPoint = targetPoint;
+				}
+			}
+		}
+
+
+		/**
+		 * Questa funzione controlla se la selezione corrente contiene almeno un punto di attacco
+		 * @return 	true se la selezione contiene almeno un punto di attacco
+		 *					false se la selezione non contiene punti di attacco
+		 */
+		Graph.prototype.selectionContainsConstraints = function() {
+			if(this.getSelectionCount()==1) {
+				return this.getSelectionCell().isConstraint();
+			} else {
+				var selectionCells = this.getSelectionCells();
+				for(i=0; i<selectionCells.length; i++) {
+					if(selectionCells[i].isConstraint()) {
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		/**
+		 * Questa funzione controlla se la selezione corrente contiene solo punti di attacco
+		 * @return 	true se la selezione contiene solo punti di attacco
+		 *					false se la selezione contiene almeno un elemento che non è un punto di attacco
+		 */
+		Graph.prototype.selectionContainsOnlyConstraints = function() {
+			if(this.getSelectionCount()==1) {
+				return this.getSelectionCell().isConstraint();
+			} else {
+				var selectionCells = this.getSelectionCells();
+				for(i=0; i<selectionCells.length; i++) {
+					if(!selectionCells[i].isConstraint()) {
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+
+		/**
+		 *	Questa funzione controlla se la selezione corrente contiene solo edges.
+		 *  @return true se la selezione contiene solo edges, false altrimenti
+		 */
+		Graph.prototype.selectionContainsOnlyEdges = function() {
+			if(this.getSelectionCount()==1) {
+				return this.getSelectionCell().edge;
+			} else {
+				var selectionCells = this.getSelectionCells();
+				for(i=0; i<selectionCells.length; i++) {
+					if(!selectionCells[i].edge) {
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+
 	    // Activates outline connect after 1500ms with touch event or if alt is pressed inside the shape
 	    // outlineConnect=0 is a custom style that means do not connect to strokes inside the shape,
 	    // or in other words, connect to the shape's perimeter if the highlight is under the mouse
@@ -1799,6 +2338,8 @@ Graph.prototype.baseUrl = (urlParams['base'] != null) ?
  */
 Graph.prototype.editAfterInsert = false;
 
+Graph.prototype.stencilManager = null;
+
 /**
  * Defines the built-in properties to be ignored in tooltips.
  */
@@ -1883,6 +2424,7 @@ Graph.prototype.init = function(container)
 	}));
 
 	this.initLayoutManager();
+	this.stencilManager = new StencilManager(this);
 };
 
 /**
@@ -6580,7 +7122,7 @@ if (typeof mxVertexHandler != 'undefined')
 		/**
 		 * Contains the default style for edges.
 		 */
-		Graph.prototype.defaultEdgeStyle = {'edgeStyle': 'orthogonalEdgeStyle', 'rounded': '0',
+		Graph.prototype.defaultEdgeStyle = {'endArrow': 'orthogonalEdgeStyle', 'rounded': '0',
 			'jettySize': 'auto', 'orthogonalLoop': '1'};
 
 		/**
@@ -6588,7 +7130,8 @@ if (typeof mxVertexHandler != 'undefined')
 		 */
 		Graph.prototype.createCurrentEdgeStyle = function()
 		{
-			var style = 'edgeStyle=' + (this.currentEdgeStyle['edgeStyle'] || 'none') + ';';
+			var style = "endArrow=none;html=1;fillColor=none;strokeColor=#000000;rounded=0;";
+			/*var style = 'edgeStyle=' + (this.currentEdgeStyle['edgeStyle'] || 'none') + ';';
 			var keys = ['shape', 'curved', 'rounded', 'comic', 'sketch', 'fillWeight', 'hachureGap',
 				'hachureAngle', 'jiggle', 'disableMultiStroke', 'disableMultiStrokeFill', 'fillStyle',
 				'curveFitting', 'simplification', 'comicStyle', 'jumpStyle', 'jumpSize'];
@@ -6634,7 +7177,7 @@ if (typeof mxVertexHandler != 'undefined')
 			else
 			{
 				style += 'html=1;';
-			}
+			}*/
 			
 			return style;
 		};
@@ -7844,6 +8387,8 @@ if (typeof mxVertexHandler != 'undefined')
 			mxGraph.prototype.removeCellsAfterUngroup.apply(this, arguments);
 		};
 
+
+
 		/**
 		 * Sets the link for the given cell.
 		 */
@@ -8008,8 +8553,8 @@ if (typeof mxVertexHandler != 'undefined')
 					pt.x, pt.y) && !mxUtils.isAncestorNode(state.text.node, mxEvent.getSource(evt))))) &&
 					((state == null && !this.isCellLocked(this.getDefaultParent())) ||
 					(state != null && !this.isCellLocked(state.cell))) &&
-					(state != null ||
-					(mxClient.IS_SVG && src == this.view.getCanvas().ownerSVGElement)))
+					((state != null ||
+					(mxClient.IS_SVG && src == this.view.getCanvas().ownerSVGElement))))
 				{
 					if (state == null)
 					{
@@ -8019,9 +8564,63 @@ if (typeof mxVertexHandler != 'undefined')
 					cell = this.addText(pt.x, pt.y, state);
 				}
 			}
+
+			if(this.isConstraintMode()) {
+				cell = this.addConstraintPoint(pt.x, pt.y);
+			}
 			
 			return cell;
 		};
+
+		/**
+		 *	Questa funzione aggiunge un punto di attacco al graph, date le coordinate
+		 * @param x coordinata x della posizione in cui aggiungere il punto di attacco
+		 * @param y coordinata y della posizione in cui aggiungere il punto di attacco
+		 */
+		Graph.prototype.addConstraintPoint = function (x, y) {
+			var point = new mxCell();
+			var doc = mxUtils.createXmlDocument();
+			var node = doc.createElement('AttachmentSymbol');
+			node.setAttribute('isConstraint', 1);
+			node.setAttribute('label', '');
+
+			point.value = node;
+			point.style = 'ellipse;rotatable=0;resizable=0;fillColor=#d5e8d4;strokeColor=#80FF00;strokeWidth=0;';
+			point.geometry = new mxGeometry();
+			point.geometry.width = 5;
+			point.geometry.height = 5;
+			var tr = this.view.translate;
+			point.geometry.x = Math.round(x / this.view.scale) - tr.x;
+			point.geometry.y = Math.round(y / this.view.scale) - tr.y;
+			point.vertex = true;
+			point.connectable = false;
+			this.getModel().beginUpdate();
+			try
+			{
+				this.addCells([point]);
+			}
+			finally
+			{
+				this.getModel().endUpdate();
+			}
+			return point;
+		}
+
+		Graph.prototype.getAllTypePoints = function(){
+			var j=0;
+			var allAttackTypeCells = [];
+
+			//Prendo tutti gli attack type
+			var allAttackType = this.getModel().filterDescendants(function(cell) {
+				if(cell.isConstraintType()) {
+					allAttackTypeCells[j] = cell;
+					j++;
+					return true;
+				}
+			});
+
+			return allAttackTypeCells;
+		}
 		
 		/**
 		 * Returns a point that specifies the location for inserting cells.

@@ -386,6 +386,475 @@
 	EditorUi.prototype.sidebarFooterHeight = 38;
 
 	/**
+	 * Questa funzione permette di cambiare la modalità dell'editor
+	 */
+	EditorUi.prototype.switchMode = function() {
+		var graph = this.editor.graph;
+		var connectionMode = graph.isConstraintMode();
+		document.getElementById("expButton").style.display = "none";
+		if(graph.isShapeMode()) {
+			graph.editorMode = mxResources.get('connectionMode');
+			graph.showConstraints();
+			/*Mostro l'highlight del simbolo se ha il contorno come punto d'attacco*/
+			var cells = graph.getModel().filterDescendants(function(cell) {
+				return !cell.isConstraint() && (cell.vertex || cell.edge) && !cell.isConstraintType();
+			})
+			for(i=0; i<cells.length; i++) {
+				var style = cells[i].style;
+				if(!style.includes('text')) {
+					cells[i].setFillColor(graph.getCellStyle(cells[i])[mxConstants.STYLE_FILLCOLOR]);
+					cells[i].setStrokeColor(graph.getCellStyle(cells[i])[mxConstants.STYLE_STROKECOLOR]);
+
+					style = mxUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR,  cells[i].areaConstraintColor);
+					style = mxUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR,  cells[i].outlineConstraintColor);
+				} else {
+					style = mxUtils.setStyle(style, mxConstants.STYLE_RESIZABLE,  0);
+				}
+				graph.getModel().setStyle(cells[i], style);
+			}
+			/*isEditablePoint = function(cell) {
+				if(!cell.getAttribute('isConstraint',false) || !cell.getAttribute('isConstraintType',false)) {
+					return false;
+				} else {
+					if(cell.getStyle().includes('ellipse')) {
+						return false;
+					}	else {
+						return true;
+					}
+				}
+			};
+			isEditable = function(cell) {
+				if(!cell.getAttribute('isConstraint',false) && !cell.getAttribute('isConstraintType',false)) {
+					return false;
+				} else {
+					return true;
+				}
+			};*/
+		} else if(graph.isConstraintMode()) {
+			document.getElementById("expButton").style.display = "inline-block";
+			/*graph.editorMode = mxResources.get('shapeMode');
+			graph.hideConstraints();
+			/*Nascondo l'highlight del simbolo
+			var cells = graph.getModel().getChildCells(graph.getDefaultParent());
+			for(i=0; i<cells.length; i++) {
+				if(cells[i].getAttribute('outlineConstraint','false')=='true') {
+					cells[i].getHighlightConstraint().hide();
+				}
+			}
+			isEditable = function(cell) {
+				if(cell.getAttribute('isConstraint',false) || cell.getAttribute('isConstraintType',false)) {
+					return false;
+				} else {
+					return true;
+				}
+			};
+			isEditablePoint = isEditable;*/
+			graph.editorMode = mxResources.get('shapeMode');
+
+
+			var cells = graph.getModel().filterDescendants(function(cell) {
+				return !cell.isConstraint() && (cell.vertex || cell.edge) && !cell.isConstraintType();
+			});
+			for(i=0; i<cells.length; i++) {
+				var style = cells[i].style;
+				if(!style.includes('text')) {
+					cells[i].setAreaConstraintColor(graph.getCellStyle(cells[i])[mxConstants.STYLE_FILLCOLOR]);
+					cells[i].setOutlineConstraintColor(graph.getCellStyle(cells[i])[mxConstants.STYLE_STROKECOLOR]);
+
+					style = mxUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR,  cells[i].fillColor);
+					style = mxUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR, cells[i].strokeColor);
+				} else {
+					style = mxUtils.setStyle(style, mxConstants.STYLE_RESIZABLE,  1);
+				}
+				graph.getModel().setStyle(cells[i], style);
+			}
+			graph.hideConstraints();
+		}
+		//Deseleziona tutti i simboli
+		graph.setSelectionCells([]);
+		//Modifica le palette della sidebar
+		this.sidebar.switchPalettes();
+		//Aggiorna la format bar
+		this.format.refresh();
+
+	}
+
+
+	/**
+	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export'
+	 * Ottenuto il Json lo carica nel localstorage del browser
+	 */
+	EditorUi.prototype.exportShape = function() {
+		var graph = this.editor.graph;
+
+		if(this.title == null) {
+			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
+		}
+
+		//Ricavo tutti i shape per i quali è definito uno stencil
+		var allShapes = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('stencil')){
+					return true;
+				}
+			}
+		});
+
+		//Ricavo tutti gli archi orientati per i quali è definito un attack type
+		var allConns = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('ap=')){
+					return true;
+				}
+			}
+		});
+
+		var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+
+		var defaultStencil = this.createStencilXml(allShapes,this.title);
+		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
+
+		console.log(json);
+
+		localStorage.setItem('STENCIL', defaultStencil);
+		localStorage.setItem('CONNECTOR', defaultConnectors);
+		localStorage.setItem('RULES' , json);
+
+		window.open("http://localhost:8080/?dev=1" , 'locomotive');
+
+		//xml che non ho capito a cosa serve
+		//this.createXML();
+
+	}
+
+	EditorUi.prototype.counterExport = 1 ;
+
+	EditorUi.prototype.createStencilXml = function(shapes,title) {
+
+		var i;
+		var graph = this.editor.graph;
+		var xml = '<?xml version="1.0" encoding="UTF-8"' +
+			' standalone="no"?>\n' +
+			'<shapes name="' + title + '">\n'
+
+		for(i=0;i<shapes.length;i++) {
+			var shape = shapes[i];
+			var stencil = shape.getStyle();
+			var base64 = stencil.substring(14, stencil.length - 2)
+			var desc = graph.decompress(base64);
+			var shapeXml = mxUtils.parseXml(desc).documentElement;
+			shapeXml.setAttribute("graphicRef" , 'symbols/General/'
+				+ shapeXml.getAttribute('name') + '.xml');
+			console.log(shapeXml);
+			var desc = mxUtils.getXml(shapeXml);
+
+
+			xml = xml + desc + '\n'
+
+		}
+
+		xml = xml + '</shapes>';
+
+		console.log(xml);
+		return xml;
+
+	}
+
+	EditorUi.prototype.createConnectorsXml = function(shapes,title){
+
+		var i;
+		var graph = this.editor.graph;
+		var xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' +
+			'<connectors name="' + title + '">\n'
+		var types;
+
+		for(i=0;i<shapes.length;i++) {
+
+			var shape = shapes[i];
+
+			if(shape.getStyle().includes("name=")){
+
+				var edgeStyle = shape.getStyle();
+				var initCut = edgeStyle.indexOf("name=")
+				edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
+				var toCut = edgeStyle.indexOf(";");
+				edgeStyle = edgeStyle.substring(5,toCut);
+				var name = edgeStyle;
+
+				var style = shape.getStyle()
+
+				let edgeType = style
+				edgeType = style.substring(edgeType.indexOf("ap=") +4 , edgeType.length);
+				toCut = edgeType.indexOf(";");
+				edgeType = edgeType.substring(0,toCut-1);
+
+				types = edgeType.split('-');
+
+				xml = xml + '<connector graphicRef="connectors/'+ name +'.svg">'
+
+				if(types[0].includes(':')){
+					xml  = xml + '<values code="content.appendChild(this.createEdgeTemplate(\'attP=P1:P2-P2:P1;graphicRef=connectors/' + name + '.svg;' + style + '\', 100 , 100 , \'\' , \'' + name + '\' , true));" ' +
+						'name="'+name+'"/>'
+				}
+				else{
+					xml  = xml + '<values code="content.appendChild(this.createEdgeTemplate(\'attP=Tail-Head;graphicRef=connectors/' + name + '.svg;' + style + '\', 100 , 100 , \'\' , \'' + name + '\' , true));" ' +
+						'name="'+name+'"/>';
+				}
+
+
+				xml = xml + '</connector>';
+
+			}
+		}
+
+		xml = xml + '</connectors>';
+		console.log(xml);
+		return xml;
+	}
+
+
+
+	/**
+	 * Questa funzione crea il json per tutte le shape per le quali è definito uno stencil all'interno del grafo corrente
+	 */
+	EditorUi.prototype.createXML = function() {
+
+		var graph = this.editor.graph;
+
+		//Ricavo tutti gli archi orientati per i quali è definito un attack type
+		var allConns = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('ap=')||(cell.getStyle().includes('stencil'))){
+					return true;
+				}
+			}
+		});
+
+
+
+		var i;
+		var xml ='<mxlibrary>['
+		for(i=0;i<allConns.length;i++){
+
+			var grafo = new mxGraphModel();
+			grafo.add(grafo.getCell('1'), allConns[i]);
+
+			var enc = new mxCodec();
+			var node = enc.encode(grafo);
+			var xml2 = mxUtils.getXml(node);
+			var xmlBase64 = graph.compress(xml2);
+
+			console.log(allConns[i])
+
+
+			xml = xml + '{"xml":"'+xmlBase64+'","w":'+allConns[i].getGeometry().width+',"h":'+allConns[i].getGeometry().height+',"title":"'+i+'","aspect":"fixed"},'
+		}
+
+		xml = xml.slice(0, -1);
+
+		xml = xml + ']</mxlibrary>'
+
+
+
+		console.log(xml);
+
+
+	}
+
+
+	/**
+	 * Questa funzione crea il json per tutte le shape per le quali è definito uno stencil all'interno del grafo corrente
+	 */
+	EditorUi.prototype.createShapesJSON = function(shapes) {
+		var graph = this.editor.graph;
+		var json = '{\n' +
+			'    "language": {\n' +
+			'        "token": [\n';
+
+		var i;
+		var j;
+		for(i=0;i<shapes.length;i++){
+
+			var shape = shapes[i];
+			var stencil = shape.getStyle();
+			var base64 = stencil.substring(14, stencil.length-2)
+			var desc = graph.decompress(base64);
+			var shapeXml = mxUtils.parseXml(desc).documentElement;
+
+			json = json + '            {\n';
+
+			var occurrences = shapeXml.getAttribute('occurrences' , '');
+			var name = shapeXml.getAttribute('name' , '');
+
+			var connectionsNode = shapeXml.getElementsByTagName('connections')[0];
+			var connectionChildNodes = this.getAllElementChildNodes(connectionsNode);
+
+			if(connectionChildNodes.length>0)
+				json = json + '                "ap": [\n'
+
+			for(j=0; j<connectionChildNodes.length; j++) {
+				var node = connectionChildNodes[j];
+				if(node.tagName == 'constraint' &&  node.getAttribute('name','P')[0] == 'P'){
+					var nameChild = node.getAttribute('name' , '');
+					var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
+					if(nameInsert == '')
+						nameInsert = nameChild;
+					json = json + '                    {\n' +
+						'                        "_type": "' + node.getAttribute('label' , '') + '",\n' +
+						'                        "_name": "' + nameInsert + '",\n' +
+						'                        "_ref": "' + nameInsert + '",\n' +
+						'                        "_numLoop": "' + node.getAttribute('numLoop') + '",\n' +
+						'                        "_connectNum": "' + node.getAttribute('connectNum') + '"\n' +
+						'                    },\n'
+				}
+				else if(node.tagName == 'attachmentcurve' || node.tagName == 'attachmentline' ||  node.tagName == 'attachmentarea'){
+					var nameChild = connectionChildNodes[j+1].getAttribute('name' , '');
+					//var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
+					//if(nameInsert == '')
+					var	nameInsert = nameChild;
+					json = json + '                    {\n' +
+						'                        "_type": "' + connectionChildNodes[j+1].getAttribute('label' , '') + '",\n' +
+						'                        "_name": "' + nameInsert + '",\n' +
+						'                        "_ref": "' + nameInsert + '",\n' +
+						'                        "_numLoop": "' + node.getAttribute('numLoop') + '",\n' +
+						'                        "_connectNum": "' + node.getAttribute('connectNum') + '"\n' +
+						'                    },\n'
+				}
+			}
+
+			json = json.slice(0, -2);
+			json = json + '\n                ],\n' +
+				'                        "_name": "' + name + '",\n' +
+				'                        "_ref": "symbols/General/' + name + '.xml",\n' +
+				'                        "_occurrences": "' + occurrences + '"\n' +
+				'            },\n'
+		}
+
+		if(shapes.length > 0 )
+			json = json.slice(0, -2);
+
+		json = json + '\n        ],\n'
+
+		//console.log(json);
+
+		return json;
+
+	}
+
+		EditorUi.prototype.getAllElementChildNodes = function(parent) {
+		var elementChildren = [];
+		if(parent!=null) {
+			var cn = parent.childNodes;
+			var i=0;
+			for(i=0; i<cn.length; i++) {
+				if(cn[i].nodeType!=Node.TEXT_NODE) {
+					elementChildren.push(cn[i]);
+				}
+			}
+		}
+		return elementChildren;
+	}
+
+
+	EditorUi.prototype.createConnectorsJSON = function(connectors) {
+		var graph = this.editor.graph;
+		var json = '        "connector": [\n';
+
+		var i;
+		var edgeType;
+		var connector;
+		var edgeType;
+		var toCut;
+		var types;
+
+		var nameInsert1;
+		var nameInsert2;
+
+		var refInsert1;
+		var refInsert2;
+
+		for(i=0;i<connectors.length;i++){
+
+			json = json + '            {\n';
+
+			connector = connectors[i];
+			edgeType= connector.getStyle();
+
+			edgeType = edgeType.substring(edgeType.indexOf("ap=") +4 , edgeType.length);
+			toCut = edgeType.indexOf(";");
+			edgeType = edgeType.substring(0,toCut-1);
+
+			types = edgeType.split('-');
+
+			if(types[0].includes(':')){
+				nameInsert1 = 'P1P2';
+				nameInsert2 = 'P2P1';
+				refInsert1 = 'P1:P2';
+				refInsert2 = 'P2:P1';
+				types[1] = types[0].split(':')[1];
+				types[0] = types[0].split(':')[0];
+
+			}
+			else{
+				nameInsert1 = 'Tail';
+				nameInsert2 = 'Head';
+				refInsert1 = 'Tail';
+				refInsert2 = 'Head';
+			}
+
+
+			var edgeName = connector.getStyle();
+			edgeName = edgeName.substring(edgeName.indexOf("name="), edgeName.length);
+			var toCut = edgeName.indexOf(";");
+			edgeName = edgeName.substring(5,toCut);
+
+			json = json + '                "ap": [\n'
+			json = json + '                    {\n' +
+				'                        "_type": "' + types[0] + '",\n' +
+				'                        "_name": "' + nameInsert1 + '",\n' +
+				'                        "_ref": "' + refInsert1 + '",\n' +
+				'                        "_connectNum": "' + '==1' + '"\n' +
+				'                    },\n'
+
+			json = json + '                    {\n' +
+				'                        "_type": "' + types[1] + '",\n' +
+				'                        "_name": "' + nameInsert2  + '",\n' +
+				'                        "_ref": "' + refInsert2 + '",\n' +
+				'                        "_connectNum": "' + '==1' + '"\n' +
+				'                    }\n'
+
+
+
+			json = json + '\n                ],\n' +
+				'                        "_name": "' + edgeName + '",\n' +
+				'                        "_occurrences": ">=0",\n' +
+				'                        "_ref": "connectors/' + edgeName + '.svg"\n' +
+				'            },\n'
+
+			if(connectors.length == i-1 ) {
+				json = json.slice(0, -2);
+				json = json + '\n';
+			}
+
+		}
+
+		if(connectors.length > 0)
+			json = json.slice(0, -2);
+
+		json = json + '\n        ],\n';
+		json = json + '       "_name": "' + this.title + '"';
+		json = json + '\n    }\n' +
+			' }\n'
+
+		//console.log(json);
+
+
+		return json;
+
+	}
+
+
+	/**
 	 * Specifies the default custom shape style.
 	 */
 	EditorUi.prototype.defaultCustomShapeStyle = 'shape=stencil(tZRtTsQgEEBPw1+DJR7AoN6DbWftpAgE0Ortd/jYRGq72R+YNE2YgTePloEJGWblgA18ZuKFDcMj5/Sm8boZq+BgjCX4pTyqk6ZlKROitwusOMXKQDODx5iy4pXxZ5qTHiFHawxB0JrQZH7lCabQ0Fr+XWC1/E8zcsT/gAi+Subo2/3Mh6d/oJb5nU1b5tW7r2knautaa3T+U32o7f7vZwpJkaNDLORJjcu7t59m2jXxqX9un+tt022acsfmoKaQZ+vhhswZtS6Ne/ThQGt0IV0N3Yyv6P3CeT9/tHO0XFI5cAE=);whiteSpace=wrap;html=1;';
@@ -2877,7 +3346,8 @@
 	 */
 	EditorUi.prototype.isScratchpadEnabled = function()
 	{
-		return isLocalStorage || mxClient.IS_CHROMEAPP;
+		//return isLocalStorage || mxClient.IS_CHROMEAPP;
+		return false;
 	};
 
 	/**
@@ -2932,6 +3402,15 @@
 	{
 		if (file != null)
 		{
+			//Cancello il contenuto della palette
+			file.setData(this.emptyLibraryXml);
+
+			//Salvo le modifiche
+			file.save(file.getTitle());
+
+			//Rimuovo i dati dallo storage locale
+			localStorage.removeItem(file.getTitle());
+
 			this.removeLibrarySidebar(file.getHash());
 			
 			if (file.constructor != LocalLibrary)
@@ -3138,16 +3617,9 @@
 					{
 						this.closeLibrary(file);
 					});
-					
-					if (saveBtn != null)
-					{
-						this.confirm(mxResources.get('allChangesLost'), null, fn,
-							mxResources.get('cancel'), mxResources.get('discardChanges'));
-					}
-					else
-					{
-						fn();
-					}
+
+					this.confirm(mxResources.get('allChangesLost'), fn, null,
+						mxResources.get('Ok'), mxResources.get('Cancel'));
 			
 					mxEvent.consume(evt);
 				}
@@ -3220,40 +3692,57 @@
 					title.style.paddingRight = (buttons.childNodes.length * btnWidth) + 'px';
 				}
 			});
-			
+
 			var addCells = mxUtils.bind(this, function(cells, bounds, evt, title)
 			{
-				cells = graph.cloneCells(mxUtils.sortCells(graph.model.getTopmostCells(cells)));
-	
-				// Translates cells to origin
-				for (var i = 0; i < cells.length; i++)
-				{
-					var geo = graph.getCellGeometry(cells[i]);
-					
-					if (geo != null)
-					{
-						geo.translate(-bounds.x, -bounds.y);
+				var res = true;
+				if(title==null) {
+					title = mxUtils.prompt('Insert a name for the shape: ', 'NoName');
+					var i;
+					for(i=0; i<images.length; i++) {
+						if(images[i].title == title) {
+							res = mxUtils.confirm('This name is already used. You want replace this symbol?');
+							if(res) {
+								//Elimino il duplicato (da sostituire)
+								images.splice(i, 1);
+							}
+						}
 					}
 				}
-	
-				contentDiv.appendChild(this.sidebar.createVertexTemplateFromCells(
-					cells, bounds.width, bounds.height, title || '', true, false, false));
-	
-				var xml = Graph.compress(mxUtils.getXml(this.editor.graph.encodeCells(cells)));
-				var entry = {xml: xml, w: bounds.width, h: bounds.height};
-				
-				if (title != null)
-				{
-					entry.title = title;
-				}
-				
-				images.push(entry);
-				saveLibrary(evt);
-				
-				if (dropTarget != null && dropTarget.parentNode != null && images.length > 0)
-				{
-					dropTarget.parentNode.removeChild(dropTarget);
-					dropTarget = null;
+				if(title!=null && res) {
+					cells = graph.cloneCells(mxUtils.sortCells(graph.model.getTopmostCells(cells)));
+
+					// Translates cells to origin
+					for (var i = 0; i < cells.length; i++)
+					{
+						var geo = graph.getCellGeometry(cells[i]);
+
+						if (geo != null)
+						{
+							geo.translate(-bounds.x, -bounds.y);
+						}
+					}
+					contentDiv.appendChild(this.sidebar.createVertexTemplateFromCells(
+						cells, bounds.width, bounds.height, title || '', true, false, false));
+
+					var xml = this.editor.graph.compress(mxUtils.getXml(this.editor.graph.encodeCells(cells)));
+					var entry = {xml: xml, w: bounds.width, h: bounds.height};
+
+					if (title != null)
+					{
+						entry.title = title;
+					}
+
+					images.push(entry);
+					saveLibrary(evt);
+
+					if (dropTarget != null && dropTarget.parentNode != null && images.length > 0)
+					{
+						dropTarget.parentNode.removeChild(dropTarget);
+						dropTarget = null;
+					}
+					//Salvo la palette in modo tale che la sostituzione sia visibile
+					this.saveLibrary(file.title, images, file, App.MODE_BROWSER);
 				}
 			});
 		
@@ -3262,6 +3751,11 @@
 				if (!graph.isSelectionEmpty())
 				{
 					var cells = graph.getSelectionCells();
+					console.log(cells);
+					if(cells[0].getStyle().includes('group')) {
+						console.log('---' + graph.ungroupCells(cells[0]));
+					}
+					// Devo controllaare che nello style ci sia un group e nel caso in cui ci sia fare l'ungroup, controllre cosa mi restituisce l'ungroup
 					var bounds = graph.view.getBounds(cells);
 					
 					var s = graph.view.scale;
@@ -3544,6 +4038,9 @@
 		
 		title.appendChild(buttons);
 		title.style.paddingRight = (buttons.childNodes.length * btnWidth) + 'px';
+		if(this.scratchpad!=null) {
+			this.closeLibrary(this.scratchpad);
+		}
 	};
 
 	/**
@@ -15036,3 +15533,5 @@ var ConfirmDialog = function(editorUi, message, okFn, cancelFn, okLabel, cancelL
 	
 	this.container = div;
 };
+
+EditorUi.title = null;

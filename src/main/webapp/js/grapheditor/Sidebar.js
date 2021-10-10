@@ -1035,6 +1035,7 @@ Sidebar.prototype.insertSearchHint = function(div, searchTerm, count, page, resu
 /**
  * Adds the general palette to the sidebar.
  */
+/*
 Sidebar.prototype.addGeneralPalette = function(expand)
 {
 	var lineTags = 'line lines connector connectors connection connections arrow arrows ';
@@ -1072,9 +1073,11 @@ Sidebar.prototype.addGeneralPalette = function(expand)
 	 	this.createVertexTemplateEntry('shape=xor;whiteSpace=wrap;html=1;', 60, 80, '', 'Or', null, null, 'logic or'),
 	 	this.createVertexTemplateEntry('shape=or;whiteSpace=wrap;html=1;', 60, 80, '', 'And', null, null, 'logic and'),
 	 	this.createVertexTemplateEntry('shape=dataStorage;whiteSpace=wrap;html=1;fixedSize=1;', 100, 80, '', 'Data Storage'),
+		this.createEdgeTemplateEntry('endArrow=none;rounded=0;fillColor=none', 50, 50, '', 'Line', null, lineTags + 'simple undirected plain blank no'),
+		this.createEdgeTemplateEntry('endArrow=none;dashed=1;roundend=0;fillColor=none', 50, 50, '', 'Dashed Line', null, lineTags + 'dashed undirected no'),
 	 	this.addEntry('curve', mxUtils.bind(this, function()
 	 	{
-			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=classic;html=1;');
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=none;html=1;fillColor=none;');
 			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
 			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
 			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
@@ -1177,6 +1180,155 @@ Sidebar.prototype.addGeneralPalette = function(expand)
 	
 	this.addPaletteFunctions('general', mxResources.get('general'), (expand != null) ? expand : true, fns);
 	this.setCurrentSearchEntryLibrary();
+};
+*/
+
+Sidebar.prototype.addGeneralPalette = function(expand)
+{
+	var lineTags = 'line lines connector connectors connection connections arrow arrows ';
+	mxStencilRegistry.loadStencilSet(STENCIL_PATH+'/general.xml',null);
+	var fns = [
+		this.createVertexTemplateEntry('shape=mxgraph.general.rectangle;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'Square', null, null, 'Square'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.triangle;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'Triangle', null, null, 'Triangle'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.nuovo;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'TriangleUpside', null, null, 'TriangleUpside'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.rectangle;fillColor=#FFFFFF;strokeColor=#000000;', 100, 50, '', 'Rectangle', null, null, 'Rectangle'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.circle;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'Circle', null, null, 'Circle'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.rumble;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'Rumble', null, null, 'Rumble'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.parallelogram;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'Parallelogram', null, null, 'Parallelogram'),
+		this.createVertexTemplateEntry('shape=mxgraph.general.actor;fillColor=#FFFFFF;strokeColor=#000000;', 100, 100, '', 'Actor', null, null, 'Actor'),
+		this.addEntry('line', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'endArrow=none;html=1;fillColor=none;strokeColor=#000000;rounded=0;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Line');
+		})),
+		this.addEntry('dashedline', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'endArrow=none;html=1;fillColor=none;dashed=1;strokeColor=#000000;rounded=0;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Dashed Line');
+		})),
+		this.addEntry('curve', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=none;html=1;fillColor=none;strokeColor=#000000;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Curve');
+		})),
+		this.addEntry('arrowLine', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'html=1;fillColor=none;strokeColor=#000000;rounded=0;endArrow=classic;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'ArrowLine');
+		})),
+		this.addEntry('arrowCurve', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=classic;html=1;fillColor=none;strokeColor=#000000;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Curve Arrow');
+		})),
+		this.addEntry('arrowDiamond', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=diamond;html=1;fillColor=none;strokeColor=#000000;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Diamond Arrow');
+		})),
+		this.addEntry('arrowDiamondEmpty', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=diamond;html=1;fillColor=none;strokeColor=#000000;endFill=0;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Diamond Arrow Empty');
+		})),
+		this.addEntry('arrowDiamondEmpty', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=classic;html=1;fillColor=none;strokeColor=#000000;endFill=0;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Diamond Arrow Empty');
+		})),
+		this.addEntry('openArrow', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=open;html=1;fillColor=none;strokeColor=#000000;endFill=0;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Open Arrow');
+		})),
+		this.addEntry('dashedline', mxUtils.bind(this, function()
+		{
+			var cell = new mxCell('', new mxGeometry(0, 0, 50, 50), 'endArrow=classic;html=1;fillColor=none;dashed=1;strokeColor=#000000;rounded=0;');
+			cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+			cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+			cell.geometry.relative = true;
+			cell.edge = true;
+			cell.vertex = true;
+			return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Dashed Arrow');
+		})),
+		this.createVertexTemplateEntry('text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;overflow=hidden;',
+			40, 20, 'Text', 'Text', null, null, 'text textbox textarea label', 100, 100, '', 'Text', null, null, 'Text'),
+	];
+
+	this.addPaletteFunctions('general', mxResources.get('general'), (expand != null) ? expand : true, fns);
+};
+
+/**
+ * Adds the general palette to the sidebar.
+ */
+Sidebar.prototype.addBasicPalette = function(dir)
+{
+	this.addStencilPalette('basic', mxResources.get('basic'), dir + '/basic.xml',
+		';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2',
+		null, null, null, null, [
+			this.createVertexTemplateEntry('shape=partialRectangle;whiteSpace=wrap;html=1;top=0;bottom=0;fillColor=none;', 120, 60, '', 'Partial Rectangle'),
+			this.createVertexTemplateEntry('shape=partialRectangle;whiteSpace=wrap;html=1;right=0;top=0;bottom=0;fillColor=none;routingCenterX=-0.5;', 120, 60, '', 'Partial Rectangle'),
+			this.createVertexTemplateEntry('shape=partialRectangle;whiteSpace=wrap;html=1;bottom=0;right=0;fillColor=none;', 120, 60, '', 'Partial Rectangle'),
+			this.createVertexTemplateEntry('shape=partialRectangle;whiteSpace=wrap;html=1;top=0;left=0;fillColor=none;', 120, 60, '', 'Partial Rectangle')
+		]);
 };
 
 /**
@@ -3090,7 +3242,7 @@ Sidebar.prototype.createDragSource = function(elt, dropHandler, preview, cells, 
 	var sourceCellStyle = this.editorUi.editor.graph.getCellStyle(cells[0]);
 	
 	// Allows drop into cell only if target is a valid root
-	dragSource.getDropTarget = mxUtils.bind(this, function(graph, x, y, evt)
+	/*dragSource.getDropTarget = mxUtils.bind(this, function(graph, x, y, evt)
 	{
 		// Alt means no targets at all
 		// LATER: Show preview where result will go
@@ -3468,7 +3620,7 @@ Sidebar.prototype.createDragSource = function(elt, dropHandler, preview, cells, 
 		
 		return target;
 	});
-	
+	*/
 	dragSource.stopDrag = function()
 	{
 		mxDragSource.prototype.stopDrag.apply(this, arguments);

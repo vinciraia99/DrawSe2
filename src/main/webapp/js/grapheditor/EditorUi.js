@@ -663,6 +663,7 @@ EditorUi = function(editor, container, lightbox)
 			}
 			
 			insertHandler(cells);
+			cells[0].vertex = true;
 		});
 	
 		this.addListener('styleChanged', mxUtils.bind(this, function(sender, evt)
@@ -840,7 +841,37 @@ EditorUi = function(editor, container, lightbox)
 				}
 			}
 		}));
-		
+
+		this.addListener('styleChanged', mxUtils.bind(this, function(sender, evt) {
+			var keys = evt.properties.keys;
+			if(keys.includes('fillColor') && graph.selectionContainsOnlyEdges()) {
+				var color = evt.properties.values[keys.indexOf('fillColor')];
+				var cells = evt.properties.cells;
+				var shpCreator = graph.stencilManager;
+				var attr = shpCreator.mergeShapes(cells, true, true);
+				var base64 = attr.base64;
+				var groupProp = attr.shapeGeo;
+				/*var desc = graph.decompress(base64);
+				var stencilToAdd = new mxStencil(mxUtils.parseXml(desc).documentElement);
+				 mxStencilRegistry.addStencil('filledpath'+cells[0].id, stencilToAdd);*/
+
+
+				var v1;
+				graph.getModel().beginUpdate();
+				try {
+					v1 = graph.insertVertex(graph.getDefaultParent(), null, null, groupProp.x, groupProp.y, groupProp.w, groupProp.h, 'shape=stencil('+base64+')'/*'shape=filledpath'+cells[0].id+';'*/);
+					//Rimuovo gli elementi che ora fanno parte del simbolo
+					graph.removeCells(cells);
+					v1.connectable = false;
+					v1.style = mxUtils.setStyle(v1.style, mxConstants.STYLE_FILLCOLOR, color);
+					v1.setValue(v1.createSymbolXmlNode());
+					v1.setAttribute('locked','1');
+				} finally {
+					graph.getModel().endUpdate();
+				}
+			}
+		}));
+
 		// Update font size and font family labels
 		if (this.toolbar != null)
 		{

@@ -654,7 +654,231 @@
 			}));
 		};
 	};
-	
+
+	/**
+	 *	Rimuove le palette non utili e aggiunge quelle necessarie a seconda della modalità
+	 */
+	/*
+	Sidebar.prototype.switchPalettes = function() {
+		var graph = this.editorUi.editor.graph;
+		if(graph.isConstraintMode()) {
+			this.removePalette('general');
+			this.removePalette('arrows2');
+			this.removePalette('misc');
+			this.removePalette('advanced');
+			this.removePalette('basic');
+			this.removePalette('uml');
+			this.removePalette('bpmnEvents');
+			this.removePalette('bpmnGateways');
+			this.removePalette('bpmn');
+			this.removePalette('er');
+			this.removePalette('flowchart');
+			this.addAttackPointsPalette(true);
+			this.addAttackPointsTypePalette(false);
+		} else if(graph.isShapeMode()) {
+			this.removePalette('attack points');
+			this.removePalette('attack type');
+			this.addGeneralPalette(false);
+			this.addMiscPalette(false);
+			this.addAdvancedPalette(false);
+			this.addBasicPalette();
+			this.addErPalette();
+			this.addFlowchartPalette();
+			this.addUmlPalette();
+			this.addBpmnPalette();
+			//this.addStencilPalette('Stencil', 'Stencil', STENCIL_PATH+'/stencil.xml',';html=1;');
+		}
+	}
+*/
+	/**
+	 *	Rimuove le palette non utili e aggiunge quelle necessarie a seconda della modalità
+	 */
+	Sidebar.prototype.switchPalettes = function() {
+		var graph = this.editorUi.editor.graph;
+		if(graph.isConstraintMode()) {
+			var pal;
+			for(pal in this.palettes) {
+				this.showPalette(pal, false);
+			}
+			this.addAttachmentPointsPalette(true);
+			this.addAttackPointsTypePalette(true);
+			document.getElementById('newPaletteButton').style.display = 'none';
+		} else if(graph.isShapeMode()) {
+			var pal;
+			for(pal in this.palettes) {
+				this.showPalette(pal, true);
+			}
+			this.showPalette('attachment points', false);
+			this.showPalette('attack type', false);
+			document.getElementById('newPaletteButton').style.display = 'block';
+		}
+	}
+
+	/**
+	 * Aggiunge la palette con i punti di attacco (punto, linea e linea curva)
+	 */
+	Sidebar.prototype.addAttachmentPointsPalette = function(expand) {
+		var lineTags = 'points attachment connections ';
+		//Aggiungo un attributo per riconoscere questi simboli come punti di attacco
+		var doc = mxUtils.createXmlDocument();
+		var node = doc.createElement('AttachmentSymbol');
+		node.setAttribute('label', '');
+		node.setAttribute('isConstraint', 1);
+		var nodeArea = doc.createElement('AttachmentSymbol');
+		nodeArea.setAttribute('label', '');
+		nodeArea.setAttribute('isConstraint', 1);
+		nodeArea.setAttribute('areaConstraint',1);
+		nodeArea.setAttribute('outlineConstraint',1);
+		var nodeOutline = doc.createElement('AttachmentSymbol');
+		nodeOutline.setAttribute('label', '');
+		nodeOutline.setAttribute('isConstraint', 1);
+		nodeOutline.setAttribute('areaConstraint',0);
+		nodeOutline.setAttribute('outlineConstraint',1);
+		var fns = [
+			this.addEntry('point', mxUtils.bind(this, function()
+			{
+				var cell = new mxCell(node, new mxGeometry(0, 0, 5, 5), 'ellipse;rotatable=0;resizable=0;fillColor=#d5e8d4;dashed=0;strokeColor=#80FF00;strokeWidth=0;');
+				cell.vertex = true;
+				cell.connectable = false;
+				return this.createVertexTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Point');
+			})),
+			this.createEdgeTemplateEntry('endArrow=none;html=1;rounded=0;rotatable=0;resizable=0;fillColor=#d5e8d4;dashed=0;strokeColor=#80FF00;strokeWidth=2;opacity=70;dashed=0;', 50, 50, node, 'Attachment Line', null, lineTags + 'simple undirected plain blank no'),
+
+
+			this.addEntry('atckcurve', mxUtils.bind(this, function()
+			{
+				var cell = new mxCell(node, new mxGeometry(0, 0, 50, 50), 'curved=1;endArrow=none;html=1;rotatable=0;resizable=0;dashed=0;fillColor=#CDEB8B;strokeColor=#80FF00;strokeWidth=2;opacity=70;dashed=0;');
+				cell.geometry.setTerminalPoint(new mxPoint(0, 50), true);
+				cell.geometry.setTerminalPoint(new mxPoint(50, 0), false);
+				cell.geometry.points = [new mxPoint(50, 50), new mxPoint(0, 0)];
+				cell.geometry.relative = true;
+				cell.edge = true;
+
+				return this.createEdgeTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Attachment Curve');
+			})),
+			this.createVertexTemplateEntry('shape=mxgraph.general.rectangle;fillColor=#CDEB8B;strokeColor=#80FF00;dashed=0;strokeWidth=2;opacity=70;', 100, 100, nodeArea, 'SquareArea', null, null, 'SquareArea'),
+			this.createVertexTemplateEntry('shape=mxgraph.general.circle;fillColor=#CDEB8B;strokeColor=#80FF00;dashed=0;strokeWidth=2;opacity=70;', 100, 100, nodeArea, 'CircleArea', null, null, 'CircleArea'),
+			this.createVertexTemplateEntry('shape=mxgraph.general.rectangle;fillColor=none;strokeColor=#80FF00;dashed=0;strokeWidth=2;opacity=70;', 100, 100, nodeOutline, 'SquareOutline', null, null, 'SquareOutline'),
+			this.createVertexTemplateEntry('shape=mxgraph.general.circle;fillColor=none;strokeColor=#80FF00;dashed=0;strokeWidth=2;opacity=70;', 100, 100, nodeOutline, 'CircleOutline', null, null, 'CircleOutline'),
+		];
+
+		this.addPaletteFunctions('attachment points', 'Attachment', (expand != null) ? expand : true, fns);
+		//Per rimpicciolire l'anteprima del punto
+		this.palettes['attachment points'][1].getElementsByTagName('a')[0].getElementsByTagName('ellipse')[0].setAttribute('rx',3);
+		this.palettes['attachment points'][1].getElementsByTagName('a')[0].getElementsByTagName('ellipse')[0].setAttribute('ry',3);
+	}
+
+	/**
+	 * Aggiunge la palette con le etichette per indicare l'attaching area type
+	 */
+	Sidebar.prototype.addAttackPointsTypePalette = function(expand) {
+
+		var fns = [];
+		var father = this;
+		var i;
+
+		for(i=0 ; i<this.attackSimbols.length ; i++) {
+
+			fns[i] = father.attackSimbols[i]
+
+		}
+		this.addPaletteFunctions('attack type', 'Attack points type', (expand != null) ? expand : true, fns);
+
+		//Aggiungo il bottone per la generazione casuale di nuovi attack points type
+		var randomTypeButton = mxUtils.button('New Attack Type', function (evt){
+
+			father.generateAttackSymbol(father.attackSimbols.length);
+			father.addAttackSymbol();
+
+		});
+
+		randomTypeButton.style.display = ' block ';
+		randomTypeButton.style.margin = '10px auto 10px auto';
+		randomTypeButton.style.width = '75%';
+		this.palettes['attack type'][1].appendChild(randomTypeButton);
+
+		var separatorDiv = document.createElement('div');
+		separatorDiv.style.borderBottom = '1px solid #C0C0C0';
+		separatorDiv.style.marginBottom = '10px';
+		this.palettes['attack type'][1].appendChild(separatorDiv);
+	}
+
+	/*
+	* Array formato da tutti gli attacktype generati
+	*/
+	Sidebar.prototype.attackSimbols = new Array();
+
+
+	/*
+	*Funzione che genera un attach type simbol dato il suo numero
+	 */
+	Sidebar.prototype.generateAttackSymbol = function (number)
+	{
+
+		var colors = [
+			'#c5cc00','#cc9400','#cc6700','#cc3100','#aacc00',
+			'#de8b8b','#5d9d76','#5d9d8a','#8fcacc','#1e7ac8',
+			'#3253e6','#7662c2','#9862c2','#c262c2','#ea2e64'
+		];
+		var numberColors = colors.length;
+
+		var darked = darking(colors[number%numberColors] , 40);
+
+
+		var doc = mxUtils.createXmlDocument();
+		var node = doc.createElement('Pip'+number);
+		node.setAttribute('isConstraint', 0);
+		node.setAttribute('isConstraintType' , 1);
+		node.setAttribute('label', ''+number);
+
+		var cell = new mxCell(node, new mxGeometry(0, 0, 20, 20), 'ellipse;rotatable=0;resizable=0;fillColor='+colors[number%numberColors]+';strokeColor='+darked+';strokeWidth=0;editable=0;');
+		cell.vertex = true;
+		cell.connectable = false;
+
+		this.attackSimbols.push(
+				this.addEntry(i+'type', mxUtils.bind(this, function () {
+				return this.createVertexTemplateFromCells([cell], cell.geometry.width, cell.geometry.height, 'Point'+i);
+			}))
+		);
+	}
+
+	/**
+	 * PROVA
+	 */
+	Sidebar.prototype.addAttackSymbol= function(expand)
+	{
+		this.removePalette('attack type');
+		this.addAttackPointsTypePalette(true);
+	};
+
+	function darking(hex, percent){
+		// strip the leading # if it's there
+		hex = hex.replace(/^\s*#|\s*$/g, '');
+
+		// convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
+		if(hex.length == 3){
+			hex = hex.replace(/(.)/g, '$1$1');
+		}
+
+		var r = parseInt(hex.substr(0, 2), 16),
+			g = parseInt(hex.substr(2, 2), 16),
+			b = parseInt(hex.substr(4, 2), 16);
+
+		return '#' +
+			((0|(1<<8) + r * (1 - percent / 100)).toString(16)).substr(1) +
+			((0|(1<<8) + g * (1 - percent / 100)).toString(16)).substr(1) +
+			((0|(1<<8) + b * (1 - percent / 100)).toString(16)).substr(1);
+	}
+
+	function lightenDarkenColor(col, amt) {
+		var num = parseInt(col, 16);
+		var r = (num >> 16) + amt;
+		var b = ((num >> 8) & 0x00FF) + amt;
+		var g = (num & 0x0000FF) + amt;
+		var newColor = g | (b << 8) | (r << 16);
+		return '#' + newColor.toString(16);
+	}
+
 	/**
 	 * Overridden to use shapetags to improve search results.
 	 */
@@ -821,7 +1045,7 @@
 			}
 		}
 	};
-	
+
 	/**
 	 * Overrides the sidebar init.
 	 */
@@ -829,379 +1053,44 @@
 	{
 		var imgDir = GRAPH_IMAGE_PATH;
 		var dir = STENCIL_PATH;
-		var signs = this.signs;
-		var gcp = this.gcp;
-		var rack = this.rack;
-		var pids = this.pids;
-		var cisco = this.cisco;
-		var cisco19 = this.cisco19;
-		var cisco_safe = this.cisco_safe;
-		var sysml = this.sysml;
-		var eip = this.eip;
-		var gmdl = this.gmdl;
-		var office = this.office;
-		var veeam = this.veeam;
-		var veeam2 = this.veeam2;
-		var archimate3 = this.archimate3;
-		var electrical = this.electrical;
-		
+
 		if (urlParams['createindex'] == '1')
 		{
-			this.createdSearchIndex = [];
+			mxLog.show();
+			mxLog.textarea.value = '';
 		}
-
+		var palettesName = ['arrows', 'atlassian', 'basic', 'bootstrap','bpmn','cabinets','citrix','eip','floorplan','flowchart','gmdl','lean_mapping','networks'];
 		this.addSearchPalette(true);
-		
-		// Adds custom sections first
-		if (this.customEntries != null)
-		{
-			var preloadCount = 0;
-			
-			for (var i = 0; i < this.customEntries.length; i++)
-			{
-				var section = this.customEntries[i];
-				
-				for (var j = 0; j < section.entries.length; j++)
-				{
-					var entry = section.entries[j];
-					
-					for (var k = 0; k < entry.libs.length; k++)
-					{
-						(mxUtils.bind(this, function(lib)
-						{
-							var data = null;
-							var error = null;
-							var content = null;
-							var title = null;
-							
-							var showError = mxUtils.bind(this, function(err, c)
-							{
-								var div = document.createElement('span');
-								div.style.paddingBottom = '6px';
-								div.style.paddingTop = '6px';
-								div.style.fontSize = '11px';
-								mxUtils.write(div, err);
-								c.innerHTML = '<img align="top" src="' + mxGraph.prototype.warningImage.src + '"/> ';
-								c.appendChild(div);
-							});
-							
-							var barrier = mxUtils.bind(this, function()
-							{
-								if (content != null && title != null)
-								{
-									if (error != null)
-									{
-										content.style.display = 'block';
-										title.innerHTML = '';
-										mxUtils.write(title, this.editorUi.getResource(lib.title));
-										showError(error, content);
-									}
-									else if (data != null)
-									{
-										this.editorUi.addLibraryEntries(data, content);
-										content.style.display = 'block';
-										title.innerHTML = '';
-										mxUtils.write(title, this.editorUi.getResource(lib.title));
-									}
-									else
-									{
-										content.style.display = 'none';
-										title.innerHTML = '';
-										mxUtils.write(title, mxResources.get('loading') + '...');
-									}
-								}
-							});
-							
-							if (lib.data == null && lib.url != null && (!lib.preload && preloadCount >= this.maxPreloadCount))
-							{
-								this.addPalette(entry.id + '.' + k, this.editorUi.getResource(lib.title),
-									false, mxUtils.bind(this, function(content, title)
-								{
-									var dataLoaded = mxUtils.bind(this, function(images)
-									{
-										this.setCurrentSearchEntryLibrary(entry.id, entry.id + '.' + k);
-										this.addEntries(images);
-										this.setCurrentSearchEntryLibrary();
-										this.editorUi.addLibraryEntries(images, content);
-									});
-
-									content.style.display = 'none';
-									title.innerHTML = '';
-									mxUtils.write(title, mxResources.get('loading') + '...');
-									
-									var url = lib.url;
-									
-									if (!this.editorUi.editor.isCorsEnabledForUrl(url))
-									{
-										url = PROXY_URL + '?url=' + encodeURIComponent(url);
-									}
-									
-									this.editorUi.editor.loadUrl(url, mxUtils.bind(this, function(data)
-									{
-										content.style.display = 'block';
-										title.innerHTML = '';
-										mxUtils.write(title, this.editorUi.getResource(lib.title));
-
-										try
-										{
-											var doc = mxUtils.parseXml(data);
-											
-											if (doc.documentElement.nodeName == 'mxlibrary')
-											{
-												var images = JSON.parse(mxUtils.getTextContent(doc.documentElement));
-												dataLoaded(images);
-											}
-											else
-											{
-												showError(mxResources.get('notALibraryFile'), content);
-											}
-										}
-										catch (e)
-										{
-											showError(mxResources.get('error') + ': ' + e.message, content);
-										}
-									}));
-								}));
-							}
-							else
-							{							
-								this.addPalette(entry.id + '.' + k, this.editorUi.getResource(lib.title),
-									false, mxUtils.bind(this, function(c, t)
-								{
-									content = c;
-									title = t;
-									barrier();
-								}));
-								
-								if (lib.data != null)
-								{
-									this.setCurrentSearchEntryLibrary(entry.id, entry.id + '.' + k);
-									this.addEntries(lib.data);
-									this.setCurrentSearchEntryLibrary();
-									data = lib.data;
-									barrier();
-								}
-								else if (lib.url != null)
-								{
-									preloadCount++;					
-									var url = lib.url;
-									
-									if (!this.editorUi.editor.isCorsEnabledForUrl(url))
-									{
-										url = PROXY_URL + '?url=' + encodeURIComponent(url);
-									}
-									
-									this.editorUi.editor.loadUrl(url, mxUtils.bind(this, function(temp)
-									{
-										try
-										{
-											var doc = mxUtils.parseXml(temp);
-											
-											if (doc.documentElement.nodeName == 'mxlibrary')
-											{
-												data = JSON.parse(mxUtils.getTextContent(doc.documentElement));
-												this.addEntries(data);
-												barrier();
-											}
-											else
-											{
-												error = mxResources.get('notALibraryFile');
-												barrier();
-											}
-										}
-										catch (e)
-										{
-											error = mxResources.get('error') + ': ' + e.message;
-											barrier();
-										}
-									}), mxUtils.bind(this, function(e)
-									{
-										error = (e != null && e.message != null) ? e.message : e;
-										barrier();
-									}));
-								}
-								else
-								{
-									error = mxResources.get('invalidInput');
-									barrier();
-								}
-							}
-						}))(entry.libs[k]);
-					}
-				}
-			}
+		this.addNewPaletteButton();
+		this.addGeneralPalette(true);
+		var i;
+		for(i=0; i<palettesName.length; i++) {
+			this.addStencilPalette(palettesName[i], palettesName[i], STENCIL_PATH+'/'+palettesName[i]+'.xml',';html=1;fillColor=#FFFFFF;strokeColor=#000000;');
 		}
-		
-		this.addGeneralPalette(this.customEntries == null);
-		this.addMiscPalette(false);	
-		this.addAdvancedPalette(false);
-		this.addBasicPalette();
-		this.addStencilPalette('arrows', mxResources.get('arrows'), dir + '/arrows.xml',
-				';html=1;' + mxConstants.STYLE_VERTICAL_LABEL_POSITION + '=bottom;' + mxConstants.STYLE_VERTICAL_ALIGN + '=top;' + mxConstants.STYLE_STROKEWIDTH + '=2;strokeColor=#000000;',
-				null, null, null, null, null, 'arrows');
-		this.addArrows2Palette();
-		
-		this.setCurrentSearchEntryLibrary('clipart', 'computer');
-		this.addImagePalette('computer', 'Clipart / Computer', imgDir
-				+ '/lib/clip_art/computers/', '_128x128.png', ['Antivirus',
-				'Data_Filtering', 'Database', 'Database_Add', 'Database_Minus',
-				'Database_Move_Stack', 'Database_Remove', 'Fujitsu_Tablet',
-				'Harddrive', 'IBM_Tablet', 'iMac', 'iPad', 'Laptop', 'MacBook',
-				'Mainframe', 'Monitor', 'Monitor_Tower',
-				'Monitor_Tower_Behind', 'Netbook', 'Network', 'Network_2',
-				'Printer', 'Printer_Commercial', 'Secure_System', 'Server',
-				'Server_Rack', 'Server_Rack_Empty', 'Server_Rack_Partial',
-				'Server_Tower', 'Software', 'Stylus', 'Touch', 'USB_Hub',
-				'Virtual_Application', 'Virtual_Machine', 'Virus',
-				'Workstation' ], [ 'Antivirus', 'Data Filtering', 'Database',
-	            'Database Add', 'Database Minus', 'Database Move Stack',
-	            'Database Remove', 'Fujitsu Tablet', 'Harddrive', 'IBMTablet',
-	            'iMac', 'iPad', 'Laptop', 'MacBook', 'Mainframe', 'Monitor',
-	            'Monitor Tower', 'Monitor Tower Behind', 'Netbook', 'Network',
-	            'Network 2', 'Printer', 'Printer Commercial', 'Secure System',
-	            'Server', 'Server Rack', 'Server Rack Empty', 'Server Rack Partial',
-	            'Server Tower', 'Software', 'Stylus', 'Touch', 'USB Hub',
-	            'Virtual Application', 'Virtual Machine', 'Virus', 'Workstation']);
-		
-		this.setCurrentSearchEntryLibrary('clipart', 'finance');		
-		this.addImagePalette('finance', 'Clipart / Finance', imgDir
-				+ '/lib/clip_art/finance/', '_128x128.png', [ 'Arrow_Down',
-				'Arrow_Up', 'Coins', 'Credit_Card', 'Dollar', 'Graph',
-				'Pie_Chart', 'Piggy_Bank', 'Safe', 'Shopping_Cart',
-				'Stock_Down', 'Stock_Up'], ['Arrow_Down', 'Arrow Up',
-	            'Coins', 'Credit Card', 'Dollar', 'Graph', 'Pie Chart',
-	            'Piggy Bank', 'Safe', 'Shopping Basket', 'Stock Down', 'Stock Up']);
-		
-		this.setCurrentSearchEntryLibrary('clipart', 'clipart');		
-		this.addImagePalette('clipart', 'Clipart / Various', imgDir
-				+ '/lib/clip_art/general/', '_128x128.png', [ 'Battery_0',
-				'Battery_100', 'Battery_50', 'Battery_75', 'Battery_allstates',
-				'Bluetooth', 'Earth_globe', 'Empty_Folder', 'Full_Folder',
-				'Gear', 'Keys', 'Lock', 'Mouse_Pointer', 'Plug', 'Ships_Wheel',
-				'Star', 'Tire' ], [ 'Battery 0%', 'Battery 100%', 'Battery 50%',
-	            'Battery 75%', 'Battery', 'Bluetooth', 'Globe',
-	            'Empty Folder', 'Full Folder', 'Gear', 'Keys', 'Lock', 'Mousepointer',
-	            'Plug', 'Ships Wheel', 'Star', 'Tire']);
-		
-		this.setCurrentSearchEntryLibrary('clipart', 'networking');
-		this.addImagePalette('networking', 'Clipart / Networking', imgDir
-				+ '/lib/clip_art/networking/', '_128x128.png', ['Bridge',
-				'Certificate', 'Certificate_Off', 'Cloud', 'Cloud_Computer',
-				'Cloud_Computer_Private', 'Cloud_Rack', 'Cloud_Rack_Private',
-				'Cloud_Server', 'Cloud_Server_Private', 'Cloud_Storage',
-				'Concentrator', 'Email', 'Firewall_02', 'Firewall',
-				'Firewall-page1', 'Ip_Camera', 'Modem',
-				'power_distribution_unit', 'Print_Server',
-				'Print_Server_Wireless', 'Repeater', 'Router', 'Router_Icon',
-				'Switch', 'UPS', 'Wireless_Router', 'Wireless_Router_N'],
-				['Bridge', 'Certificate', 'Certificate Off', 'Cloud', 'Cloud Computer',
-				'Cloud Computer Private', 'Cloud Rack', 'Cloud Rack Private',
-				'Cloud Server', 'Cloud Server Private', 'Cloud Storage',
-				'Concentrator', 'Email', 'Firewall 1', 'Firewall 2',
-				'Firewall', 'Camera', 'Modem',
-				'Power Distribution Unit', 'Print Server',
-				'Print Server Wireless', 'Repeater', 'Router', 'Router Icon',
-				'Switch', 'UPS', 'Wireless Router', 'Wireless Router N'],
-				 {'Wireless_Router': 'wireless router switch wap wifi access point wlan',
-				  'Wireless_Router_N': 'wireless router switch wap wifi access point wlan',
-				  'Router': 'router switch',
-				  'Router_Icon': 'router switch'});
-		
-		this.setCurrentSearchEntryLibrary('clipart', 'people');
-		this.addImagePalette('people', 'Clipart / People', imgDir
-				+ '/lib/clip_art/people/', '_128x128.png', ['Suit_Man',
-				'Suit_Man_Black', 'Suit_Man_Blue', 'Suit_Man_Green',
-				'Suit_Man_Green_Black', 'Suit_Woman', 'Suit_Woman_Black',
-				'Suit_Woman_Blue', 'Suit_Woman_Green',
-				'Suit_Woman_Green_Black', 'Construction_Worker_Man',
-				'Construction_Worker_Man_Black', 'Construction_Worker_Woman',
-				'Construction_Worker_Woman_Black', 'Doctor_Man',
-				'Doctor_Man_Black', 'Doctor_Woman', 'Doctor_Woman_Black',
-				'Farmer_Man', 'Farmer_Man_Black', 'Farmer_Woman',
-				'Farmer_Woman_Black', 'Nurse_Man', 'Nurse_Man_Black',
-				'Nurse_Woman',
-				'Nurse_Woman_Black',
-				'Military_Officer', 'Military_Officer_Black',
-				'Military_Officer_Woman', 'Military_Officer_Woman_Black',
-				'Pilot_Man', 'Pilot_Man_Black', 'Pilot_Woman',
-				'Pilot_Woman_Black', 'Scientist_Man', 'Scientist_Man_Black',
-				'Scientist_Woman', 'Scientist_Woman_Black', 'Security_Man',
-				'Security_Man_Black', 'Security_Woman', 'Security_Woman_Black',
-				'Tech_Man', 'Tech_Man_Black',
-				'Telesales_Man', 'Telesales_Man_Black', 'Telesales_Woman',
-				'Telesales_Woman_Black', 'Waiter', 'Waiter_Black',
-				'Waiter_Woman', 'Waiter_Woman_Black', 'Worker_Black',
-				'Worker_Man', 'Worker_Woman', 'Worker_Woman_Black']);
-		
-		this.setCurrentSearchEntryLibrary('clipart', 'telco');
-		this.addImagePalette('telco', 'Clipart / Telecommunication', imgDir
-				+ '/lib/clip_art/telecommunication/', '_128x128.png', [
-				'BlackBerry', 'Cellphone', 'HTC_smartphone', 'iPhone',
-				'Palm_Treo', 'Signal_tower_off', 'Signal_tower_on' ],
-				['BlackBerry', 'Cellphone', 'HTC smartphone', 'iPhone',
-				  'Palm Treo', 'Signaltower off', 'Signaltower on']);
-		this.setCurrentSearchEntryLibrary();
+	};
 
-		this.addFlowchartPalette();
-		this.addActiveDirectoryPalette();
-		this.addAndroidPalette();
-		this.addAtlassianPalette();
-		this.addBootstrapPalette();
-		this.addDFDPalette();
-		this.addErPalette();
-		this.addIos7Palette();
-		this.addIosPalette();
-		this.addKubernetesPalette();
-		this.addMockupPalette();
-		this.addSitemapPalette();
-		this.addUml25Palette();
-		this.addUmlPalette(false);
-		this.addAlliedTelesisPalette();
-		this.addAWS3Palette();
-		this.addAWS4bPalette();
-		this.addAWS4Palette();
-		this.addAWS3DPalette();
-		this.addAzurePalette();
-		this.addAzure2Palette();
-		this.addMSCAEPalette();
-		this.addC4Palette();
-		this.addCiscoPalette(cisco, dir);
-		this.addCisco19Palette();
-		this.addCiscoSafePalette();
-		this.addCumulusPalette();
-		this.addCitrixPalette();
-		this.addGCP2Palette();
-		this.addIBMPalette();
-		this.addNetworkPalette();
-		this.addOfficePalette();
-		this.addRackPalette(rack, dir);
-		this.addVeeamPalette();
-		this.addVeeam2Palette();
-		this.addVVDPalette();
-		this.addArchimate3Palette();
-		this.addArchiMatePalette();
-		this.addBpmnPalette(dir, false);
-		this.addSysMLPalette(sysml, dir);
-		this.addLeanMappingPalette();
-		this.addCabinetsPalette();
-		this.addInfographicPalette();
-		this.addEipPalette();
-		this.addElectricalPalette();
-		this.addFloorplanPalette();
-		this.addFluidPowerPalette();
-		this.addGMDLPalette();
-		this.addPidPalette(pids, dir);
-		this.addThreatModelingPalette();
-		this.addWebIconsPalette();
-		this.addWebLogosPalette();
-		this.addSignsPalette(signs, dir);
-		// LATER: Check if conflicts with restore libs after loading file
-		this.showEntries();
-		
-		if (this.createdSearchIndex != null)
-		{
-			console.log('searchFileData', Graph.compress(JSON.stringify(this.createdSearchIndex)));
-		}
+	/**
+	 *	Aggiunge un bottone per creare nuove palette (scratchpad)
+	 */
+	Sidebar.prototype.addNewPaletteButton = function() {
+		var editor = this.editorUi;
+		var addNewPaletteButton = mxUtils.button(mxResources.get('newPalette'), function(evt) {
+			var title = 'NewPalette'+mxSettings.getCustomLibraries().length;
+
+			var emptyXml = editor.emptyLibraryXml;
+			editor.loadLibrary(new StorageLibrary(editor, emptyXml, title));
+
+		});
+		addNewPaletteButton.id = 'newPaletteButton';
+		addNewPaletteButton.style.display = ' block';
+		addNewPaletteButton.style.margin = '10px auto 10px auto';
+		addNewPaletteButton.style.width = '75%';
+		this.container.appendChild(addNewPaletteButton);
+
+		var separatorDiv = document.createElement('div');
+		separatorDiv.style.borderBottom = '1px solid #C0C0C0';
+		separatorDiv.style.marginBottom = '10px';
+		this.container.appendChild(separatorDiv);
 	};
 	
 	/**

@@ -119,7 +119,7 @@ Toolbar.prototype.init = function()
 	{
 		this.addItems(['-', 'toFront', 'toBack']);
 	}
-
+/*
 	if (sw >= 740)
 	{
 		this.addItems(['-', 'fillColor']);
@@ -133,8 +133,8 @@ Toolbar.prototype.init = function()
 				this.addItems(['shadow']);
 			}
 		}
-	}
-	
+	}*/
+	/*
 	if (sw >= 400)
 	{
 		this.addSeparator();
@@ -166,12 +166,86 @@ Toolbar.prototype.init = function()
 		
 		this.addDropDownArrow(this.edgeStyleMenu, 'geSprite-orthogonal', 44, 50, 0, 0, 22, -4);
 	}
+*/
+
+
 
 	this.addSeparator();
 	var insertMenu = this.addMenu('', mxResources.get('insert') + ' (' + mxResources.get('doubleClickTooltip') + ')', true, 'insert', null, true);
 	this.addDropDownArrow(insertMenu, 'geSprite-plus', 38, 48, -4, -3, 36, -8);
 	this.addTableDropDown();
+
+
+
+	//modifca
+	this.addSeparator();
+	this.addToggleSwitch();
+
+	var graph = this.editorUi.editor.graph;
+
+	if(graph.isShapeMode()) {
+		this.addSeparator();
+		this.addExportLocalButton();
+	}
 };
+
+/**
+ * Questa funzione aggiunge un toggle switch button alla toolbar
+ */
+Toolbar.prototype.addToggleSwitch = function() {
+	var label = document.createElement('label');
+	label.className = 'switch';
+	var inputNode = document.createElement('input');
+	inputNode.setAttribute('type', 'checkbox');
+	var spanNode = document.createElement('span');
+	spanNode.className = 'slider round';
+	label.appendChild(inputNode);
+	label.appendChild(spanNode);
+
+	var divL = document.createElement('div');
+	divL.style.float = 'left';
+	divL.style.margin = '7px';
+	mxUtils.write(divL, 'Shape Mode');
+	var divR = document.createElement('div');
+	divR.style.float = 'left';
+	divR.style.margin = '7px';
+	mxUtils.write(divR, 'Constraint Mode');
+	this.container.appendChild(divL);
+	this.container.appendChild(label);
+	this.container.appendChild(divR);
+
+	var switchEvent = mxUtils.bind(this, function(evt) {
+		this.editorUi.switchMode();
+	});
+	mxEvent.addListener(inputNode, 'click', switchEvent);
+}
+
+
+/**
+ * Questa funzione aggiunge un toggle switch button alla toolbar
+ */
+Toolbar.prototype.addExportLocalButton = function() {
+	var label2 = document.createElement('label');
+	label2.className = 'exportShape';
+	var inputNode2 = document.createElement('input');
+	inputNode2.setAttribute('type', 'button');
+	inputNode2.setAttribute('value', 'Export');
+	inputNode2.style.margin = '7px';
+	inputNode2.className = 'expButton';
+	inputNode2.id = 'expButton';
+	label2.appendChild(inputNode2);
+
+
+
+	this.container.appendChild(label2);
+
+	var switchEvent = mxUtils.bind(this, function(evt) {
+		this.editorUi.exportShape();
+	});
+	mxEvent.addListener(inputNode2, 'click', switchEvent);
+
+
+}
 
 /**
  * Adds the toolbar elements.

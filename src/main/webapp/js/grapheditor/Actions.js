@@ -63,8 +63,20 @@ Actions.prototype.init = function()
 			window.openFile = null;
 		});
 	}).isEnabled = isGraphEnabled;
-	this.addAction('save', function() { ui.saveFile(false); }, null, null, Editor.ctrlKey + '+S').isEnabled = isGraphEnabled;
-	this.addAction('saveAs...', function() { ui.saveFile(true); }, null, null, Editor.ctrlKey + '+Shift+S').isEnabled = isGraphEnabled;
+	this.addAction('save', function() {
+		if(graph.isConstraintMode()) {
+			mxUtils.alert("You can save only in Shape Mode!");
+		} else {
+			ui.saveFile(false);
+		}
+	}, null, null, Editor.ctrlKey + '+S').isEnabled = isGraphEnabled;
+	this.addAction('saveAs...', function() {
+		if(graph.isConstraintMode()) {
+			mxUtils.alert("You can save only in Shape Mode!");
+		} else {
+			ui.saveFile(true);
+		}
+	}, null, null, Editor.ctrlKey + '+Shift+S').isEnabled = isGraphEnabled;
 	this.addAction('export...', function() { ui.showDialog(new ExportDialog(ui).container, 300, 304, true, true); });
 	this.addAction('editDiagram...', function()
 	{
@@ -303,6 +315,104 @@ Actions.prototype.init = function()
 	this.addAction('enterGroup', function() { graph.enterGroup(); }, null, null, Editor.ctrlKey + '+Shift+End');
 	this.addAction('collapse', function() { graph.foldCells(true); }, null, null, Editor.ctrlKey + '+Home');
 	this.addAction('expand', function() { graph.foldCells(false); }, null, null, Editor.ctrlKey + '+End');
+
+	//Aggiungo action per la creazione di uno shape
+	this.addAction('merge', function() {
+		var shapeCreator = graph.stencilManager;
+		var selectionCells = graph.getSelectionCells();
+		var cellsToMerge = new Array();
+		var cellsToTransform = new Array();
+		var i;
+
+		for(i=0; i<selectionCells.length; i++) {
+			if(selectionCells[i].style.includes('group')) {
+				graph.setSelectionCell(selectionCells[i]);
+				cellsToMerge.concat(graph.ungroupCells());
+			} else {
+				cellsToMerge.push(selectionCells[i]);
+			}
+		}
+		var constraintCells = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge) && cell.isConstraint()) {
+				return true;
+			}
+		});
+		var i;
+		for(i=0; i<cellsToMerge.length; i++) {
+			if(graph.getCellStyle(cellsToMerge[i])[mxConstants.STYLE_SHAPE].includes('stencil(') && cellsToMerge[i].getAttribute('locked','0')!='1') {
+				var cells = shapeCreator.unmergeShape(cellsToMerge[i]);
+
+				cellsToTransform = cellsToTransform.concat(cells);
+			} else {
+				cellsToTransform.push(cellsToMerge[i]);
+				cellsToTransform = cellsToTransform.concat(graph.getClosestCells(cellsToMerge[i], constraintCells, new Array()));
+			}
+
+		}
+		var attr = shapeCreator.mergeShapes(cellsToTransform, false, false);
+		var groupProp = attr.shapeGeo;
+		var xmlBase64 = attr.base64;
+		graph.getModel().beginUpdate();
+		try {
+			v1 = graph.insertVertex(graph.getDefaultParent(), null, null, groupProp.x, groupProp.y, groupProp.w, groupProp.h, 'shape=stencil('+xmlBase64+');');
+			//Rimuovo gli elementi che ora fanno parte del simbolo
+			graph.removeCells(cellsToTransform);
+		} finally {
+			graph.getModel().endUpdate();
+		}
+		var vertexToGroup = attr.text;
+		if(vertexToGroup.length>0) {
+			var i;
+			//Rendo il testo immobile
+			for(i=0; i<vertexToGroup.length; i++) {
+				vertexToGroup[i].style = mxUtils.setStyle(vertexToGroup[i].style, mxConstants.STYLE_MOVABLE, 0);
+				vertexToGroup[i].style = mxUtils.setStyle(vertexToGroup[i].style, mxConstants.STYLE_ROTATABLE, 0);
+				vertexToGroup[i].style = mxUtils.setStyle(vertexToGroup[i].style, mxConstants.STYLE_RESIZABLE, 0);
+			}
+			vertexToGroup.push(v1);
+			graph.setSelectionCell(graph.groupCells(null, 0, vertexToGroup.reverse()));
+
+		}
+
+	});
+	this.addAction('unmerge', function() {
+		var shapeCreator = graph.stencilManager;
+		var selectionCell = graph.getSelectionCells()[0];
+		var cellToTransform;
+		/*
+            Se è un gruppo, cerco il simbolo da trasformare
+        */
+		if(selectionCell.style.includes('group')) {
+			var childCells = graph.ungroupCells();
+			var textNodes = [];
+			var i;
+			for(i=0; i<childCells.length; i++) {
+				if(childCells[i].style.includes('shape=')) {
+					cellToTransform = childCells[i];
+				} else {
+					textNodes.push(childCells[i]);
+					childCells[i].style = mxUtils.setStyle(childCells[i].style, mxConstants.STYLE_MOVABLE, 1);
+					childCells[i].style = mxUtils.setStyle(childCells[i].style, mxConstants.STYLE_ROTATABLE, 1);
+					childCells[i].style = mxUtils.setStyle(childCells[i].style, mxConstants.STYLE_RESIZABLE, 1);
+				}
+			}
+		} else {
+			cellToTransform = selectionCell;
+		}
+			var cellsAdded = shapeCreator.unmergeShape(cellToTransform);
+			var i;
+			for(i=0; i<cellsAdded.length; i++) {
+				if(cellsAdded[i].isConstraint()) {
+					cellsAdded[i].visible = false;
+				}
+			}
+			graph.refresh();
+			//Porto in avanti il testo per renderlo visibile
+			graph.orderCells(false, textNodes);
+
+
+
+	});
 	
 	// Arrange actions
 	this.addAction('toFront', function() { graph.orderCells(false); }, null, null, Editor.ctrlKey + '+Shift+F');
@@ -388,6 +498,61 @@ Actions.prototype.init = function()
 				graph.removeCellsFromParent(temp);
 			}
 		}
+	});
+	this.addAction('areaConstraint', function() {
+
+		var selectedCells = graph.getSelectionCells();
+		if(graph.selectionContainsOnlyEdges()) {
+			var shCr = graph.stencilManager;
+			var attr = shCr.mergeShapes(selectedCells, true, true);
+			var groupProp = attr.shapeGeo;
+			var xmlBase64 = attr.base64;
+			var v1;
+			graph.getModel().beginUpdate();
+			try {
+				v1 = graph.insertVertex(graph.getDefaultParent(), null, null, groupProp.x, groupProp.y, groupProp.w, groupProp.h, 'shape=stencil('+xmlBase64+');');
+				//Rimuovo gli elementi che ora fanno parte del simbolo
+				graph.removeCells(selectedCells);
+			} finally {
+				graph.getModel().endUpdate();
+			}
+			v1.setConstraint();
+			v1.addAreaConstraint();
+			v1.setStyle(mxUtils.setStyle(v1.style, mxConstants.STYLE_FILLCOLOR, '#CDEB8B'));
+			v1.setStyle(mxUtils.setStyle(v1.style, mxConstants.STYLE_STROKECOLOR, '#A6FF4C'));
+			v1.setStyle(mxUtils.setStyle(v1.style, mxConstants.STYLE_OPACITY, '60'));
+			graph.refresh();
+		} else {
+			selectedCells[0].addAreaConstraint()
+			var style = selectedCells[0].style;
+			style = mxUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR,  selectedCells[0].areaConstraintColor);
+			graph.getModel().setStyle(selectedCells[0], style);
+			graph.refresh();
+		}
+
+		graph.refresh();
+	});
+	this.addAction('disableAreaConstraint', function() {
+		var selectedCells = graph.getSelectionCells();
+		var selectedCellColor = graph.getCellStyle(selectedCells[0])[mxConstants.STYLE_STROKECOLOR];
+		var selectedCellShape = graph.getCellStyle(selectedCells[0])[mxConstants.STYLE_SHAPE];
+		if(selectedCellShape.includes('stencil(')) {
+			var shCr = graph.stencilManager;
+			var constraints = shCr.unmergeShape(selectedCells[0]);
+			var j;
+			for(j=0; j<constraints.length; j++) {
+
+				constraints[j].setStyle(mxUtils.setStyle(constraints[j].style, mxConstants.STYLE_STROKECOLOR, selectedCellColor));
+				constraints[j].setConstraint();
+			}
+		} else {
+			selectedCells[0].removeAreaConstraint();
+			var style = selectedCells[0].style;
+			style = mxUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR,  selectedCells[0].areaConstraintColor);
+			graph.getModel().setStyle(selectedCells[0], style);
+		}
+
+		graph.refresh();
 	});
 	// Adds action
 	this.addAction('edit', function()

@@ -137,6 +137,7 @@ mxscript(geBasePath +'/Actions.js');
 mxscript(geBasePath +'/Menus.js');
 mxscript(geBasePath +'/Toolbar.js');
 mxscript(geBasePath +'/Dialogs.js');
+mxscript(geBasePath +'/StencilManager.js');
 
 // Loads main classes
 mxscript(drawDevUrl + 'js/diagramly/sidebar/Sidebar.js');
@@ -214,6 +215,7 @@ mxscript(drawDevUrl + 'js/diagramly/EditorUi.js');
 mxscript(drawDevUrl + 'js/diagramly/DiffSync.js');
 mxscript(drawDevUrl + 'js/diagramly/Settings.js');
 mxscript(drawDevUrl + 'js/diagramly/DrawioFileSync.js');
+mxscript(drawDevUrl + 'js/diagramly/Cell.js');
 
 //Comments
 mxscript(drawDevUrl + 'js/diagramly/DrawioComment.js');

@@ -431,15 +431,7 @@ Menus.prototype.init = function()
 	this.put('arrange', new Menu(mxUtils.bind(this, function(menu, parent)
 	{
 		this.addMenuItems(menu, ['toFront', 'toBack', '-'], parent);
-		this.addSubmenu('direction', menu, parent);
-		this.addMenuItems(menu, ['turn', '-'], parent);
-		this.addSubmenu('align', menu, parent);
-		this.addSubmenu('distribute', menu, parent);
-		menu.addSeparator(parent);
-		this.addSubmenu('navigation', menu, parent);
-		this.addSubmenu('insert', menu, parent);
-		this.addSubmenu('layout', menu, parent);
-		this.addMenuItems(menu, ['-', 'group', 'ungroup', 'removeFromGroup', '-', 'clearWaypoints', 'autosize'], parent);
+
 	}))).isEnabled = isGraphEnabled;
 	this.put('insert', new Menu(mxUtils.bind(this, function(menu, parent)
 	{
@@ -1135,13 +1127,13 @@ Menus.prototype.addPopupMenuArrangeItems = function(menu, cell, evt)
 	if (!graph.isSelectionEmpty())
 	{
 		this.addMenuItems(menu, ['-', 'toFront', 'toBack'], null, evt);
-	}	
+	}
 
-	if (graph.getSelectionCount() > 1)	
+	if (graph.isShapeMode() && graph.getSelectionCount() > 1)
 	{
 		this.addMenuItems(menu, ['-', 'group'], null, evt);
 	}
-	else if (graph.getSelectionCount() == 1 && !graph.getModel().isEdge(cell) &&
+	else if (graph.isShapeMode() && graph.getSelectionCount() == 1 && !graph.getModel().isEdge(cell) && !graph.isSwimlane(cell) &&
 		!graph.isSwimlane(cell) && graph.getModel().getChildCount(cell) > 0)
 	{
 		this.addMenuItems(menu, ['-', 'ungroup'], null, evt);
@@ -1194,6 +1186,40 @@ Menus.prototype.addPopupMenuCellItems = function(menu, cell, evt)
 			graph.getModel().getEdgeCount(cell) > 0)))
 		{
 			this.addMenuItems(menu, ['-', 'clearWaypoints'], null, evt);
+		}
+
+		if(graph.selectionContainsOnlyConstraints() && graph.selectionContainsOnlyEdges() ||
+			(graph.getSelectionCount()==1 && graph.getSelectionCell().isConstraint() && graph.getSelectionCell().style.includes('shape'))) {
+			menu.addSeparator();
+			var selectedCell = graph.getSelectionCell();
+
+			if(selectedCell.isAreaConstraint()) {
+				this.addMenuItems(menu, ['disableAreaConstraint'], null, evt);
+			} else {
+				this.addMenuItems(menu, ['areaConstraint'], null, evt);
+			}
+
+
+		}
+		if(graph.getSelectionCount() > 0 && graph.isShapeMode()) {
+			var i;
+			var selectionContainsChildren = false;
+			var selection = graph.getSelectionCells();
+			for(i=0; i<selection.length; i++) {
+				if(selection[i].source!=null || selection[i].target!=null) {
+					selectionContainsChildren = true;
+					break;
+				}
+			}
+			if(!selectionContainsChildren) {
+				menu.addSeparator();
+				this.addMenuItems(menu, ['merge'], null, evt);
+			}
+		}
+
+		if(graph.getSelectionCount()==1 && (graph.getSelectionCell().style.includes('shape=') || graph.getSelectionCell().style.includes('group')) && graph.isShapeMode()) {
+			menu.addSeparator();
+			this.addMenuItems(menu, ['unmerge'], null, evt);
 		}
 	
 		if (graph.getSelectionCount() == 1)

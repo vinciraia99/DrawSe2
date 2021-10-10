@@ -400,7 +400,8 @@ Format.prototype.refresh = function()
 		evt.preventDefault();
 	}));
 
-	var containsLabel = this.getSelectionState().containsLabel;
+	//var containsLabel = this.getSelectionState().containsLabel;
+	var containsLabel = false;
 	var currentLabel = null;
 	var currentPanel = null;
 	
@@ -412,7 +413,7 @@ Format.prototype.refresh = function()
 			{
 				if (containsLabel)
 				{
-					this.labelIndex = index;
+					this.labelIndex = 0/*index*/;
 				}
 				else if (graph.isSelectionEmpty())
 				{
@@ -562,28 +563,33 @@ Format.prototype.refresh = function()
 		{
 			label2.style.borderLeftWidth = '0px';
 		}
-		else
-		{
-			label.style.borderLeftWidth = '0px';
-			mxUtils.write(label, mxResources.get('style'));
-			div.appendChild(label);
-			
-			var stylePanel = div.cloneNode(false);
-			stylePanel.style.display = 'none';
-			this.panels.push(new StyleFormatPanel(this, ui, stylePanel));
-			this.container.appendChild(stylePanel);
+			//Se il simbolo selezionato è uno shape il tab style viene mostrato solo se si è nella modalità modifica shape
+			if((graph.isShapeMode() && !graph.selectionContainsConstraints()) || (graph.isConstraintMode() && graph.selectionContainsOnlyConstraints()))  {
+				label.style.borderLeftWidth = '0px';
+				mxUtils.write(label, mxResources.get('style'));
+				div.appendChild(label);
 
-			addClickHandler(label, stylePanel, idx++);
-		}
-		
+				var stylePanel = div.cloneNode(false);
+				stylePanel.style.display = 'none';
+				this.panels.push(new StyleFormatPanel(this, ui, stylePanel));
+				this.container.appendChild(stylePanel);
+
+				addClickHandler(label, stylePanel, idx++);
+			}
+
+
 		// Text
-		mxUtils.write(label2, mxResources.get('text'));
-		div.appendChild(label2);
+		//Se il simbolo selezionato è uno shape il tab Text viene mostrato solo se si è nella modalità modifica shape
+		if(graph.isShapeMode())  {
+			mxUtils.write(label2, mxResources.get('text'));
+			div.appendChild(label2);
 
-		var textPanel = div.cloneNode(false);
-		textPanel.style.display = 'none';
-		this.panels.push(new TextFormatPanel(this, ui, textPanel));
-		this.container.appendChild(textPanel);
+			var textPanel = div.cloneNode(false);
+			textPanel.style.display = 'none';
+			this.panels.push(new TextFormatPanel(this, ui, textPanel));
+			this.container.appendChild(textPanel);
+			addClickHandler(label2, textPanel, idx++);
+		}
 		
 		// Arrange
 		mxUtils.write(label3, mxResources.get('arrange'));
@@ -594,8 +600,12 @@ Format.prototype.refresh = function()
 		this.panels.push(new ArrangePanel(this, ui, arrangePanel));
 		this.container.appendChild(arrangePanel);
 		
-		addClickHandler(label2, textPanel, idx++);
+
 		addClickHandler(label3, arrangePanel, idx++);
+		if(this.panels[this.currentIndex]==null) {
+			this.currentIndex = 0;
+			this.refresh();
+		}
 	}
 };
 
@@ -649,6 +659,46 @@ BaseFormatPanel.prototype.getSelectionState = function()
 	
 	return shape;
 };
+
+
+BaseFormatPanel.prototype.addCheckBoxInput = function(container, title, checked, functionEvent) {
+	var span = document.createElement('div');
+
+	var input = document.createElement('input');
+	input.style.marginTop = '-2px';
+	input.style.marginRight = '2px';
+	input.style.verticalAlign = 'bottom';
+
+	input.setAttribute('type', 'checkbox');
+	input.checked = checked;
+
+	span.appendChild(input);
+	mxUtils.write(span, title);
+	container.appendChild(span);
+
+	mxEvent.addListener(input, 'click', functionEvent);
+	return input;
+}
+
+/**
+ *	Questa funzione restituisce una textbox testuale
+ *  @param container - div che conterrà la textbox
+ *	@param right - attributo right dello stile
+ *	@param width - attributo width dello stile
+ */
+BaseFormatPanel.prototype.addTextInput = function(container, right, width, content) {
+	var input = document.createElement('input');
+	input.style.textAlign = 'right';
+	input.style.marginTop = '-2px';
+	input.style.right = (right + 12) + 'px';
+	input.style.width = width + 'px';
+	input.style.marginRight = '2px';
+	input.value = content;
+	container.appendChild(input);
+
+	return input;
+}
+
 
 /**
  * Install input handler.
@@ -1094,15 +1144,6 @@ BaseFormatPanel.prototype.createColorOption = function(label, getColorFn, setCol
 	div.style.overflow = 'hidden';
 	div.style.width = '200px';
 	div.style.height = '18px';
-	
-	var cb = document.createElement('input');
-	cb.setAttribute('type', 'checkbox');
-	cb.style.margin = '0px 6px 0px 0px';
-	
-	if (!hideCheckbox)
-	{
-		div.appendChild(cb);	
-	}
 
 	var span = document.createElement('span');
 	mxUtils.write(span, label);
@@ -1122,21 +1163,7 @@ BaseFormatPanel.prototype.createColorOption = function(label, getColorFn, setCol
 				'36px;height:12px;margin:3px;border:1px solid black;background-color:' +
 				mxUtils.htmlEntities((color != null && color != mxConstants.NONE) ?
 				color : defaultColor) + ';"></div>';
-			
-			if (color != null && color != mxConstants.NONE)
-			{
-				cb.setAttribute('checked', 'checked');
-				cb.defaultChecked = true;
-				cb.checked = true;
-			}
-			else
-			{
-				cb.removeAttribute('checked');
-				cb.defaultChecked = false;
-				cb.checked = false;
-			}
-	
-			btn.style.display = (cb.checked || hideCheckbox) ? '' : 'none';
+
 
 			if (callbackFn != null)
 			{
@@ -1172,32 +1199,8 @@ BaseFormatPanel.prototype.createColorOption = function(label, getColorFn, setCol
 	btn.style.right = '20px';
 	btn.style.height = '22px';
 	btn.className = 'geColorBtn';
-	btn.style.display = (cb.checked || hideCheckbox) ? '' : 'none';
 	div.appendChild(btn);
 
-	mxEvent.addListener(div, 'click', function(evt)
-	{
-		var source = mxEvent.getSource(evt);
-		
-		if (source == cb || source.nodeName != 'INPUT')
-		{		
-			// Toggles checkbox state for click on label
-			if (source != cb)
-			{
-				cb.checked = !cb.checked;
-			}
-	
-			// Overrides default value with current value to make it easier
-			// to restore previous value if the checkbox is clicked twice
-			if (!cb.checked && value != null && value != mxConstants.NONE &&
-				defaultColor != mxConstants.NONE)
-			{
-				defaultColor = value;
-			}
-			
-			apply((cb.checked) ? defaultColor : mxConstants.NONE);
-		}
-	});
 	
 	apply(value, true);
 	
@@ -1540,52 +1543,218 @@ ArrangePanel.prototype.init = function()
 	var graph = this.editorUi.editor.graph;
 	var ss = this.format.getSelectionState();
 
+
+
 	this.container.appendChild(this.addLayerOps(this.createPanel()));
 	// Special case that adds two panels
-	this.addGeometry(this.container);
-	this.addEdgeGeometry(this.container);
+	if(graph.isShapeMode() || (graph.isConstraintMode() && graph.selectionContainsOnlyConstraints())) {
+		this.addGeometry(this.container);
+		this.addEdgeGeometry(this.container);
+	}
 
-	if (!ss.containsLabel || ss.edges.length == 0)
-	{
-		this.container.appendChild(this.addAngle(this.createPanel()));
+	if(graph.isShapeMode() && !graph.selectionContainsConstraints()){
+		if(false)
+		{
+			this.container.appendChild(this.addAngle(this.createPanel()));
+		}
+
+		if (!ss.containsLabel && ss.edges.length == 0)
+		{
+			this.container.appendChild(this.addFlip(this.createPanel()));
+		}
+
+		if (ss.vertices.length > 1)
+		{
+			this.container.appendChild(this.addAlign(this.createPanel()));
+			this.container.appendChild(this.addDistribute(this.createPanel()));
+		}
+
+		this.container.appendChild(this.addGroupOps(this.createPanel()));
 	}
-	
-	if (!ss.containsLabel && ss.edges.length == 0 &&
-		ss.style.shape != 'rectangle' &&
-		ss.style.shape != 'label')
-	{
-		this.container.appendChild(this.addFlip(this.createPanel()));
+
+	if(graph.isConstraintMode() && graph.getSelectionCount()==1 && graph.getSelectionCell().isConstraint() && graph.getSelectionCell().getParent()==graph.getDefaultParent()) {
+		this.container.appendChild(this.addConstraintName(this.createPanel()));
+		this.container.appendChild(this.addConstraintConnectionNum(this.createPanel()));
+		this.container.appendChild(this.addConstraintNumLoop(this.createPanel()));
 	}
-	
-	if (ss.vertices.length > 1)
-	{
-		this.container.appendChild(this.addAlign(this.createPanel()));
-		this.container.appendChild(this.addDistribute(this.createPanel()));
+
+
+	if(graph.isShapeMode() && graph.getSelectionCount()==1 && graph.getSelectionCell().style.includes('shape=stencil') ){
+		this.container.appendChild(this.addShapeName(this.createPanel()));
+		this.container.appendChild(this.addShapeOccurrences(this.createPanel()));
 	}
-	
-	if (graph.isTable(ss.vertices[0]) ||
-		graph.isTableRow(ss.vertices[0]) ||
-		graph.isTableCell(ss.vertices[0]))
-	{
-		this.container.appendChild(this.addTable(this.createPanel()));
+
+	if(graph.isShapeMode() && graph.getSelectionCount()==1 && graph.getSelectionCell().style.includes('endArrow=') ){
+		this.container.appendChild(this.addEdgeName(this.createPanel()));
 	}
-	
-	this.container.appendChild(this.addGroupOps(this.createPanel()));
-	
-	if (ss.containsLabel)
-	{
-		// Adds functions from hidden style format panel
-		var span = document.createElement('div');
-		span.style.width = '100%';
-		span.style.marginTop = '0px';
-		span.style.fontWeight = 'bold';
-		span.style.padding = '10px 0 0 18px';
-		mxUtils.write(span, mxResources.get('style'));
-		this.container.appendChild(span);
-			
-		new StyleFormatPanel(this.format, this.editorUi, this.container);
+
+	var selectedCell = graph.getSelectionCell();
+	if(graph.isConstraintMode() && graph.getSelectionCount()>0 && !selectedCell.style.includes('text') && !(selectedCell.isConstraint() && selectedCell.style.includes('ellipse'))) {
+		this.container.appendChild(this.addConstraintPanel(this.createPanel()));
 	}
+/*
+	if(graph.isConstraintMode() && graph.getSelectionCount()>1) {
+		var selectedCell = graph.getSelectionCells();
+		var countSymbol = 0;
+		var i;
+		for(i=0; i<selectedCell.length && countSymbol<2; i++) {
+			if(!selectedCell[i].isConstraint()) {
+				countSymbol ++;
+			}
+		}
+		if(countSymbol==1) {
+			this.container.appendChild(this.addAttachPanel(this.createPanel()));
+		}
+	}
+
+	if(graph.isConstraintMode() && graph.getSelectionCount()==1) {
+		var selectedCell = graph.getSelectionCell();
+		if(selectedCell.isConstraint() && selectedCell.getParent()!=graph.getDefaultParent()) {
+			this.container.appendChild(this.addDetachPanel(this.createPanel()));
+		}
+	}
+*/
+	/*	if(graph.getSelectionCount()==1 && !graph.getSelectionCell().isConstraint() && graph.getSelectionCell().isAreaConstraint()) {
+		this.container.appendChild(this.addFill(this.createPanel()));
+	}
+
+
+	if(graph.getSelectionCount()==1 && (graph.getSelectionCell().isConstraint() || graph.getSelectionCell().isOutlineConstraint())) {
+		this.container.appendChild(this.addStroke(this.createPanel()));
+	}*/
+
 };
+
+ArrangePanel.prototype.addFill = function(container) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	var ss = this.format.getSelectionState();
+	container.style.paddingTop = '6px';
+	container.style.paddingBottom = '6px';
+
+	var fillKey = (ss.style.shape == 'image') ? mxConstants.STYLE_IMAGE_BACKGROUND : mxConstants.STYLE_FILLCOLOR;
+
+	var fillPanel = this.createCellColorOption(mxResources.get('fill'), fillKey, '#ffffff');
+	fillPanel.style.fontWeight = 'bold';
+
+	container.appendChild(fillPanel);
+
+	// Adds custom colors
+	var custom = this.getCustomColors();
+
+	for (var i = 0; i < custom.length; i++)
+	{
+		container.appendChild(this.createCellColorOption(custom[i].title, custom[i].key, custom[i].defaultValue));
+	}
+
+	return container;
+}
+
+ArrangePanel.prototype.getCustomColors = function()
+{
+	var ss = this.format.getSelectionState();
+	var result = [];
+
+	if (ss.style.shape == 'swimlane')
+	{
+		result.push({title: mxResources.get('laneColor'), key: 'swimlaneFillColor', defaultValue: '#ffffff'});
+	}
+
+	return result;
+};
+
+ArrangePanel.prototype.addStroke = function(container)
+{
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	var ss = this.format.getSelectionState();
+
+	container.style.paddingTop = '4px';
+	container.style.paddingBottom = '4px';
+	container.style.whiteSpace = 'normal';
+
+	var colorPanel = document.createElement('div');
+	colorPanel.style.fontWeight = 'bold';
+
+	var strokeKey = (ss.style.shape == 'image') ? mxConstants.STYLE_IMAGE_BORDER : mxConstants.STYLE_STROKECOLOR;
+
+	var lineColor = this.createCellColorOption(mxResources.get('line'), strokeKey, '#000000');
+	colorPanel.appendChild(lineColor);
+	container.appendChild(colorPanel);
+	return container;
+}
+
+/**
+ *	Pannello per effettuare l'attach
+ */
+ArrangePanel.prototype.addAttachPanel = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	var format = this.format;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+
+	var btn = mxUtils.button('Attach', function(evt) {
+		var cells = graph.getSelectionCells();
+		var constraints = [];
+		var symbol;
+		var i;
+		for(i=0; i<cells.length; i++) {
+			if(!cells[i].isConstraint()) {
+				symbol = cells[i];
+			} else {
+				if(cells[i].getParent()==graph.getDefaultParent()) { //Se il punto di attacco non è attached
+					constraints.push(cells[i]);
+				}
+			}
+		}
+		var symbolPosition = {x: symbol.getGeometry().x, y: symbol.getGeometry().y};
+		for(i=0; i<constraints.length; i++) {
+			constraints[i].getGeometry().translate(-symbolPosition.x, -symbolPosition.y);
+			graph.getModel().add(symbol, constraints[i]);
+		}
+		graph.getSelectionModel().clear();
+		format.refresh();
+	});
+	span.appendChild(btn);
+	div.appendChild(span);
+
+
+	return div;
+}
+
+/**
+ *	Pannello per il detach
+ */
+ArrangePanel.prototype.addDetachPanel = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+
+	var btn = mxUtils.button('Detach', function(evt) {
+		var cell = graph.getSelectionCell();
+		var parentPosition = cell.getParent().getGeometry();
+		cell.getGeometry().translate(parentPosition.x, parentPosition.y);
+		graph.getModel().add(graph.getDefaultParent(), cell);
+
+	});
+	span.appendChild(btn);
+	div.appendChild(span);
+
+
+	return div;
+}
 
 /**
  * 
@@ -1691,6 +1860,302 @@ ArrangePanel.prototype.addTable = function(div)
 	
 	return div;
 };
+
+ArrangePanel.prototype.addConstraintPanel = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	var selectedCell = graph.getSelectionCell();
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+	var checked;
+	if(!selectedCell.isConstraint() && (selectedCell.style.includes('rectangle') || selectedCell.style.includes('circle') || selectedCell.edge)) {
+		if(selectedCell.isOutlineConstraint()) {
+			checked = true;
+		} else {
+			checked = false;
+		}
+		this.addCheckBoxInput(div, 'Outline constraint', checked, function(evt) {
+			var selectedCell = graph.getSelectionCell();
+			//Imposto l'highlight del simbolo
+			if(evt.target.checked) {
+				selectedCell.addOutlineConstraint();
+			} else {
+				selectedCell.removeOutlineConstraint();
+			}
+			var style = selectedCell.style;
+			style = mxUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR,  selectedCell.outlineConstraintColor);
+			graph.getModel().setStyle(selectedCell, style);
+		});
+	}
+	if(graph.selectionContainsOnlyConstraints() && graph.selectionContainsOnlyEdges() ||
+		(graph.getSelectionCount()==1 && graph.getSelectionCell().isConstraint() && graph.getSelectionCell().style.includes('shape'))) {
+
+		if(selectedCell.isAreaConstraint()) {
+			checked = true;
+		} else {
+			checked = false;
+		}
+
+		this.addCheckBoxInput(div, 'Area constraint', checked, function(evt) {
+
+
+			if(evt.target.checked) {
+				if(graph.selectionContainsOnlyEdges()) {
+					ui.actions.get('areaConstraint').funct();
+
+				} else {
+					ui.actions.get('disableAreaConstraint').funct();
+				}
+			}
+		});
+	}
+	return div;
+}
+
+
+ArrangePanel.prototype.addConstraintName = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Name');
+	div.appendChild(span);
+
+	var input = this.addTextInput(div, 20, 120, graph.getSelectionCell().getAttribute('label',''));
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var cell = graph.getSelectionCell();
+		cell.setAttribute('label', input.value);
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+ArrangePanel.prototype.addShapeName = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Shape Name');
+	div.appendChild(span);
+
+	var stencil = graph.getSelectionCell().getStyle();
+	var base64 = stencil.substring(14, stencil.length-2);
+	var name = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name' , '');
+	var input = this.addTextInput(div, 20, 120, name);
+
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var cell = graph.getSelectionCell();
+		cell.setAttribute('name', input.value);
+		var stencil = cell.getStyle();
+		var base64 = stencil.substring(14, stencil.length-2);
+		var desc = graph.decompress(base64);
+		var shapeXml = mxUtils.parseXml(desc).documentElement;
+		console.log(shapeXml);
+		shapeXml.setAttribute("name" , input.value);
+		console.log(shapeXml);
+		var xmlBase64 = graph.compress(mxUtils.getXml(shapeXml));
+		console.log(xmlBase64)
+		cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+ArrangePanel.prototype.addEdgeName = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Edge Name');
+	div.appendChild(span);
+
+	var stencil = graph.getSelectionCell().getStyle();
+	if(!graph.getSelectionCell().getStyle().includes("name=")){
+		var id = graph.getSelectionCell().id
+		var name = "EDGE_" + id;
+		var style = graph.getSelectionCell().getStyle() +"name="+ name +";";
+		graph.getSelectionCell().setStyle(style);
+	}
+	else{
+		var edge = graph.getSelectionCell();
+		var edgeStyle = edge.getStyle();
+		var initCut = edgeStyle.indexOf("name=")
+		edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
+		var toCut = edgeStyle.indexOf(";");
+		edgeStyle = edgeStyle.substring(5,toCut);
+		var name = edgeStyle;
+	}
+	var input = this.addTextInput(div, 20, 120, name);
+
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var edge = graph.getSelectionCell();
+		var edgeStyle = edge.getStyle();
+		var initCut = edgeStyle.indexOf("name=")
+		edge.setAttribute("name", input.value);
+
+
+		if(initCut == -1) {
+			var style = edge.getStyle() +"name="+ input.value +";";
+			edge.setStyle(style);
+		}
+		else{
+			edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
+			var toCut = edgeStyle.indexOf(";");
+			edgeStyle = edgeStyle.substring(0,toCut);
+			edge.setStyle(edge.getStyle().replace(edgeStyle,"name="+ input.value))
+		}
+
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+ArrangePanel.prototype.addShapeOccurrences = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Shape Occurrences');
+	div.appendChild(span);
+
+	var stencil = graph.getSelectionCell().getStyle();
+	var base64 = stencil.substring(14, stencil.length-2);
+	var name = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('occurrences' , '');
+	var input = this.addTextInput(div, 20, 120, name);
+
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var cell = graph.getSelectionCell();
+		cell.setAttribute('occurrences', input.value);
+		var stencil = cell.getStyle();
+		var base64 = stencil.substring(14, stencil.length-2);
+		var desc = graph.decompress(base64);
+		var shapeXml = mxUtils.parseXml(desc).documentElement;
+		console.log(shapeXml);
+		shapeXml.setAttribute("occurrences" , input.value);
+		console.log(shapeXml);
+		var xmlBase64 = graph.compress(mxUtils.getXml(shapeXml));
+		console.log(xmlBase64)
+		cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+
+ArrangePanel.prototype.addConstraintConnectionNum = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Connections Number');
+	div.appendChild(span);
+
+	var input = this.addTextInput(div, 20, 120, graph.getSelectionCell().getAttribute('connectNum','>=0'));
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var cell = graph.getSelectionCell();
+		var cin = input.value;
+		var match = cin.match(/^[><=]{1}={1}[0123456789]*/g);
+		if (match != null) {
+			cell.setAttribute('connectNum', match);
+		}
+		else{
+			cell.setAttribute('connectNum', '>=0');
+		}
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+ArrangePanel.prototype.addConstraintNumLoop = function(div) {
+    var ui = this.editorUi;
+    var graph = ui.editor.graph;
+    div.style.paddingBottom = '8px';
+
+    var span = document.createElement('div');
+
+    span.style.width = '70px';
+    span.style.marginTop = '0px';
+    span.style.marginBottom = '2px';
+    span.style.fontWeight = 'bold';
+
+    mxUtils.write(span, 'NumLoop');
+    div.appendChild(span);
+
+    var input = this.addTextInput(div, 20, 120, graph.getSelectionCell().getAttribute('numLoop',''));
+    var button  = mxUtils.button('Add', function(evt)
+    {
+        var cell = graph.getSelectionCell();
+        var cin = input.value;
+        var match = cin.match(/^[><=]{1}={1}[0123456789]*/g);
+        if (match != null) {
+            cell.setAttribute('numLoop', match);
+        }
+        else{
+            cell.setAttribute('numLoop', '');
+        }
+        graph.getSelectionModel().clear();
+        graph.refresh();
+    })
+    div.appendChild(button);
+    return div;
+}
+
 
 /**
  * 
@@ -1845,7 +2310,7 @@ ArrangePanel.prototype.addGroupOps = function(div)
 		count++;
 	}
 	
-	if (graph.getSelectionCount() == 1)
+	if (graph.getSelectionCount() == 1  && !graph.getSelectionCell().getAttribute('isConstraint',false))
 	{
 		if (count > 0)
 		{
@@ -1875,7 +2340,52 @@ ArrangePanel.prototype.addGroupOps = function(div)
 		div.appendChild(btn);
 		count++;
 	}
-	
+
+	//Aggiungo il bottone per creare lo shape
+	if(graph.getSelectionCount() > 0) {
+		var i;
+		var selectionContainsChildren = false;
+		var selection = graph.getSelectionCells();
+		for(i=0; i<selection.length; i++) {
+			if(selection[i].source!=null || selection[i].target!=null) {
+				selectionContainsChildren = true;
+				break;
+			}
+		}
+		if(!selectionContainsChildren) {
+			if (count > 0) {
+				mxUtils.br(div);
+			}
+			btn = mxUtils.button(mxResources.get('merge'), function (evt) {
+				ui.actions.get('merge').funct();
+			})
+
+			btn.setAttribute('title', 'Merge');
+			btn.style.width = '202px';
+			btn.style.marginBottom = '2px';
+			div.appendChild(btn);
+			count++;
+		}
+	}
+
+		if(graph.getSelectionCount()==1 && (graph.getSelectionCell().style.includes('shape=') || graph.getSelectionCell().style.includes('group'))) {
+		if( count > 0) {
+			mxUtils.br(div);
+		}
+			btn = mxUtils.button('Break Up', function(evt)
+		{
+			ui.actions.get('unmerge').funct();
+		})
+
+		btn.setAttribute('title', 'Unmerge');
+		btn.style.width = '202px';
+		btn.style.marginBottom = '2px';
+		div.appendChild(btn);
+		count++;
+	}
+
+
+
 	if (count == 0)
 	{
 		div.style.display = 'none';
@@ -2396,6 +2906,10 @@ ArrangePanel.prototype.addGeometry = function(container)
 	if (rect.movable)
 	{
 		container.appendChild(div2);
+	}
+
+	if(graph.isConstraintMode() && (graph.getSelectionCount()>1 || !graph.isCellResizable(graph.getSelectionCell()))) {
+		div.style.display = 'none';
 	}
 };
 
@@ -4200,29 +4714,35 @@ StyleFormatPanel.prototype.init = function()
 		{
 			this.container.appendChild(this.addSvgStyles(this.createPanel()));
 		}
-		
-		if (!ss.containsImage || ss.style.shape == 'image')
+
+		if ((!ss.containsImage || ss.style.shape == 'image') && !ss.style.shape.includes('stencil'))
 		{
 			this.container.appendChild(this.addFill(this.createPanel()));
 		}
-	
-		this.container.appendChild(this.addStroke(this.createPanel()));
-		this.container.appendChild(this.addLineJumps(this.createPanel()));
-		var opacityPanel = this.createRelativeOption(mxResources.get('opacity'), mxConstants.STYLE_OPACITY, 41);
-		opacityPanel.style.paddingTop = '8px';
-		opacityPanel.style.paddingBottom = '8px';
-		this.container.appendChild(opacityPanel);
-		this.container.appendChild(this.addEffects(this.createPanel()));
+
+		if(!ss.style.shape.includes('stencil')) {
+			this.container.appendChild(this.addStroke(this.createPanel()));
+		}
+		if(graph.isShapeMode() && !graph.selectionContainsConstraints()) {
+
+			this.container.appendChild(this.addLineJumps(this.createPanel()));
+			/*var opacityPanel = this.createRelativeOption(mxResources.get('opacity'), mxConstants.STYLE_OPACITY, 41);
+			opacityPanel.style.paddingTop = '8px';
+			opacityPanel.style.paddingBottom = '8px';
+			if(!ss.style.shape.includes('stencil')) {
+				this.container.appendChild(opacityPanel);
+			}
+			this.container.appendChild(this.addEffects(this.createPanel()));*/
+
+			var opsPanel = this.addEditOps(this.createPanel());
+
+			if (opsPanel.firstChild != null) {
+				mxUtils.br(opsPanel);
+			}
+
+			this.container.appendChild(this.addStyleOps(opsPanel));
+		}
 	}
-	
-	var opsPanel = this.addEditOps(this.createPanel());
-	
-	if (opsPanel.firstChild != null)
-	{
-		mxUtils.br(opsPanel);
-	}
-	
-	this.container.appendChild(this.addStyleOps(opsPanel));
 };
 
 /**
@@ -4530,6 +5050,8 @@ StyleFormatPanel.prototype.addFill = function(container)
 		graph.setCellStyles(mxConstants.STYLE_GRADIENT_DIRECTION, gradientSelect.value, graph.getSelectionCells());
 		mxEvent.consume(evt);
 	});
+
+
 	
 	mxEvent.addListener(fillStyleSelect, 'change', function(evt)
 	{
@@ -4538,7 +5060,7 @@ StyleFormatPanel.prototype.addFill = function(container)
 	});
 	
 	container.appendChild(fillPanel);
-	container.appendChild(gradientPanel);
+	//container.appendChild(gradientPanel);
 	
 	// Adds custom colors
 	var custom = this.getCustomColors();
@@ -4575,19 +5097,14 @@ StyleFormatPanel.prototype.addStroke = function(container)
 	var ui = this.editorUi;
 	var graph = ui.editor.graph;
 	var ss = this.format.getSelectionState();
-	
+
 	container.style.paddingTop = '4px';
 	container.style.paddingBottom = '4px';
 	container.style.whiteSpace = 'normal';
-	
+
 	var colorPanel = document.createElement('div');
 	colorPanel.style.fontWeight = 'bold';
-	
-	if (!ss.stroke)
-	{
-		colorPanel.style.display = 'none';
-	}
-	
+
 	// Adds gradient direction option
 	var styleSelect = document.createElement('select');
 	styleSelect.style.position = 'absolute';
@@ -4604,7 +5121,7 @@ StyleFormatPanel.prototype.addStroke = function(container)
 		mxUtils.write(styleOption, mxResources.get(styles[i]));
 		styleSelect.appendChild(styleOption);
 	}
-	
+
 	mxEvent.addListener(styleSelect, 'change', function(evt)
 	{
 		graph.getModel().beginUpdate();
@@ -4613,7 +5130,7 @@ StyleFormatPanel.prototype.addStroke = function(container)
 			var keys = [mxConstants.STYLE_ROUNDED, mxConstants.STYLE_CURVED];
 			// Default for rounded is 1
 			var values = ['0', null];
-			
+
 			if (styleSelect.value == 'rounded')
 			{
 				values = ['1', null];
@@ -4622,12 +5139,12 @@ StyleFormatPanel.prototype.addStroke = function(container)
 			{
 				values = [null, '1'];
 			}
-			
+
 			for (var i = 0; i < keys.length; i++)
 			{
 				graph.setCellStyles(keys[i], values[i], graph.getSelectionCells());
 			}
-			
+
 			ui.fireEvent(new mxEventObject('styleChanged', 'keys', keys,
 				'values', values, 'cells', graph.getSelectionCells()));
 		}
@@ -4635,10 +5152,10 @@ StyleFormatPanel.prototype.addStroke = function(container)
 		{
 			graph.getModel().endUpdate();
 		}
-		
+
 		mxEvent.consume(evt);
 	});
-	
+
 	// Stops events from bubbling to color option event handler
 	mxEvent.addListener(styleSelect, 'click', function(evt)
 	{
@@ -4646,450 +5163,467 @@ StyleFormatPanel.prototype.addStroke = function(container)
 	});
 
 	var strokeKey = (ss.style.shape == 'image') ? mxConstants.STYLE_IMAGE_BORDER : mxConstants.STYLE_STROKECOLOR;
-	var label = (ss.style.shape == 'image') ? mxResources.get('border') : mxResources.get('line');
-	
-	var defs = (ss.vertices.length >= 1) ? graph.stylesheet.getDefaultVertexStyle() : graph.stylesheet.getDefaultEdgeStyle();
-	var lineColor = this.createCellColorOption(label, strokeKey, (defs[strokeKey] != null) ? defs[strokeKey] : '#000000', null, mxUtils.bind(this, function(color)
-	{
-		graph.updateCellStyles(strokeKey, color, graph.getSelectionCells());
-	}));
-	
-	lineColor.appendChild(styleSelect);
+
+	var lineColor = this.createCellColorOption(mxResources.get('line'), strokeKey, '#000000');
+	if(!graph.selectionContainsConstraints()) {
+		lineColor.appendChild(styleSelect);
+	}
 	colorPanel.appendChild(lineColor);
-	
-	// Used if only edges selected
-	var stylePanel = colorPanel.cloneNode(false);
-	stylePanel.style.fontWeight = 'normal';
-	stylePanel.style.whiteSpace = 'nowrap';
-	stylePanel.style.position = 'relative';
-	stylePanel.style.paddingLeft = '16px'
-	stylePanel.style.marginBottom = '2px';
-	stylePanel.style.marginTop = '2px';
-	stylePanel.className = 'geToolbarContainer';
-
-	var addItem = mxUtils.bind(this, function(menu, width, cssName, keys, values)
-	{
-		var item = this.editorUi.menus.styleChange(menu, '', keys, values, 'geIcon', null);
-	
-		var pat = document.createElement('div');
-		pat.style.width = width + 'px';
-		pat.style.height = '1px';
-		pat.style.borderBottom = '1px ' + cssName + ' ' + this.defaultStrokeColor;
-		pat.style.paddingTop = '6px';
-
-		item.firstChild.firstChild.style.padding = '0px 4px 0px 4px';
-		item.firstChild.firstChild.style.width = width + 'px';
-		item.firstChild.firstChild.appendChild(pat);
-		
-		return item;
-	});
-
-	var pattern = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel, 'geSprite-orthogonal', mxResources.get('pattern'), false, mxUtils.bind(this, function(menu)
-	{
-		addItem(menu, 75, 'solid', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], [null, null]).setAttribute('title', mxResources.get('solid'));
-		addItem(menu, 75, 'dashed', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', null]).setAttribute('title', mxResources.get('dashed'));
-		addItem(menu, 75, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 1']).setAttribute('title', mxResources.get('dotted') + ' (1)');
-		addItem(menu, 75, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 2']).setAttribute('title', mxResources.get('dotted') + ' (2)');
-		addItem(menu, 75, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 4']).setAttribute('title', mxResources.get('dotted') + ' (3)');
-	}));
-	
-	// Used for mixed selection (vertices and edges)
-	var altStylePanel = stylePanel.cloneNode(false);
-	
-	var edgeShape = this.editorUi.toolbar.addMenuFunctionInContainer(altStylePanel, 'geSprite-connection', mxResources.get('connection'), false, mxUtils.bind(this, function(menu)
-	{
-		this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], [null, null, null, null], 'geIcon geSprite geSprite-connection', null, true).setAttribute('title', mxResources.get('line'));
-		this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], ['link', null, null, null], 'geIcon geSprite geSprite-linkedge', null, true).setAttribute('title', mxResources.get('link'));
-		this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], ['flexArrow', null, null, null], 'geIcon geSprite geSprite-arrow', null, true).setAttribute('title', mxResources.get('arrow'));
-		this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], ['arrow', null, null, null], 'geIcon geSprite geSprite-simplearrow', null, true).setAttribute('title', mxResources.get('simpleArrow')); 
-	}));
-
-	var altPattern = this.editorUi.toolbar.addMenuFunctionInContainer(altStylePanel, 'geSprite-orthogonal', mxResources.get('pattern'), false, mxUtils.bind(this, function(menu)
-	{
-		addItem(menu, 33, 'solid', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], [null, null]).setAttribute('title', mxResources.get('solid'));
-		addItem(menu, 33, 'dashed', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', null]).setAttribute('title', mxResources.get('dashed'));
-		addItem(menu, 33, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 1']).setAttribute('title', mxResources.get('dotted') + ' (1)');
-		addItem(menu, 33, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 2']).setAttribute('title', mxResources.get('dotted') + ' (2)');
-		addItem(menu, 33, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 4']).setAttribute('title', mxResources.get('dotted') + ' (3)');
-	}));
-	
-	var stylePanel2 = stylePanel.cloneNode(false);
-
-	// Stroke width
-	var input = document.createElement('input');
-	input.style.textAlign = 'right';
-	input.style.marginTop = '2px';
-	input.style.width = '41px';
-	input.setAttribute('title', mxResources.get('linewidth'));
-	
-	stylePanel.appendChild(input);
-	
-	var altInput = input.cloneNode(true);
-	altStylePanel.appendChild(altInput);
-
-	function update(evt)
-	{
-		// Maximum stroke width is 999
-		var value = parseInt(input.value);
-		value = Math.min(999, Math.max(1, (isNaN(value)) ? 1 : value));
-		
-		if (value != mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1))
-		{
-			graph.setCellStyles(mxConstants.STYLE_STROKEWIDTH, value, graph.getSelectionCells());
-			ui.fireEvent(new mxEventObject('styleChanged', 'keys', [mxConstants.STYLE_STROKEWIDTH],
-					'values', [value], 'cells', graph.getSelectionCells()));
-		}
-
-		input.value = value + ' pt';
-		mxEvent.consume(evt);
-	};
-
-	function altUpdate(evt)
-	{
-		// Maximum stroke width is 999
-		var value = parseInt(altInput.value);
-		value = Math.min(999, Math.max(1, (isNaN(value)) ? 1 : value));
-		
-		if (value != mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1))
-		{
-			graph.setCellStyles(mxConstants.STYLE_STROKEWIDTH, value, graph.getSelectionCells());
-			ui.fireEvent(new mxEventObject('styleChanged', 'keys', [mxConstants.STYLE_STROKEWIDTH],
-					'values', [value], 'cells', graph.getSelectionCells()));
-		}
-
-		altInput.value = value + ' pt';
-		mxEvent.consume(evt);
-	};
-
-	var stepper = this.createStepper(input, update, 1, 9);
-	stepper.style.display = input.style.display;
-	stepper.style.marginTop = '2px';
-	stylePanel.appendChild(stepper);
-	
-	var altStepper = this.createStepper(altInput, altUpdate, 1, 9);
-	altStepper.style.display = altInput.style.display;
-	altStepper.style.marginTop = '2px';
-	altStylePanel.appendChild(altStepper);
-	
-	input.style.position = 'absolute';
-	input.style.height = '15px';
-	input.style.left = '141px';
-	stepper.style.left = '190px';
-
-	altInput.style.position = 'absolute';
-	altInput.style.left = '141px';
-	altInput.style.height = '15px';
-	altStepper.style.left = '190px';
-	
-	mxEvent.addListener(input, 'blur', update);
-	mxEvent.addListener(input, 'change', update);
-
-	mxEvent.addListener(altInput, 'blur', altUpdate);
-	mxEvent.addListener(altInput, 'change', altUpdate);
-	
-	var edgeStyle = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel2, 'geSprite-orthogonal', mxResources.get('waypoints'), false, mxUtils.bind(this, function(menu)
-	{
-		if (ss.style.shape != 'arrow')
-		{
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], [null, null, null], 'geIcon geSprite geSprite-straight', null, true).setAttribute('title', mxResources.get('straight'));
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['orthogonalEdgeStyle', null, null], 'geIcon geSprite geSprite-orthogonal', null, true).setAttribute('title', mxResources.get('orthogonal'));
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['elbowEdgeStyle', null, null, null], 'geIcon geSprite geSprite-horizontalelbow', null, true).setAttribute('title', mxResources.get('simple'));
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['elbowEdgeStyle', 'vertical', null, null], 'geIcon geSprite geSprite-verticalelbow', null, true).setAttribute('title', mxResources.get('simple'));
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['isometricEdgeStyle', null, null, null], 'geIcon geSprite geSprite-horizontalisometric', null, true).setAttribute('title', mxResources.get('isometric'));
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['isometricEdgeStyle', 'vertical', null, null], 'geIcon geSprite geSprite-verticalisometric', null, true).setAttribute('title', mxResources.get('isometric'));
-	
-			if (ss.style.shape == 'connector')
-			{
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['orthogonalEdgeStyle', '1', null], 'geIcon geSprite geSprite-curved', null, true).setAttribute('title', mxResources.get('curved'));
-			}
-			
-			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['entityRelationEdgeStyle', null, null], 'geIcon geSprite geSprite-entity', null, true).setAttribute('title', mxResources.get('entityRelation'));
-		}
-	}));
-
-	var lineStart = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel2, 'geSprite-startclassic', mxResources.get('linestart'), false, mxUtils.bind(this, function(menu)
-	{
-		if (ss.style.shape == 'connector' || ss.style.shape == 'flexArrow' || ss.style.shape == 'filledEdge')
-		{
-			var item = this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.NONE, 0], 'geIcon', null, false);
-			item.setAttribute('title', mxResources.get('none'));
-			item.firstChild.firstChild.innerHTML = '<font style="font-size:10px;">' + mxUtils.htmlEntities(mxResources.get('none')) + '</font>';
-
-			if (ss.style.shape == 'connector' || ss.style.shape == 'filledEdge')
-			{
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC, 1], 'geIcon geSprite geSprite-startclassic', null, false).setAttribute('title', mxResources.get('classic'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC_THIN, 1], 'geIcon geSprite geSprite-startclassicthin', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OPEN, 0], 'geIcon geSprite geSprite-startopen', null, false).setAttribute('title', mxResources.get('openArrow'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OPEN_THIN, 0], 'geIcon geSprite geSprite-startopenthin', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['openAsync', 0], 'geIcon geSprite geSprite-startopenasync', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK, 1], 'geIcon geSprite geSprite-startblock', null, false).setAttribute('title', mxResources.get('block'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK_THIN, 1], 'geIcon geSprite geSprite-startblockthin', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['async', 1], 'geIcon geSprite geSprite-startasync', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OVAL, 1], 'geIcon geSprite geSprite-startoval', null, false).setAttribute('title', mxResources.get('oval'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND, 1], 'geIcon geSprite geSprite-startdiamond', null, false).setAttribute('title', mxResources.get('diamond'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND_THIN, 1], 'geIcon geSprite geSprite-startthindiamond', null, false).setAttribute('title', mxResources.get('diamondThin'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC, 0], 'geIcon geSprite geSprite-startclassictrans', null, false).setAttribute('title', mxResources.get('classic'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC_THIN, 0], 'geIcon geSprite geSprite-startclassicthintrans', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK, 0], 'geIcon geSprite geSprite-startblocktrans', null, false).setAttribute('title', mxResources.get('block'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK_THIN, 0], 'geIcon geSprite geSprite-startblockthintrans', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['async', 0], 'geIcon geSprite geSprite-startasynctrans', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OVAL, 0], 'geIcon geSprite geSprite-startovaltrans', null, false).setAttribute('title', mxResources.get('oval'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND, 0], 'geIcon geSprite geSprite-startdiamondtrans', null, false).setAttribute('title', mxResources.get('diamond'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND_THIN, 0], 'geIcon geSprite geSprite-startthindiamondtrans', null, false).setAttribute('title', mxResources.get('diamondThin'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['box', 0], 'geIcon geSprite geSvgSprite geSprite-box', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['halfCircle', 0], 'geIcon geSprite geSvgSprite geSprite-halfCircle', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['dash', 0], 'geIcon geSprite geSprite-startdash', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['cross', 0], 'geIcon geSprite geSprite-startcross', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['circlePlus', 0], 'geIcon geSprite geSprite-startcircleplus', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['circle', 1], 'geIcon geSprite geSprite-startcircle', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERone', 0], 'geIcon geSprite geSprite-starterone', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERmandOne', 0], 'geIcon geSprite geSprite-starteronetoone', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERmany', 0], 'geIcon geSprite geSprite-startermany', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERoneToMany', 0], 'geIcon geSprite geSprite-starteronetomany', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERzeroToOne', 1], 'geIcon geSprite geSprite-starteroneopt', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERzeroToMany', 1], 'geIcon geSprite geSprite-startermanyopt', null, false);
-			}
-			else
-			{
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW], [mxConstants.ARROW_BLOCK], 'geIcon geSprite geSprite-startblocktrans', null, false).setAttribute('title', mxResources.get('block'));
-			}
-		}
-	}));
-
-	var lineEnd = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel2, 'geSprite-endclassic', mxResources.get('lineend'), false, mxUtils.bind(this, function(menu)
-	{
-		if (ss.style.shape == 'connector' || ss.style.shape == 'flexArrow' || ss.style.shape == 'filledEdge')
-		{
-			var item = this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.NONE, 0], 'geIcon', null, false);
-			item.setAttribute('title', mxResources.get('none'));
-			item.firstChild.firstChild.innerHTML = '<font style="font-size:10px;">' + mxUtils.htmlEntities(mxResources.get('none')) + '</font>';
-			
-			if (ss.style.shape == 'connector' || ss.style.shape == 'filledEdge')
-			{
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC, 1], 'geIcon geSprite geSprite-endclassic', null, false).setAttribute('title', mxResources.get('classic'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC_THIN, 1], 'geIcon geSprite geSprite-endclassicthin', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OPEN, 0], 'geIcon geSprite geSprite-endopen', null, false).setAttribute('title', mxResources.get('openArrow'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OPEN_THIN, 0], 'geIcon geSprite geSprite-endopenthin', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['openAsync', 0], 'geIcon geSprite geSprite-endopenasync', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK, 1], 'geIcon geSprite geSprite-endblock', null, false).setAttribute('title', mxResources.get('block'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK_THIN, 1], 'geIcon geSprite geSprite-endblockthin', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['async', 1], 'geIcon geSprite geSprite-endasync', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OVAL, 1], 'geIcon geSprite geSprite-endoval', null, false).setAttribute('title', mxResources.get('oval'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND, 1], 'geIcon geSprite geSprite-enddiamond', null, false).setAttribute('title', mxResources.get('diamond'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND_THIN, 1], 'geIcon geSprite geSprite-endthindiamond', null, false).setAttribute('title', mxResources.get('diamondThin'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC, 0], 'geIcon geSprite geSprite-endclassictrans', null, false).setAttribute('title', mxResources.get('classic'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC_THIN, 0], 'geIcon geSprite geSprite-endclassicthintrans', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK, 0], 'geIcon geSprite geSprite-endblocktrans', null, false).setAttribute('title', mxResources.get('block'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK_THIN, 0], 'geIcon geSprite geSprite-endblockthintrans', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['async', 0], 'geIcon geSprite geSprite-endasynctrans', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OVAL, 0], 'geIcon geSprite geSprite-endovaltrans', null, false).setAttribute('title', mxResources.get('oval'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND, 0], 'geIcon geSprite geSprite-enddiamondtrans', null, false).setAttribute('title', mxResources.get('diamond'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND_THIN, 0], 'geIcon geSprite geSprite-endthindiamondtrans', null, false).setAttribute('title', mxResources.get('diamondThin'));
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['box', 0], 'geIcon geSprite geSvgSprite geFlipSprite geSprite-box', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['halfCircle', 0], 'geIcon geSprite geSvgSprite geFlipSprite geSprite-halfCircle', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['dash', 0], 'geIcon geSprite geSprite-enddash', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['cross', 0], 'geIcon geSprite geSprite-endcross', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['circlePlus', 0], 'geIcon geSprite geSprite-endcircleplus', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['circle', 1], 'geIcon geSprite geSprite-endcircle', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERone', 0], 'geIcon geSprite geSprite-enderone', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERmandOne', 0], 'geIcon geSprite geSprite-enderonetoone', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERmany', 0], 'geIcon geSprite geSprite-endermany', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERoneToMany', 0], 'geIcon geSprite geSprite-enderonetomany', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERzeroToOne', 1], 'geIcon geSprite geSprite-enderoneopt', null, false);
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERzeroToMany', 1], 'geIcon geSprite geSprite-endermanyopt', null, false);
-			}
-			else
-			{
-				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW], [mxConstants.ARROW_BLOCK], 'geIcon geSprite geSprite-endblocktrans', null, false).setAttribute('title', mxResources.get('block'));
-			}
-		}
-	}));
-
-	this.addArrow(edgeShape, 8);
-	this.addArrow(edgeStyle);
-	this.addArrow(lineStart);
-	this.addArrow(lineEnd);
-	
-	var symbol = this.addArrow(pattern, 9);
-	symbol.className = 'geIcon';
-	symbol.style.width = 'auto';
-	
-	var altSymbol = this.addArrow(altPattern, 9);
-	altSymbol.className = 'geIcon';
-	altSymbol.style.width = '22px';
-	
-	var solid = document.createElement('div');
-	solid.style.width = '85px';
-	solid.style.height = '1px';
-	solid.style.borderBottom = '1px solid ' + this.defaultStrokeColor;
-	solid.style.marginBottom = '9px';
-	symbol.appendChild(solid);
-	
-	var altSolid = document.createElement('div');
-	altSolid.style.width = '23px';
-	altSolid.style.height = '1px';
-	altSolid.style.borderBottom = '1px solid ' + this.defaultStrokeColor;
-	altSolid.style.marginBottom = '9px';
-	altSymbol.appendChild(altSolid);
-
-	pattern.style.height = '15px';
-	altPattern.style.height = '15px';
-	edgeShape.style.height = '15px';
-	edgeStyle.style.height = '17px';
-	lineStart.style.marginLeft = '3px';
-	lineStart.style.height = '17px';
-	lineEnd.style.marginLeft = '3px';
-	lineEnd.style.height = '17px';
-
 	container.appendChild(colorPanel);
-	container.appendChild(altStylePanel);
-	container.appendChild(stylePanel);
+	if(graph.isShapeMode()) {
+		// Used if only edges selected
+		var stylePanel = colorPanel.cloneNode(false);
+		stylePanel.style.fontWeight = 'normal';
+		stylePanel.style.whiteSpace = 'nowrap';
+		stylePanel.style.position = 'relative';
+		stylePanel.style.paddingLeft = '16px'
+		stylePanel.style.marginBottom = '2px';
+		stylePanel.style.marginTop = '2px';
+		stylePanel.className = 'geToolbarContainer';
 
-	var arrowPanel = stylePanel.cloneNode(false);
-	arrowPanel.style.paddingBottom = '6px';
-	arrowPanel.style.paddingTop = '4px';
-	arrowPanel.style.fontWeight = 'normal';
-	
-	var span = document.createElement('div');
-	span.style.position = 'absolute';
-	span.style.marginLeft = '3px';
-	span.style.marginBottom = '12px';
-	span.style.marginTop = '2px';
-	span.style.fontWeight = 'normal';
-	span.style.width = '76px';
-	
-	mxUtils.write(span, mxResources.get('lineend'));
-	arrowPanel.appendChild(span);
-	
-	var endSpacingUpdate, endSizeUpdate;
-	var endSpacing = this.addUnitInput(arrowPanel, 'pt', 74, 33, function()
-	{
-		endSpacingUpdate.apply(this, arguments);
-	});
-	var endSize = this.addUnitInput(arrowPanel, 'pt', 20, 33, function()
-	{
-		endSizeUpdate.apply(this, arguments);
-	});
+		var addItem = mxUtils.bind(this, function(menu, width, cssName, keys, values)
+		{
+			var item = this.editorUi.menus.styleChange(menu, '', keys, values, 'geIcon', null);
 
-	mxUtils.br(arrowPanel);
-	
-	var spacer = document.createElement('div');
-	spacer.style.height = '8px';
-	arrowPanel.appendChild(spacer);
-	
-	span = span.cloneNode(false);
-	mxUtils.write(span, mxResources.get('linestart'));
-	arrowPanel.appendChild(span);
-	
-	var startSpacingUpdate, startSizeUpdate;
-	var startSpacing = this.addUnitInput(arrowPanel, 'pt', 74, 33, function()
-	{
-		startSpacingUpdate.apply(this, arguments);
-	});
-	var startSize = this.addUnitInput(arrowPanel, 'pt', 20, 33, function()
-	{
-		startSizeUpdate.apply(this, arguments);
-	});
+			var pat = document.createElement('div');
+			pat.style.width = width + 'px';
+			pat.style.height = '1px';
+			pat.style.borderBottom = '1px ' + cssName + ' ' + this.defaultStrokeColor;
+			pat.style.paddingTop = '6px';
 
-	mxUtils.br(arrowPanel);
-	this.addLabel(arrowPanel, mxResources.get('spacing'), 74, 50);
-	this.addLabel(arrowPanel, mxResources.get('size'), 20, 50);
-	mxUtils.br(arrowPanel);
-	
-	var perimeterPanel = colorPanel.cloneNode(false);
-	perimeterPanel.style.fontWeight = 'normal';
-	perimeterPanel.style.position = 'relative';
-	perimeterPanel.style.paddingLeft = '16px'
-	perimeterPanel.style.marginBottom = '2px';
-	perimeterPanel.style.marginTop = '6px';
-	perimeterPanel.style.borderWidth = '0px';
-	perimeterPanel.style.paddingBottom = '18px';
-	
-	var span = document.createElement('div');
-	span.style.position = 'absolute';
-	span.style.marginLeft = '3px';
-	span.style.marginBottom = '12px';
-	span.style.marginTop = '1px';
-	span.style.fontWeight = 'normal';
-	span.style.width = '120px';
-	mxUtils.write(span, mxResources.get('perimeter'));
-	perimeterPanel.appendChild(span);
-	
-	var perimeterUpdate;
-	var perimeterSpacing = this.addUnitInput(perimeterPanel, 'pt', 20, 41, function()
-	{
-		perimeterUpdate.apply(this, arguments);
-	});
+			item.firstChild.firstChild.style.padding = '0px 4px 0px 4px';
+			item.firstChild.firstChild.style.width = width + 'px';
+			item.firstChild.firstChild.appendChild(pat);
 
-	if (ss.edges.length == graph.getSelectionCount())
-	{
-		container.appendChild(stylePanel2);
-		
-		container.appendChild(arrowPanel);
-	}
-	else if (ss.vertices.length == graph.getSelectionCount())
-	{
-		container.appendChild(perimeterPanel);
-	}
-	
-	var listener = mxUtils.bind(this, function(sender, evt, force)
-	{
-		ss = this.format.getSelectionState();
-		var color = mxUtils.getValue(ss.style, strokeKey, null);
+			return item;
+		});
 
-		if (force || document.activeElement != input)
+		var pattern = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel, 'geSprite-orthogonal', mxResources.get('pattern'), false, mxUtils.bind(this, function(menu)
 		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1));
-			input.value = (isNaN(tmp)) ? '' : tmp + ' pt';
-		}
-		
-		if (force || document.activeElement != altInput)
+			addItem(menu, 75, 'solid', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], [null, null]).setAttribute('title', mxResources.get('solid'));
+			addItem(menu, 75, 'dashed', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', null]).setAttribute('title', mxResources.get('dashed'));
+			addItem(menu, 75, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 1']).setAttribute('title', mxResources.get('dotted') + ' (1)');
+			addItem(menu, 75, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 2']).setAttribute('title', mxResources.get('dotted') + ' (2)');
+			addItem(menu, 75, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 4']).setAttribute('title', mxResources.get('dotted') + ' (3)');
+		}));
+
+		// Used for mixed selection (vertices and edges)
+		var altStylePanel = stylePanel.cloneNode(false);
+
+		var edgeShape = this.editorUi.toolbar.addMenuFunctionInContainer(altStylePanel, 'geSprite-connection', mxResources.get('connection'), false, mxUtils.bind(this, function(menu)
 		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1));
-			altInput.value = (isNaN(tmp)) ? '' : tmp + ' pt';
-		}
-		
-		styleSelect.style.visibility = (ss.style.shape == 'connector' || ss.style.shape == 'filledEdge') ? '' : 'hidden';
-		
-		if (mxUtils.getValue(ss.style, mxConstants.STYLE_CURVED, null) == '1')
+			this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], [null, null, null, null], 'geIcon geSprite geSprite-connection', null, true).setAttribute('title', mxResources.get('line'));
+			this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], ['link', null, null, null], 'geIcon geSprite geSprite-linkedge', null, true).setAttribute('title', mxResources.get('link'));
+			this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], ['flexArrow', null, null, null], 'geIcon geSprite geSprite-arrow', null, true).setAttribute('title', mxResources.get('arrow'));
+			this.editorUi.menus.styleChange(menu, '', [mxConstants.STYLE_SHAPE, mxConstants.STYLE_STARTSIZE, mxConstants.STYLE_ENDSIZE, 'width'], ['arrow', null, null, null], 'geIcon geSprite geSprite-simplearrow', null, true).setAttribute('title', mxResources.get('simpleArrow'));
+		}));
+
+		var altPattern = this.editorUi.toolbar.addMenuFunctionInContainer(altStylePanel, 'geSprite-orthogonal', mxResources.get('pattern'), false, mxUtils.bind(this, function(menu)
 		{
-			styleSelect.value = 'curved';
-		}
-		else if (mxUtils.getValue(ss.style, mxConstants.STYLE_ROUNDED, null) == '1')
+			addItem(menu, 33, 'solid', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], [null, null]).setAttribute('title', mxResources.get('solid'));
+			addItem(menu, 33, 'dashed', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', null]).setAttribute('title', mxResources.get('dashed'));
+			addItem(menu, 33, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 1']).setAttribute('title', mxResources.get('dotted') + ' (1)');
+			addItem(menu, 33, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 2']).setAttribute('title', mxResources.get('dotted') + ' (2)');
+			addItem(menu, 33, 'dotted', [mxConstants.STYLE_DASHED, mxConstants.STYLE_DASH_PATTERN], ['1', '1 4']).setAttribute('title', mxResources.get('dotted') + ' (3)');
+		}));
+
+		var stylePanel2 = stylePanel.cloneNode(false);
+
+		// Stroke width
+		var input = document.createElement('input');
+		input.style.textAlign = 'right';
+		input.style.marginTop = '2px';
+		input.style.width = '41px';
+		input.setAttribute('title', mxResources.get('linewidth'));
+
+		stylePanel.appendChild(input);
+
+		var altInput = input.cloneNode(true);
+		altStylePanel.appendChild(altInput);
+
+		function update(evt)
 		{
-			styleSelect.value = 'rounded';
-		}
-		
-		if (mxUtils.getValue(ss.style, mxConstants.STYLE_DASHED, null) == '1')
-		{
-			if (mxUtils.getValue(ss.style, mxConstants.STYLE_DASH_PATTERN, null) == null)
+			// Maximum stroke width is 999
+			var value = parseInt(input.value);
+			value = Math.min(999, Math.max(1, (isNaN(value)) ? 1 : value));
+
+			if (value != mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1))
 			{
-				solid.style.borderBottom = '1px dashed ' + this.defaultStrokeColor;
+				graph.setCellStyles(mxConstants.STYLE_STROKEWIDTH, value, graph.getSelectionCells());
+				ui.fireEvent(new mxEventObject('styleChanged', 'keys', [mxConstants.STYLE_STROKEWIDTH],
+					'values', [value], 'cells', graph.getSelectionCells()));
 			}
-			else
+
+			input.value = value + ' pt';
+			mxEvent.consume(evt);
+		};
+
+		function altUpdate(evt)
+		{
+			// Maximum stroke width is 999
+			var value = parseInt(altInput.value);
+			value = Math.min(999, Math.max(1, (isNaN(value)) ? 1 : value));
+
+			if (value != mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1))
 			{
-				solid.style.borderBottom = '1px dotted ' + this.defaultStrokeColor;
+				graph.setCellStyles(mxConstants.STYLE_STROKEWIDTH, value, graph.getSelectionCells());
+				ui.fireEvent(new mxEventObject('styleChanged', 'keys', [mxConstants.STYLE_STROKEWIDTH],
+					'values', [value], 'cells', graph.getSelectionCells()));
 			}
+
+			altInput.value = value + ' pt';
+			mxEvent.consume(evt);
+		};
+
+		var stepper = this.createStepper(input, update, 1, 9);
+		stepper.style.display = input.style.display;
+		stepper.style.marginTop = '2px';
+		stylePanel.appendChild(stepper);
+
+		var altStepper = this.createStepper(altInput, altUpdate, 1, 9);
+		altStepper.style.display = altInput.style.display;
+		altStepper.style.marginTop = '2px';
+		altStylePanel.appendChild(altStepper);
+
+		if (!mxClient.IS_QUIRKS)
+		{
+			input.style.position = 'absolute';
+			input.style.right = '32px';
+			input.style.height = '15px';
+			stepper.style.right = '20px';
+
+			altInput.style.position = 'absolute';
+			altInput.style.right = '32px';
+			altInput.style.height = '15px';
+			altStepper.style.right = '20px';
 		}
 		else
 		{
-			solid.style.borderBottom = '1px solid ' + this.defaultStrokeColor;
+			input.style.height = '17px';
+			altInput.style.height = '17px';
 		}
-		
-		altSolid.style.borderBottom = solid.style.borderBottom;
-		
-		// Updates toolbar icon for edge style
-		var edgeStyleDiv = edgeStyle.getElementsByTagName('div')[0];
-		
-		if (edgeStyleDiv != null)
+
+		mxEvent.addListener(input, 'blur', update);
+		mxEvent.addListener(input, 'change', update);
+
+		mxEvent.addListener(altInput, 'blur', altUpdate);
+		mxEvent.addListener(altInput, 'change', altUpdate);
+
+		if (mxClient.IS_QUIRKS)
 		{
+			mxUtils.br(stylePanel2);
+			mxUtils.br(stylePanel2);
+		}
+
+		var edgeStyle = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel2, 'geSprite-orthogonal', mxResources.get('waypoints'), false, mxUtils.bind(this, function(menu)
+		{
+			if (ss.style.shape != 'arrow')
+			{
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], [null, null, null], 'geIcon geSprite geSprite-straight', null, true).setAttribute('title', mxResources.get('straight'));
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['orthogonalEdgeStyle', null, null], 'geIcon geSprite geSprite-orthogonal', null, true).setAttribute('title', mxResources.get('orthogonal'));
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['elbowEdgeStyle', null, null, null], 'geIcon geSprite geSprite-horizontalelbow', null, true).setAttribute('title', mxResources.get('simple'));
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['elbowEdgeStyle', 'vertical', null, null], 'geIcon geSprite geSprite-verticalelbow', null, true).setAttribute('title', mxResources.get('simple'));
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['isometricEdgeStyle', null, null, null], 'geIcon geSprite geSprite-horizontalisometric', null, true).setAttribute('title', mxResources.get('isometric'));
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_ELBOW, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['isometricEdgeStyle', 'vertical', null, null], 'geIcon geSprite geSprite-verticalisometric', null, true).setAttribute('title', mxResources.get('isometric'));
+
+				if (ss.style.shape == 'connector')
+				{
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['orthogonalEdgeStyle', '1', null], 'geIcon geSprite geSprite-curved', null, true).setAttribute('title', mxResources.get('curved'));
+				}
+
+				this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_EDGE, mxConstants.STYLE_CURVED, mxConstants.STYLE_NOEDGESTYLE], ['entityRelationEdgeStyle', null, null], 'geIcon geSprite geSprite-entity', null, true).setAttribute('title', mxResources.get('entityRelation'));
+			}
+		}));
+
+		var lineStart = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel2, 'geSprite-startclassic', mxResources.get('linestart'), false, mxUtils.bind(this, function(menu)
+		{
+			if (ss.style.shape == 'connector' || ss.style.shape == 'flexArrow' || ss.style.shape == 'filledEdge')
+			{
+				var item = this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.NONE, 0], 'geIcon', null, false);
+				item.setAttribute('title', mxResources.get('none'));
+				item.firstChild.firstChild.innerHTML = '<font style="font-size:10px;">' + mxUtils.htmlEntities(mxResources.get('none')) + '</font>';
+
+				if (ss.style.shape == 'connector' || ss.style.shape == 'filledEdge')
+				{
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC, 1], 'geIcon geSprite geSprite-startclassic', null, false).setAttribute('title', mxResources.get('classic'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC_THIN, 1], 'geIcon geSprite geSprite-startclassicthin', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OPEN, 0], 'geIcon geSprite geSprite-startopen', null, false).setAttribute('title', mxResources.get('openArrow'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OPEN_THIN, 0], 'geIcon geSprite geSprite-startopenthin', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['openAsync', 0], 'geIcon geSprite geSprite-startopenasync', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK, 1], 'geIcon geSprite geSprite-startblock', null, false).setAttribute('title', mxResources.get('block'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK_THIN, 1], 'geIcon geSprite geSprite-startblockthin', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['async', 1], 'geIcon geSprite geSprite-startasync', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OVAL, 1], 'geIcon geSprite geSprite-startoval', null, false).setAttribute('title', mxResources.get('oval'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND, 1], 'geIcon geSprite geSprite-startdiamond', null, false).setAttribute('title', mxResources.get('diamond'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND_THIN, 1], 'geIcon geSprite geSprite-startthindiamond', null, false).setAttribute('title', mxResources.get('diamondThin'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC, 0], 'geIcon geSprite geSprite-startclassictrans', null, false).setAttribute('title', mxResources.get('classic'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_CLASSIC_THIN, 0], 'geIcon geSprite geSprite-startclassicthintrans', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK, 0], 'geIcon geSprite geSprite-startblocktrans', null, false).setAttribute('title', mxResources.get('block'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_BLOCK_THIN, 0], 'geIcon geSprite geSprite-startblockthintrans', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['async', 0], 'geIcon geSprite geSprite-startasynctrans', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_OVAL, 0], 'geIcon geSprite geSprite-startovaltrans', null, false).setAttribute('title', mxResources.get('oval'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND, 0], 'geIcon geSprite geSprite-startdiamondtrans', null, false).setAttribute('title', mxResources.get('diamond'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], [mxConstants.ARROW_DIAMOND_THIN, 0], 'geIcon geSprite geSprite-startthindiamondtrans', null, false).setAttribute('title', mxResources.get('diamondThin'));
+
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['dash', 0], 'geIcon geSprite geSprite-startdash', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['cross', 0], 'geIcon geSprite geSprite-startcross', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['circlePlus', 0], 'geIcon geSprite geSprite-startcircleplus', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['circle', 1], 'geIcon geSprite geSprite-startcircle', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERone', 0], 'geIcon geSprite geSprite-starterone', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERmandOne', 0], 'geIcon geSprite geSprite-starteronetoone', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERmany', 0], 'geIcon geSprite geSprite-startermany', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERoneToMany', 0], 'geIcon geSprite geSprite-starteronetomany', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERzeroToOne', 1], 'geIcon geSprite geSprite-starteroneopt', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW, 'startFill'], ['ERzeroToMany', 1], 'geIcon geSprite geSprite-startermanyopt', null, false);
+				}
+				else
+				{
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_STARTARROW], [mxConstants.ARROW_BLOCK], 'geIcon geSprite geSprite-startblocktrans', null, false).setAttribute('title', mxResources.get('block'));
+				}
+			}
+		}));
+
+		var lineEnd = this.editorUi.toolbar.addMenuFunctionInContainer(stylePanel2, 'geSprite-endclassic', mxResources.get('lineend'), false, mxUtils.bind(this, function(menu)
+		{
+			if (ss.style.shape == 'connector' || ss.style.shape == 'flexArrow' || ss.style.shape == 'filledEdge')
+			{
+				var item = this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.NONE, 0], 'geIcon', null, false);
+				item.setAttribute('title', mxResources.get('none'));
+				item.firstChild.firstChild.innerHTML = '<font style="font-size:10px;">' + mxUtils.htmlEntities(mxResources.get('none')) + '</font>';
+
+				if (ss.style.shape == 'connector' || ss.style.shape == 'filledEdge')
+				{
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC, 1], 'geIcon geSprite geSprite-endclassic', null, false).setAttribute('title', mxResources.get('classic'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC_THIN, 1], 'geIcon geSprite geSprite-endclassicthin', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OPEN, 0], 'geIcon geSprite geSprite-endopen', null, false).setAttribute('title', mxResources.get('openArrow'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OPEN_THIN, 0], 'geIcon geSprite geSprite-endopenthin', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['openAsync', 0], 'geIcon geSprite geSprite-endopenasync', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK, 1], 'geIcon geSprite geSprite-endblock', null, false).setAttribute('title', mxResources.get('block'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK_THIN, 1], 'geIcon geSprite geSprite-endblockthin', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['async', 1], 'geIcon geSprite geSprite-endasync', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OVAL, 1], 'geIcon geSprite geSprite-endoval', null, false).setAttribute('title', mxResources.get('oval'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND, 1], 'geIcon geSprite geSprite-enddiamond', null, false).setAttribute('title', mxResources.get('diamond'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND_THIN, 1], 'geIcon geSprite geSprite-endthindiamond', null, false).setAttribute('title', mxResources.get('diamondThin'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC, 0], 'geIcon geSprite geSprite-endclassictrans', null, false).setAttribute('title', mxResources.get('classic'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_CLASSIC_THIN, 0], 'geIcon geSprite geSprite-endclassicthintrans', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK, 0], 'geIcon geSprite geSprite-endblocktrans', null, false).setAttribute('title', mxResources.get('block'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_BLOCK_THIN, 0], 'geIcon geSprite geSprite-endblockthintrans', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['async', 0], 'geIcon geSprite geSprite-endasynctrans', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_OVAL, 0], 'geIcon geSprite geSprite-endovaltrans', null, false).setAttribute('title', mxResources.get('oval'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND, 0], 'geIcon geSprite geSprite-enddiamondtrans', null, false).setAttribute('title', mxResources.get('diamond'));
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], [mxConstants.ARROW_DIAMOND_THIN, 0], 'geIcon geSprite geSprite-endthindiamondtrans', null, false).setAttribute('title', mxResources.get('diamondThin'));
+
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['dash', 0], 'geIcon geSprite geSprite-enddash', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['cross', 0], 'geIcon geSprite geSprite-endcross', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['circlePlus', 0], 'geIcon geSprite geSprite-endcircleplus', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['circle', 1], 'geIcon geSprite geSprite-endcircle', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERone', 0], 'geIcon geSprite geSprite-enderone', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERmandOne', 0], 'geIcon geSprite geSprite-enderonetoone', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERmany', 0], 'geIcon geSprite geSprite-endermany', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERoneToMany', 0], 'geIcon geSprite geSprite-enderonetomany', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERzeroToOne', 1], 'geIcon geSprite geSprite-enderoneopt', null, false);
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW, 'endFill'], ['ERzeroToMany', 1], 'geIcon geSprite geSprite-endermanyopt', null, false);
+				}
+				else
+				{
+					this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_ENDARROW], [mxConstants.ARROW_BLOCK], 'geIcon geSprite geSprite-endblocktrans', null, false).setAttribute('title', mxResources.get('block'));
+				}
+			}
+		}));
+
+		this.addArrow(edgeShape, 8);
+		this.addArrow(edgeStyle);
+		this.addArrow(lineStart);
+		this.addArrow(lineEnd);
+
+		var symbol = this.addArrow(pattern, 9);
+		symbol.className = 'geIcon';
+		symbol.style.width = '84px';
+
+		var altSymbol = this.addArrow(altPattern, 9);
+		altSymbol.className = 'geIcon';
+		altSymbol.style.width = '22px';
+
+		var solid = document.createElement('div');
+		solid.style.width = '85px';
+		solid.style.height = '1px';
+		solid.style.borderBottom = '1px solid ' + this.defaultStrokeColor;
+		solid.style.marginBottom = '9px';
+		symbol.appendChild(solid);
+
+		var altSolid = document.createElement('div');
+		altSolid.style.width = '23px';
+		altSolid.style.height = '1px';
+		altSolid.style.borderBottom = '1px solid ' + this.defaultStrokeColor;
+		altSolid.style.marginBottom = '9px';
+		altSymbol.appendChild(altSolid);
+
+		pattern.style.height = '15px';
+		altPattern.style.height = '15px';
+		edgeShape.style.height = '15px';
+		edgeStyle.style.height = '17px';
+		lineStart.style.marginLeft = '3px';
+		lineStart.style.height = '17px';
+		lineEnd.style.marginLeft = '3px';
+		lineEnd.style.height = '17px';
+
+		container.appendChild(altStylePanel);
+		container.appendChild(stylePanel);
+
+
+		var arrowPanel = stylePanel.cloneNode(false);
+		arrowPanel.style.paddingBottom = '6px';
+		arrowPanel.style.paddingTop = '4px';
+		arrowPanel.style.fontWeight = 'normal';
+
+		var span = document.createElement('div');
+		span.style.position = 'absolute';
+		span.style.marginLeft = '3px';
+		span.style.marginBottom = '12px';
+		span.style.marginTop = '2px';
+		span.style.fontWeight = 'normal';
+		span.style.width = '76px';
+
+		mxUtils.write(span, mxResources.get('lineend'));
+		arrowPanel.appendChild(span);
+
+		var endSpacingUpdate, endSizeUpdate;
+		var endSpacing = this.addUnitInput(arrowPanel, 'pt', 74, 33, function()
+		{
+			endSpacingUpdate.apply(this, arguments);
+		});
+		var endSize = this.addUnitInput(arrowPanel, 'pt', 20, 33, function()
+		{
+			endSizeUpdate.apply(this, arguments);
+		});
+
+		mxUtils.br(arrowPanel);
+
+		var spacer = document.createElement('div');
+		spacer.style.height = '8px';
+		arrowPanel.appendChild(spacer);
+
+		span = span.cloneNode(false);
+		mxUtils.write(span, mxResources.get('linestart'));
+		arrowPanel.appendChild(span);
+
+		var startSpacingUpdate, startSizeUpdate;
+		var startSpacing = this.addUnitInput(arrowPanel, 'pt', 74, 33, function()
+		{
+			startSpacingUpdate.apply(this, arguments);
+		});
+		var startSize = this.addUnitInput(arrowPanel, 'pt', 20, 33, function()
+		{
+			startSizeUpdate.apply(this, arguments);
+		});
+
+		mxUtils.br(arrowPanel);
+		this.addLabel(arrowPanel, mxResources.get('spacing'), 74, 50);
+		this.addLabel(arrowPanel, mxResources.get('size'), 20, 50);
+		mxUtils.br(arrowPanel);
+
+		var perimeterPanel = colorPanel.cloneNode(false);
+		perimeterPanel.style.fontWeight = 'normal';
+		perimeterPanel.style.position = 'relative';
+		perimeterPanel.style.paddingLeft = '16px'
+		perimeterPanel.style.marginBottom = '2px';
+		perimeterPanel.style.marginTop = '6px';
+		perimeterPanel.style.borderWidth = '0px';
+		perimeterPanel.style.paddingBottom = '18px';
+
+		var span = document.createElement('div');
+		span.style.position = 'absolute';
+		span.style.marginLeft = '3px';
+		span.style.marginBottom = '12px';
+		span.style.marginTop = '1px';
+		span.style.fontWeight = 'normal';
+		span.style.width = '120px';
+		mxUtils.write(span, mxResources.get('perimeter'));
+		perimeterPanel.appendChild(span);
+
+		var perimeterUpdate;
+		var perimeterSpacing = this.addUnitInput(perimeterPanel, 'pt', 20, 41, function()
+		{
+			perimeterUpdate.apply(this, arguments);
+		});
+
+		if (ss.edges.length == graph.getSelectionCount())
+		{
+			container.appendChild(stylePanel2);
+
+			if (mxClient.IS_QUIRKS)
+			{
+				mxUtils.br(container);
+				mxUtils.br(container);
+			}
+
+			container.appendChild(arrowPanel);
+		}
+		else if (ss.vertices.length == graph.getSelectionCount())
+		{
+			if (mxClient.IS_QUIRKS)
+			{
+				mxUtils.br(container);
+			}
+
+			//container.appendChild(perimeterPanel);
+		}
+
+		var listener = mxUtils.bind(this, function(sender, evt, force)
+		{
+			ss = this.format.getSelectionState();
+			var color = mxUtils.getValue(ss.style, strokeKey, null);
+
+			if (force || document.activeElement != input)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1));
+				input.value = (isNaN(tmp)) ? '' : tmp + ' pt';
+			}
+
+			if (force || document.activeElement != altInput)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_STROKEWIDTH, 1));
+				altInput.value = (isNaN(tmp)) ? '' : tmp + ' pt';
+			}
+
+			styleSelect.style.visibility = (ss.style.shape == 'connector' || ss.style.shape == 'filledEdge') ? '' : 'hidden';
+
+			if (mxUtils.getValue(ss.style, mxConstants.STYLE_CURVED, null) == '1')
+			{
+				styleSelect.value = 'curved';
+			}
+			else if (mxUtils.getValue(ss.style, mxConstants.STYLE_ROUNDED, null) == '1')
+			{
+				styleSelect.value = 'rounded';
+			}
+
+			if (mxUtils.getValue(ss.style, mxConstants.STYLE_DASHED, null) == '1')
+			{
+				if (mxUtils.getValue(ss.style, mxConstants.STYLE_DASH_PATTERN, null) == null)
+				{
+					solid.style.borderBottom = '1px dashed ' + this.defaultStrokeColor;
+				}
+				else
+				{
+					solid.style.borderBottom = '1px dotted ' + this.defaultStrokeColor;
+				}
+			}
+			else
+			{
+				solid.style.borderBottom = '1px solid ' + this.defaultStrokeColor;
+			}
+
+			altSolid.style.borderBottom = solid.style.borderBottom;
+
+			// Updates toolbar icon for edge style
+			var edgeStyleDiv = edgeStyle.getElementsByTagName('div')[0];
 			var es = mxUtils.getValue(ss.style, mxConstants.STYLE_EDGE, null);
-			
+
 			if (mxUtils.getValue(ss.style, mxConstants.STYLE_NOEDGESTYLE, null) == '1')
 			{
 				es = null;
 			}
-			
+
 			if (es == 'orthogonalEdgeStyle' && mxUtils.getValue(ss.style, mxConstants.STYLE_CURVED, null) == '1')
 			{
 				edgeStyleDiv.className = 'geSprite geSprite-curved';
@@ -5118,13 +5652,10 @@ StyleFormatPanel.prototype.addStroke = function(container)
 			{
 				edgeStyleDiv.className = 'geSprite geSprite-orthogonal';
 			}
-		}
-		
-		// Updates icon for edge shape
-		var edgeShapeDiv = edgeShape.getElementsByTagName('div')[0];
-		
-		if (edgeShapeDiv != null)
-		{
+
+			// Updates icon for edge shape
+			var edgeShapeDiv = edgeShape.getElementsByTagName('div')[0];
+
 			if (ss.style.shape == 'link')
 			{
 				edgeShapeDiv.className = 'geSprite geSprite-linkedge';
@@ -5141,27 +5672,24 @@ StyleFormatPanel.prototype.addStroke = function(container)
 			{
 				edgeShapeDiv.className = 'geSprite geSprite-connection';
 			}
-		}
-		
-		if (ss.edges.length == graph.getSelectionCount())
-		{
-			altStylePanel.style.display = '';
-			stylePanel.style.display = 'none';
-		}
-		else
-		{
-			altStylePanel.style.display = 'none';
-			stylePanel.style.display = '';
-		}
-		
-		function updateArrow(marker, fill, elt, prefix)
-		{
-			var markerDiv = elt.getElementsByTagName('div')[0];
-			
-			if (markerDiv != null)
+
+			if (ss.edges.length == graph.getSelectionCount())
 			{
+				altStylePanel.style.display = '';
+				stylePanel.style.display = 'none';
+			}
+			else
+			{
+				altStylePanel.style.display = 'none';
+				stylePanel.style.display = '';
+			}
+
+			function updateArrow(marker, fill, elt, prefix)
+			{
+				var markerDiv = elt.getElementsByTagName('div')[0];
+
 				markerDiv.className = ui.getCssClassForMarker(prefix, ss.style.shape, marker, fill);
-				
+
 				if (markerDiv.className == 'geSprite geSprite-noarrow')
 				{
 					markerDiv.innerHTML = mxUtils.htmlEntities(mxResources.get('none'));
@@ -5173,19 +5701,16 @@ StyleFormatPanel.prototype.addStroke = function(container)
 					markerDiv.style.color = this.defaultStrokeColor;
 					markerDiv.nextSibling.style.marginTop = '0px';
 				}
-			}
-			
-			return markerDiv;
-		};
-		
-		var sourceDiv = updateArrow(mxUtils.getValue(ss.style, mxConstants.STYLE_STARTARROW, null),
+
+				return markerDiv;
+			};
+
+			var sourceDiv = updateArrow(mxUtils.getValue(ss.style, mxConstants.STYLE_STARTARROW, null),
 				mxUtils.getValue(ss.style, 'startFill', '1'), lineStart, 'start');
-		var targetDiv = updateArrow(mxUtils.getValue(ss.style, mxConstants.STYLE_ENDARROW, null),
+			var targetDiv = updateArrow(mxUtils.getValue(ss.style, mxConstants.STYLE_ENDARROW, null),
 				mxUtils.getValue(ss.style, 'endFill', '1'), lineEnd, 'end');
 
-		// Special cases for markers
-		if (sourceDiv != null && targetDiv != null)
-		{
+			// Special cases for markers
 			if (ss.style.shape == 'arrow')
 			{
 				sourceDiv.className = 'geSprite geSprite-noarrow';
@@ -5196,69 +5721,68 @@ StyleFormatPanel.prototype.addStroke = function(container)
 				sourceDiv.className = 'geSprite geSprite-noarrow';
 				targetDiv.className = 'geSprite geSprite-noarrow';
 			}
-		}
 
-		mxUtils.setOpacity(edgeStyle, (ss.style.shape == 'arrow') ? 30 : 100);			
-		
-		if (ss.style.shape != 'connector' && ss.style.shape != 'flexArrow' && ss.style.shape != 'filledEdge')
-		{
-			mxUtils.setOpacity(lineStart, 30);
-			mxUtils.setOpacity(lineEnd, 30);
-		}
-		else
-		{
-			mxUtils.setOpacity(lineStart, 100);
-			mxUtils.setOpacity(lineEnd, 100);
-		}
+			mxUtils.setOpacity(edgeStyle, (ss.style.shape == 'arrow') ? 30 : 100);
 
-		if (force || document.activeElement != startSize)
-		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_MARKERSIZE));
-			startSize.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
-		}
-		
-		if (force || document.activeElement != startSpacing)
-		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_SOURCE_PERIMETER_SPACING, 0));
-			startSpacing.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
-		}
+			if (ss.style.shape != 'connector' && ss.style.shape != 'flexArrow' && ss.style.shape != 'filledEdge')
+			{
+				mxUtils.setOpacity(lineStart, 30);
+				mxUtils.setOpacity(lineEnd, 30);
+			}
+			else
+			{
+				mxUtils.setOpacity(lineStart, 100);
+				mxUtils.setOpacity(lineEnd, 100);
+			}
 
-		if (force || document.activeElement != endSize)
-		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE));
-			endSize.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
-		}
-		
-		if (force || document.activeElement != startSpacing)
-		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_TARGET_PERIMETER_SPACING, 0));
-			endSpacing.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
-		}
-		
-		if (force || document.activeElement != perimeterSpacing)
-		{
-			var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_PERIMETER_SPACING, 0));
-			perimeterSpacing.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
-		}
-	});
-	
-	startSizeUpdate = this.installInputHandler(startSize, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_MARKERSIZE, 0, 999, ' pt');
-	startSpacingUpdate = this.installInputHandler(startSpacing, mxConstants.STYLE_SOURCE_PERIMETER_SPACING, 0, -999, 999, ' pt');
-	endSizeUpdate = this.installInputHandler(endSize, mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE, 0, 999, ' pt');
-	endSpacingUpdate = this.installInputHandler(endSpacing, mxConstants.STYLE_TARGET_PERIMETER_SPACING, 0, -999, 999, ' pt');
-	perimeterUpdate = this.installInputHandler(perimeterSpacing, mxConstants.STYLE_PERIMETER_SPACING, 0, 0, 999, ' pt');
+			if (force || document.activeElement != startSize)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_MARKERSIZE));
+				startSize.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
+			}
 
-	this.addKeyHandler(input, listener);
-	this.addKeyHandler(startSize, listener);
-	this.addKeyHandler(startSpacing, listener);
-	this.addKeyHandler(endSize, listener);
-	this.addKeyHandler(endSpacing, listener);
-	this.addKeyHandler(perimeterSpacing, listener);
+			if (force || document.activeElement != startSpacing)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_SOURCE_PERIMETER_SPACING, 0));
+				startSpacing.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
+			}
 
-	graph.getModel().addListener(mxEvent.CHANGE, listener);
-	this.listeners.push({destroy: function() { graph.getModel().removeListener(listener); }});
-	listener();
+			if (force || document.activeElement != endSize)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE));
+				endSize.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
+			}
 
+			if (force || document.activeElement != startSpacing)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_TARGET_PERIMETER_SPACING, 0));
+				endSpacing.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
+			}
+
+			if (force || document.activeElement != perimeterSpacing)
+			{
+				var tmp = parseInt(mxUtils.getValue(ss.style, mxConstants.STYLE_PERIMETER_SPACING, 0));
+				perimeterSpacing.value = (isNaN(tmp)) ? '' : tmp  + ' pt';
+			}
+		});
+
+		startSizeUpdate = this.installInputHandler(startSize, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_MARKERSIZE, 0, 999, ' pt');
+		startSpacingUpdate = this.installInputHandler(startSpacing, mxConstants.STYLE_SOURCE_PERIMETER_SPACING, 0, -999, 999, ' pt');
+		endSizeUpdate = this.installInputHandler(endSize, mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE, 0, 999, ' pt');
+		endSpacingUpdate = this.installInputHandler(endSpacing, mxConstants.STYLE_TARGET_PERIMETER_SPACING, 0, -999, 999, ' pt');
+		perimeterUpdate = this.installInputHandler(perimeterSpacing, mxConstants.STYLE_PERIMETER_SPACING, 0, 0, 999, ' pt');
+
+		this.addKeyHandler(input, listener);
+		this.addKeyHandler(startSize, listener);
+		this.addKeyHandler(startSpacing, listener);
+		this.addKeyHandler(endSize, listener);
+		this.addKeyHandler(endSpacing, listener);
+		this.addKeyHandler(perimeterSpacing, listener);
+
+		graph.getModel().addListener(mxEvent.CHANGE, listener);
+		this.listeners.push({destroy: function() { graph.getModel().removeListener(listener); }});
+		listener();
+	}
 	return container;
 };
 
