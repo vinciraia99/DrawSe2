@@ -229,7 +229,7 @@ Toolbar.prototype.addExportLocalButton = function() {
 	label2.className = 'exportShape';
 	var inputNode2 = document.createElement('input');
 	inputNode2.setAttribute('type', 'button');
-	inputNode2.setAttribute('value', 'Export');
+	inputNode2.setAttribute('value', 'Export JSON file');
 	inputNode2.style.margin = '7px';
 	inputNode2.className = 'expButton';
 	inputNode2.id = 'expButton';
@@ -240,11 +240,27 @@ Toolbar.prototype.addExportLocalButton = function() {
 	this.container.appendChild(label2);
 
 	var switchEvent = mxUtils.bind(this, function(evt) {
-		this.editorUi.exportShape();
+		this.editorUi.exportShapeJSON();
 	});
 	mxEvent.addListener(inputNode2, 'click', switchEvent);
 
+	var label22 = document.createElement('label');
+	label22.className = 'exportShape2';
+	var inputNode22 = document.createElement('input');
+	inputNode22.setAttribute('type', 'button');
+	inputNode22.setAttribute('value', 'Export XML file');
+	inputNode22.style.margin = '7px';
+	inputNode22.className = 'expButton2';
+	inputNode22.id = 'expButton2';
+	label22.appendChild(inputNode22);
 
+
+	this.container.appendChild(label22);
+
+	var switchEvent = mxUtils.bind(this, function(evt) {
+		this.editorUi.exportShapeXML();
+	});
+	mxEvent.addListener(inputNode22, 'click', switchEvent);
 }
 
 /**

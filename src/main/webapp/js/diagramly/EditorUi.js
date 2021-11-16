@@ -2,6 +2,8 @@
  * Copyright (c) 2006-2017, JGraph Ltd
  * Copyright (c) 2006-2017, Gaudenz Alder
  */
+var locomotiveurl;
+
 (function()
 {
 	/**
@@ -479,12 +481,132 @@
 
 	}
 
+	function OBJtoXML(obj) {
+		var xml = '';
+		for (var prop in obj) {
+			xml += "<" + prop + ">";
+			if(Array.isArray(obj[prop])) {
+				for (var array of obj[prop]) {
+
+					// A real botch fix here
+					xml += "</" + prop + ">";
+					xml += "<" + prop + ">";
+
+					xml += OBJtoXML(new Object(array));
+				}
+			} else if (typeof obj[prop] == "object") {
+				xml += OBJtoXML(new Object(obj[prop]));
+			} else {
+				xml += obj[prop];
+			}
+			xml += "</" + prop + ">";
+		}
+		var xml = xml.replace(/<\/?[0-9]{1,}>/g,'');
+		return xml;
+	}
+
+	function xmlConversionTive(xml){
+		//xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xml;
+		//console.log(xml);
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(xml, "application/xml");
+		const errorNode = doc.querySelector("parsererror");
+		if (errorNode) {
+			console.log("error while parsing");
+		} else {
+			var namelang = doc.querySelectorAll("_name")[doc.querySelectorAll("_name").length -1].textContent;
+			doc.querySelectorAll("_name")[doc.querySelectorAll("_name").length -1].remove();
+			doc.querySelectorAll("language")[0].setAttribute("name", namelang);
+
+			doc.querySelectorAll("token")[0].remove()
+
+			doc.querySelectorAll('token').forEach(function(node) {
+				node.querySelectorAll("ap")[0].remove();
+				node.querySelectorAll('ap').forEach(function(ap) {
+					var type = ap.querySelector("_type").textContent;
+					try {
+						var name = ap.querySelector("_name").textContent;
+					}
+					catch {
+					
+					}
+
+					var ref = ap.querySelector("_ref").textContent;
+					var connectNum = ap.querySelector("_connectNum").textContent;
+
+					ap.querySelector("_type").remove();
+					try {
+					ap.querySelector("_name").remove();
+					}
+					catch {}
+					ap.querySelector("_ref").remove();
+					ap.querySelector("_numLoop").remove();
+					ap.querySelector("_connectNum").remove();
+
+					ap.setAttribute("type", type);
+					ap.setAttribute("name", name);
+					ap.setAttribute("ref", ref);
+					ap.setAttribute("connectNum", connectNum);
+				});
+				//node.setAttribute("name", "Fred");
+				var nametoken = node.querySelectorAll('_name')[0].textContent;
+				var reftoken = node.querySelectorAll('_ref')[0].textContent;
+				var occurencetoken = node.querySelectorAll('_occurrences')[0].textContent;
+				node.setAttribute("name", nametoken);
+				node.setAttribute("ref", reftoken);
+				node.setAttribute("occurrences", occurencetoken);
+
+				node.querySelectorAll('_name')[0].remove();
+				node.querySelectorAll('_ref')[0].remove();
+				node.querySelectorAll('_occurrences')[0].remove();
+			});
+
+			doc.querySelectorAll("connector")[0].remove();
+			doc.querySelectorAll('connector').forEach(function(node) {
+				node.querySelectorAll("ap")[0].remove();
+				while(node.querySelectorAll("ap")[0] != null){
+					var ap = node.querySelectorAll("ap")[0];
+					var type = ap.querySelector("_type").textContent;
+					var name = ap.querySelector("_name").textContent;
+					var ref = ap.querySelector("_ref").textContent;
+					var connectNum = ap.querySelector("_connectNum").textContent;
+
+					ap.querySelector("_type").remove();
+					ap.querySelector("_name").remove();
+					ap.querySelector("_ref").remove();
+					ap.querySelector("_connectNum").remove();
+
+					node.querySelectorAll("ap")[0].remove();
+
+					var cap = document.createElement("cap");
+
+					cap.setAttribute("type", type);
+					cap.setAttribute("name", name);
+					cap.setAttribute("ref", ref);
+					cap.setAttribute("connectNum", connectNum);
+					node.appendChild(cap);
+				}
+				var nametoken = node.querySelectorAll('_name')[0].textContent;
+				var reftoken = node.querySelectorAll('_ref')[0].textContent;
+				var occurencetoken = node.querySelectorAll('_occurrences')[0].textContent;
+				node.setAttribute("name", nametoken);
+				node.setAttribute("ref", reftoken);
+				node.setAttribute("occurrences", occurencetoken);
+				node.querySelectorAll('_name')[0].remove();
+				node.querySelectorAll('_ref')[0].remove();
+				node.querySelectorAll('_occurrences')[0].remove();
+			});
+		}
+
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + new XMLSerializer().serializeToString(doc);
+	}
 
 	/**
 	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export'
 	 * Ottenuto il Json lo carica nel localstorage del browser
 	 */
-	EditorUi.prototype.exportShape = function() {
+
+	EditorUi.prototype.exportShapeJSON = function() {
 		var graph = this.editor.graph;
 
 		if(this.title == null) {
@@ -514,13 +636,68 @@
 		var defaultStencil = this.createStencilXml(allShapes,this.title);
 		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
 
-		console.log(json);
+		console.log("\n\nJson File:\n" + json);
 
 		localStorage.setItem('STENCIL', defaultStencil);
 		localStorage.setItem('CONNECTOR', defaultConnectors);
 		localStorage.setItem('RULES' , json);
 
-		window.open("http://localhost:8080/?dev=1" , 'locomotive');
+
+		if(this.locomotiveurl == null){
+			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8080/?dev=1');
+		}
+
+		window.open(this.locomotiveurl, 'locomotive');
+
+		//xml che non ho capito a cosa serve
+		//this.createXML();
+
+	}
+
+	EditorUi.prototype.exportShapeXML = function() {
+		var graph = this.editor.graph;
+		var xmlconversion;
+		if(this.title == null) {
+			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
+		}
+
+		//Ricavo tutti i shape per i quali è definito uno stencil
+		var allShapes = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('stencil')){
+					return true;
+				}
+			}
+		});
+
+		//Ricavo tutti gli archi orientati per i quali è definito un attack type
+		var allConns = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('ap=')){
+					return true;
+				}
+			}
+		});
+
+		var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+
+		var defaultStencil = this.createStencilXml(allShapes,this.title);
+		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
+
+		console.log("\n\nJson File:\n" + json);
+		xmlconversion= xmlConversionTive(OBJtoXML(JSON.parse(json)));
+		localStorage.setItem('STENCIL', defaultStencil);
+		localStorage.setItem('CONNECTOR', defaultConnectors);
+		localStorage.setItem('RULES' , xmlconversion);
+
+
+
+
+		if(this.locomotiveurl == null){
+			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8080/?dev=1');
+		}
+
+		window.open(this.locomotiveurl, 'locomotive');
 
 		//xml che non ho capito a cosa serve
 		//this.createXML();

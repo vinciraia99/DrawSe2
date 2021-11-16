@@ -16,6 +16,13 @@
 	<meta name="msapplication-config" content="images/browserconfig.xml">
     <meta name="mobile-web-app-capable" content="yes">
 	<meta name="theme-color" content="#d89000">
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript">
+		function postCrossDomainMessage(msg,domain) {
+			var win = document.getElementById('ifr').contentWindow;
+			win.postMessage(msg, domain);
+		}
+	</script>
 	<script type="text/javascript">
 		/**
 		 * URL Parameters and protocol description are here:
@@ -245,11 +252,11 @@
 		if (urlParams['dev'] == '1')
 		{
 			// Used to request grapheditor/mxgraph sources in dev mode
-			var mxDevUrl = "http://localhost:8080/drawio_Web_exploded/";
+			var mxDevUrl = window.location.href.split('?')[0];
 			//var mxDevUrl = document.location.protocol + '//devhost.jgraph.com/drawio/src/main';
 			// Used to request draw.io sources in dev mode
 			//var drawDevUrl = document.location.protocol + '//devhost.jgraph.com/drawio/src/main/webapp/';
-			var drawDevUrl = "http://localhost:8080/drawio_Web_exploded/" ;
+			var drawDevUrl = window.location.href.split('?')[0] ;
 			var geBasePath = drawDevUrl + '/js/grapheditor';
 			var mxBasePath = mxDevUrl + '/mxgraph';
 			
@@ -284,6 +291,7 @@
 		}
 		else
 		{
+			window.location.replace(window.location.href.split('?')[0] + "?dev=1"); //Da rimuovere
 			(function()
 			{
 				var hostName = window.location.hostname;
