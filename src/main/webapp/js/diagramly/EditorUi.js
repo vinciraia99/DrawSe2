@@ -3,7 +3,6 @@
  * Copyright (c) 2006-2017, Gaudenz Alder
  */
 var locomotiveurl;
-
 (function()
 {
 	/**
@@ -394,6 +393,7 @@ var locomotiveurl;
 		var graph = this.editor.graph;
 		var connectionMode = graph.isConstraintMode();
 		document.getElementById("expButton").style.display = "none";
+		document.getElementById("expButton2").style.display = "none";
 		if(graph.isShapeMode()) {
 			graph.editorMode = mxResources.get('connectionMode');
 			graph.showConstraints();
@@ -434,6 +434,7 @@ var locomotiveurl;
 			};*/
 		} else if(graph.isConstraintMode()) {
 			document.getElementById("expButton").style.display = "inline-block";
+			document.getElementById("expButton2").style.display = "inline-block";
 			/*graph.editorMode = mxResources.get('shapeMode');
 			graph.hideConstraints();
 			/*Nascondo l'highlight del simbolo
@@ -480,8 +481,8 @@ var locomotiveurl;
 		this.format.refresh();
 
 	}
-
-	function OBJtoXML(obj) {
+	//qusta funzione converte il JSON in XML
+	function ConversionJSONtoXML(obj) {
 		var xml = '';
 		for (var prop in obj) {
 			xml += "<" + prop + ">";
@@ -492,10 +493,10 @@ var locomotiveurl;
 					xml += "</" + prop + ">";
 					xml += "<" + prop + ">";
 
-					xml += OBJtoXML(new Object(array));
+					xml += ConversionJSONtoXML(new Object(array));
 				}
 			} else if (typeof obj[prop] == "object") {
-				xml += OBJtoXML(new Object(obj[prop]));
+				xml += ConversionJSONtoXML(new Object(obj[prop]));
 			} else {
 				xml += obj[prop];
 			}
@@ -505,9 +506,54 @@ var locomotiveurl;
 		return xml;
 	}
 
+	//Questo metodo adatta il file xml delle rules per il tive servlet
+	function stencilXMLTive(xml){
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(xml, "application/xml");
+		const errorNode = doc.querySelector("parsererror");
+		if (errorNode) {
+			console.log("error while parsing");
+		}else{
+			doc.querySelectorAll("shape").forEach(function(node) {
+				var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("rect")[0];
+				if(childrect != null){
+					var back = document.createElement("background");
+					var rectnode = document.createElement("rect");
+					debugger;
+					var px = childrect.getAttribute("x");
+					var py = childrect.getAttribute("y");
+					var pw = childrect.getAttribute("w");
+					var ph = childrect.getAttribute("h");
+					rectnode.setAttribute("x", px);
+					rectnode.setAttribute("y", py);
+					rectnode.setAttribute("w", pw);
+					rectnode.setAttribute("h", ph);
+					back.appendChild(rectnode);
+					node.appendChild(back);
+				}
+				var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("ellipse")[0];
+				if(childrect != null){
+					var back = document.createElement("background");
+					var rectnode = document.createElement("ellipse");
+					var px = childrect.getAttribute("x");
+					var py = childrect.getAttribute("y");
+					var pw = childrect.getAttribute("w");
+					var ph = childrect.getAttribute("h");
+					rectnode.setAttribute("x", px);
+					rectnode.setAttribute("y", py);
+					rectnode.setAttribute("w", pw);
+					rectnode.setAttribute("h", ph);
+					back.appendChild(rectnode);
+					node.appendChild(back);
+				}
+			});
+			return new XMLSerializer().serializeToString(doc);
+		}
+	}
+
+
+	//Questo metodo adatta il file xml delle rules per il tive servlet
 	function xmlConversionTive(xml){
-		//xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + xml;
-		//console.log(xml);
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(xml, "application/xml");
 		const errorNode = doc.querySelector("parsererror");
@@ -602,7 +648,7 @@ var locomotiveurl;
 	}
 
 	/**
-	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export'
+	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export from JSON'
 	 * Ottenuto il Json lo carica nel localstorage del browser
 	 */
 
@@ -654,6 +700,11 @@ var locomotiveurl;
 
 	}
 
+	/**
+	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export from XML'
+	 * Ottenuto il Json lo carica nel localstorage del browser
+	 */
+
 	EditorUi.prototype.exportShapeXML = function() {
 		var graph = this.editor.graph;
 		var xmlconversion;
@@ -684,8 +735,12 @@ var locomotiveurl;
 		var defaultStencil = this.createStencilXml(allShapes,this.title);
 		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
 
-		console.log("\n\nJson File:\n" + json);
-		xmlconversion= xmlConversionTive(OBJtoXML(JSON.parse(json)));
+		//Converte il JSON in XML compatibile con il tive servlet
+		xmlconversion= xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
+
+		defaultStencil = stencilXMLTive(defaultStencil);
+
+
 		localStorage.setItem('STENCIL', defaultStencil);
 		localStorage.setItem('CONNECTOR', defaultConnectors);
 		localStorage.setItem('RULES' , xmlconversion);
