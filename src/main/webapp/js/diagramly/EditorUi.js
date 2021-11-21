@@ -519,7 +519,6 @@ var locomotiveurl;
 				if(childrect != null){
 					var back = document.createElement("background");
 					var rectnode = document.createElement("rect");
-					debugger;
 					var px = childrect.getAttribute("x");
 					var py = childrect.getAttribute("y");
 					var pw = childrect.getAttribute("w");
@@ -560,6 +559,9 @@ var locomotiveurl;
 		if (errorNode) {
 			console.log("error while parsing");
 		} else {
+			var constraint = document.createElement("constraint");
+			constraint.innerHTML = "Connected";
+			doc.querySelectorAll("language")[0].appendChild(constraint);
 			var namelang = doc.querySelectorAll("_name")[doc.querySelectorAll("_name").length -1].textContent;
 			doc.querySelectorAll("_name")[doc.querySelectorAll("_name").length -1].remove();
 			doc.querySelectorAll("language")[0].setAttribute("name", namelang);
@@ -644,7 +646,9 @@ var locomotiveurl;
 			});
 		}
 
-		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + new XMLSerializer().serializeToString(doc);
+		var finalxml = new XMLSerializer().serializeToString(doc);
+
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + finalxml.replaceAll("connectnum","connectNum");
 	}
 
 	/**
@@ -746,13 +750,34 @@ var locomotiveurl;
 		localStorage.setItem('RULES' , xmlconversion);
 
 
-
-
 		if(this.locomotiveurl == null){
-			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8080/?dev=1');
+			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/uploadexternal');
 		}
 
-		window.open(this.locomotiveurl, 'locomotive');
+		var form = document.createElement("form");
+		form.setAttribute("id","formupload")
+		var element1 = document.createElement("input");
+		var element2 = document.createElement("input");
+		var element3 = document.createElement("input");
+
+		form.method = "POST";
+		form.action = this.locomotiveurl;
+
+		element1.value=defaultStencil;
+		element1.name="stencil";
+		form.appendChild(element1);
+
+		element2.value=defaultConnectors;
+		element2.name="connector";
+		form.appendChild(element2);
+
+		element3.value= xmlconversion;
+		element3.name="rules";
+		form.appendChild(element3);
+
+		document.body.appendChild(form);
+
+		form.submit();
 
 		//xml che non ho capito a cosa serve
 		//this.createXML();
