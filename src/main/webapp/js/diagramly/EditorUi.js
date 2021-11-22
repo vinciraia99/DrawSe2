@@ -516,7 +516,6 @@ var locomotiveurl;
 			console.log("error while parsing");
 		}else{
 			doc.querySelectorAll("shape").forEach(function(node) {
-				debugger;
 				var childrect = node.querySelectorAll("foreground")[0].children[4];
 				if(childrect != null){
 					var back = document.createElement("background");
