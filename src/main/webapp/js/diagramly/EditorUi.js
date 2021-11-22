@@ -511,14 +511,22 @@ var locomotiveurl;
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(xml, "application/xml");
 		const errorNode = doc.querySelector("parsererror");
+		var flag = true;
 		if (errorNode) {
 			console.log("error while parsing");
 		}else{
 			doc.querySelectorAll("shape").forEach(function(node) {
-				var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("rect")[0];
+				debugger;
+				var childrect = node.querySelectorAll("foreground")[0].children[4];
 				if(childrect != null){
 					var back = document.createElement("background");
-					var rectnode = document.createElement("rect");
+					var tagname = childrect.tagName;
+					var rectnode = document.createElement(tagname);
+					var name = childrect.getAttribute("name");
+					if(name!=null){
+							alert("Stencil not supported for old tive!");
+							flag=false;
+					}
 					var px = childrect.getAttribute("x");
 					var py = childrect.getAttribute("y");
 					var pw = childrect.getAttribute("w");
@@ -529,8 +537,7 @@ var locomotiveurl;
 					rectnode.setAttribute("h", ph);
 					back.appendChild(rectnode);
 					node.appendChild(back);
-				}
-				var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("ellipse")[0];
+				/*var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("ellipse")[0];
 				if(childrect != null){
 					var back = document.createElement("background");
 					var rectnode = document.createElement("ellipse");
@@ -544,9 +551,14 @@ var locomotiveurl;
 					rectnode.setAttribute("h", ph);
 					back.appendChild(rectnode);
 					node.appendChild(back);
-				}
-			});
-			return new XMLSerializer().serializeToString(doc);
+				}*/
+			}});
+			if(flag){
+				return new XMLSerializer().serializeToString(doc);
+			}else{
+				return false;
+			}
+
 		}
 	}
 
@@ -744,6 +756,11 @@ var locomotiveurl;
 
 		defaultStencil = stencilXMLTive(defaultStencil);
 
+		if(defaultStencil ==  false){
+			return;
+		}else{
+
+
 
 		localStorage.setItem('STENCIL', defaultStencil);
 		localStorage.setItem('CONNECTOR', defaultConnectors);
@@ -751,7 +768,7 @@ var locomotiveurl;
 
 
 		if(this.locomotiveurl == null){
-			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/uploadexternal');
+			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8077/DiagramEditor_war_exploded/');
 		}
 
 		var form = document.createElement("form");
@@ -781,7 +798,7 @@ var locomotiveurl;
 
 		//xml che non ho capito a cosa serve
 		//this.createXML();
-
+		}
 	}
 
 	EditorUi.prototype.counterExport = 1 ;
