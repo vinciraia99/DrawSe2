@@ -723,80 +723,84 @@ var locomotiveurl;
 	EditorUi.prototype.exportShapeXML = function() {
 		var graph = this.editor.graph;
 		var xmlconversion;
+		debugger;
 		if(this.title == null) {
 			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
 		}
+		if(this.title != null){
 
-		//Ricavo tutti i shape per i quali è definito uno stencil
-		var allShapes = graph.getModel().filterDescendants(function(cell) {
-			if((cell.vertex || cell.edge)){
-				if(cell.getStyle().includes('stencil')){
-					return true;
+			//Ricavo tutti i shape per i quali è definito uno stencil
+			var allShapes = graph.getModel().filterDescendants(function(cell) {
+				if((cell.vertex || cell.edge)){
+					if(cell.getStyle().includes('stencil')){
+						return true;
+					}
+				}
+			});
+
+			//Ricavo tutti gli archi orientati per i quali è definito un attack type
+			var allConns = graph.getModel().filterDescendants(function(cell) {
+				if((cell.vertex || cell.edge)){
+					if(cell.getStyle().includes('ap=')){
+						return true;
+					}
+				}
+			});
+
+			var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+
+			var defaultStencil = this.createStencilXml(allShapes,this.title);
+			var defaultConnectors = this.createConnectorsXml(allConns,this.title);
+
+			//Converte il JSON in XML compatibile con il tive servlet
+			xmlconversion= xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
+
+			defaultStencil = stencilXMLTive(defaultStencil);
+
+			if(defaultStencil ==  false){
+				return;
+			}else {
+
+
+				localStorage.setItem('STENCIL', defaultStencil);
+				localStorage.setItem('CONNECTOR', defaultConnectors);
+				localStorage.setItem('RULES', xmlconversion);
+
+
+				if (this.locomotiveurl == null) {
+					this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8077/DiagramEditor_war_exploded/');
+				}
+				if (this.locomotiveurl != null) {
+
+					var form = document.createElement("form");
+					form.setAttribute("id", "formupload")
+					var element1 = document.createElement("input");
+					var element2 = document.createElement("input");
+					var element3 = document.createElement("input");
+
+					form.method = "POST";
+					form.action = this.locomotiveurl;
+
+					element1.value = defaultStencil;
+					element1.name = "stencil";
+					form.appendChild(element1);
+
+					element2.value = defaultConnectors;
+					element2.name = "connector";
+					form.appendChild(element2);
+
+					element3.value = xmlconversion;
+					element3.name = "rules";
+					form.appendChild(element3);
+
+					document.body.appendChild(form);
+
+					form.submit();
+
+					//xml che non ho capito a cosa serve
+					//this.createXML();
 				}
 			}
-		});
-
-		//Ricavo tutti gli archi orientati per i quali è definito un attack type
-		var allConns = graph.getModel().filterDescendants(function(cell) {
-			if((cell.vertex || cell.edge)){
-				if(cell.getStyle().includes('ap=')){
-					return true;
-				}
-			}
-		});
-
-		var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
-
-		var defaultStencil = this.createStencilXml(allShapes,this.title);
-		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
-
-		//Converte il JSON in XML compatibile con il tive servlet
-		xmlconversion= xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
-
-		defaultStencil = stencilXMLTive(defaultStencil);
-
-		if(defaultStencil ==  false){
-			return;
-		}else{
-
-
-
-		localStorage.setItem('STENCIL', defaultStencil);
-		localStorage.setItem('CONNECTOR', defaultConnectors);
-		localStorage.setItem('RULES' , xmlconversion);
-
-
-		if(this.locomotiveurl == null){
-			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8077/DiagramEditor_war_exploded/');
-		}
-
-		var form = document.createElement("form");
-		form.setAttribute("id","formupload")
-		var element1 = document.createElement("input");
-		var element2 = document.createElement("input");
-		var element3 = document.createElement("input");
-
-		form.method = "POST";
-		form.action = this.locomotiveurl;
-
-		element1.value=defaultStencil;
-		element1.name="stencil";
-		form.appendChild(element1);
-
-		element2.value=defaultConnectors;
-		element2.name="connector";
-		form.appendChild(element2);
-
-		element3.value= xmlconversion;
-		element3.name="rules";
-		form.appendChild(element3);
-
-		document.body.appendChild(form);
-
-		form.submit();
-
-		//xml che non ho capito a cosa serve
-		//this.createXML();
 		}
 	}
 
