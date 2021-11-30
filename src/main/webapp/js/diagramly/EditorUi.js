@@ -564,10 +564,12 @@ var locomotiveurl;
 
 	//Questo metodo adatta il file xml delle rules per il tive servlet
 	function xmlConversionTive(xml){
+		xml = xml.replaceAll("<=","&lt;=");
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(xml, "application/xml");
 		const errorNode = doc.querySelector("parsererror");
 		if (errorNode) {
+			console.log(xml);
 			console.log("error while parsing");
 		} else {
 			var constraint = document.createElement("constraint");
@@ -723,7 +725,6 @@ var locomotiveurl;
 	EditorUi.prototype.exportShapeXML = function() {
 		var graph = this.editor.graph;
 		var xmlconversion;
-		debugger;
 		if(this.title == null) {
 			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
 		}
