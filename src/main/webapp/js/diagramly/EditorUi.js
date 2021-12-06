@@ -511,21 +511,14 @@ var locomotiveurl;
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(xml, "application/xml");
 		const errorNode = doc.querySelector("parsererror");
-		var flag = true;
 		if (errorNode) {
 			console.log("error while parsing");
 		}else{
 			doc.querySelectorAll("shape").forEach(function(node) {
-				var childrect = node.querySelectorAll("foreground")[0].children[4];
+				var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("rect")[0];
 				if(childrect != null){
 					var back = document.createElement("background");
-					var tagname = childrect.tagName;
-					var rectnode = document.createElement(tagname);
-					var name = childrect.getAttribute("name");
-					if(name!=null){
-							alert("Stencil not supported for old tive!");
-							flag=false;
-					}
+					var rectnode = document.createElement("rect");
 					var px = childrect.getAttribute("x");
 					var py = childrect.getAttribute("y");
 					var pw = childrect.getAttribute("w");
@@ -536,7 +529,8 @@ var locomotiveurl;
 					rectnode.setAttribute("h", ph);
 					back.appendChild(rectnode);
 					node.appendChild(back);
-				/*var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("ellipse")[0];
+				}
+				var childrect = node.querySelectorAll("foreground")[0].querySelectorAll("ellipse")[0];
 				if(childrect != null){
 					var back = document.createElement("background");
 					var rectnode = document.createElement("ellipse");
@@ -550,14 +544,9 @@ var locomotiveurl;
 					rectnode.setAttribute("h", ph);
 					back.appendChild(rectnode);
 					node.appendChild(back);
-				}*/
-			}});
-			if(flag){
-				return new XMLSerializer().serializeToString(doc);
-			}else{
-				return false;
-			}
-
+				}
+			});
+			return new XMLSerializer().serializeToString(doc);
 		}
 	}
 
@@ -728,81 +717,73 @@ var locomotiveurl;
 		if(this.title == null) {
 			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
 		}
-		if(this.title != null){
 
-			//Ricavo tutti i shape per i quali è definito uno stencil
-			var allShapes = graph.getModel().filterDescendants(function(cell) {
-				if((cell.vertex || cell.edge)){
-					if(cell.getStyle().includes('stencil')){
-						return true;
-					}
-				}
-			});
-
-			//Ricavo tutti gli archi orientati per i quali è definito un attack type
-			var allConns = graph.getModel().filterDescendants(function(cell) {
-				if((cell.vertex || cell.edge)){
-					if(cell.getStyle().includes('ap=')){
-						return true;
-					}
-				}
-			});
-
-			var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
-
-			var defaultStencil = this.createStencilXml(allShapes,this.title);
-			var defaultConnectors = this.createConnectorsXml(allConns,this.title);
-
-			//Converte il JSON in XML compatibile con il tive servlet
-			xmlconversion= xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
-
-			defaultStencil = stencilXMLTive(defaultStencil);
-
-			if(defaultStencil ==  false){
-				return;
-			}else {
-
-
-				localStorage.setItem('STENCIL', defaultStencil);
-				localStorage.setItem('CONNECTOR', defaultConnectors);
-				localStorage.setItem('RULES', xmlconversion);
-
-
-				if (this.locomotiveurl == null) {
-					this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8077/DiagramEditor_war_exploded/');
-				}
-				if (this.locomotiveurl != null) {
-
-					var form = document.createElement("form");
-					form.setAttribute("id", "formupload")
-					var element1 = document.createElement("input");
-					var element2 = document.createElement("input");
-					var element3 = document.createElement("input");
-
-					form.method = "POST";
-					form.action = this.locomotiveurl;
-
-					element1.value = defaultStencil;
-					element1.name = "stencil";
-					form.appendChild(element1);
-
-					element2.value = defaultConnectors;
-					element2.name = "connector";
-					form.appendChild(element2);
-
-					element3.value = xmlconversion;
-					element3.name = "rules";
-					form.appendChild(element3);
-
-					document.body.appendChild(form);
-
-					form.submit();
-
-					//xml che non ho capito a cosa serve
-					//this.createXML();
+		//Ricavo tutti i shape per i quali è definito uno stencil
+		var allShapes = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('stencil')){
+					return true;
 				}
 			}
+		});
+
+		//Ricavo tutti gli archi orientati per i quali è definito un attack type
+		var allConns = graph.getModel().filterDescendants(function(cell) {
+			if((cell.vertex || cell.edge)){
+				if(cell.getStyle().includes('ap=')){
+					return true;
+				}
+			}
+		});
+
+		var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+
+		var defaultStencil = this.createStencilXml(allShapes,this.title);
+		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
+
+		//Converte il JSON in XML compatibile con il tive servlet
+		xmlconversion= xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
+
+		defaultStencil = stencilXMLTive(defaultStencil);
+
+
+		localStorage.setItem('STENCIL', defaultStencil);
+		localStorage.setItem('CONNECTOR', defaultConnectors);
+		localStorage.setItem('RULES' , xmlconversion);
+
+
+		if(this.locomotiveurl == null){
+			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/uploadexternal');
 		}
+
+		var form = document.createElement("form");
+		form.setAttribute("id","formupload")
+		var element1 = document.createElement("input");
+		var element2 = document.createElement("input");
+		var element3 = document.createElement("input");
+
+		form.method = "POST";
+		form.action = this.locomotiveurl;
+
+		element1.value=defaultStencil;
+		element1.name="stencil";
+		form.appendChild(element1);
+
+		element2.value=defaultConnectors;
+		element2.name="connector";
+		form.appendChild(element2);
+
+		element3.value= xmlconversion;
+		element3.name="rules";
+		form.appendChild(element3);
+
+		document.body.appendChild(form);
+
+		form.submit();
+
+		//xml che non ho capito a cosa serve
+		//this.createXML();
+
 	}
 
 	EditorUi.prototype.counterExport = 1 ;

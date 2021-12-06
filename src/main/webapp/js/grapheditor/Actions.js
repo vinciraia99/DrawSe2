@@ -626,6 +626,11 @@ Actions.prototype.init = function()
 			});
 		}
 	}, null, null, 'Alt+Shift+L');
+	debugger;
+	this.addAction('editTable', function (){
+		showTable(graph);
+
+	},null,null,null);
 	this.put('insertImage', new Action(mxResources.get('image') + '...', function()
 	{
 		if (graph.isEnabled() && !graph.isCellLocked(graph.getDefaultParent()))

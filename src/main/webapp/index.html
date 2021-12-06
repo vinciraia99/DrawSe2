@@ -17,6 +17,8 @@
     <meta name="mobile-web-app-capable" content="yes">
 	<meta name="theme-color" content="#d89000">
 	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<link rel="stylesheet" href="styles/stileTabella.css">
+	<script src="tableGenerator.js"></script>
 	<script type="text/javascript">
 		function postCrossDomainMessage(msg,domain) {
 			var win = document.getElementById('ifr').contentWindow;
@@ -481,5 +483,33 @@ else
 	}
 }
 </script>
+
+<div id="overlay">
+<div id="overlay1">
+	<!--<table class="tabella">
+		<thead>
+		<tr>
+			<th id="nomeoggetto" class="tg-l93j" colspan="3">Nome stencil<br><input type="text" value="John"><br><br></th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td class="tg-0pky"><input type="text" value="John"></td>
+			<td class="tg-0pky"><input type="text" value="John"></td>
+			<td class="tg-0pky"><input type="text" value="John"></td>
+		</tr>
+		<tr>
+			<td class="tg-0pky"><input type="text" value="John"></td>
+			<td class="tg-0pky"><input type="text" value="John"></td>
+			<td class="tg-0pky"><input type="text" value="John"></td>
+		</tr>
+		<tr>
+			<td id="printer" class="tg-c3ow" colspan="3"><input type="text" value="John"></td>
+		</tr>
+		</tbody>
+	</table>-
+	<p class="pop-x" onclick="hideTable()">Conferma</p>->
+</div>
+</div>
 </body>
 </html>
