@@ -254,6 +254,14 @@ Toolbar.prototype.addExportLocalButton = function() {
 	inputNode22.id = 'expButton2';
 	label22.appendChild(inputNode22);
 
+	var inputNode3 = document.createElement('input');
+	inputNode3.setAttribute('type', 'button');
+	inputNode3.setAttribute('value', 'Define priority table');
+	inputNode3.style.margin = '7px';
+	inputNode3.className = 'expButton3';
+	inputNode3.id = 'expButton3';
+	label22.appendChild(inputNode3);
+
 
 	this.container.appendChild(label22);
 
@@ -261,6 +269,10 @@ Toolbar.prototype.addExportLocalButton = function() {
 		this.editorUi.exportShapeXML();
 	});
 	mxEvent.addListener(inputNode22, 'click', switchEvent);
+	var switchEvent = mxUtils.bind(this, function(evt) {
+		this.editorUi.definePriority();
+	});
+	mxEvent.addListener(inputNode3, 'click', switchEvent);
 }
 
 /**

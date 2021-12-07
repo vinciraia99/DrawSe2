@@ -1133,4 +1133,4 @@ confACheckPagesWEmbed=Checking pages having embedded draw.io diagrams.
 confADelBrokenEmbedDiagLnk=Removing broken embedded diagram links
 replaceWith=Replace with
 replaceAll=Replace All
-editTable=Tabella test
+editTable=Define semantic rules

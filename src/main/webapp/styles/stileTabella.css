@@ -65,6 +65,7 @@
 	 background-color: rgba(0,0,0,0.5);
 	 z-index: 2;
  }
+
 #overlay1 {
 	position: fixed;
 	z-index: 9999;
@@ -100,4 +101,20 @@
 	cursor: pointer;
 	border-radius: 10px;
 	margin-top: 20px;
+}
+
+.plusbutton {
+	text-align: center;
+	font-size: 30px;
+	font-weight: 100;
+	line-height: 25px;
+	color: #f7f7f7;
+	background: #7c7c7c;
+	cursor: pointer;
+	border-radius: 10px;
+	margin: 1px;
+}
+
+.rowinline{
+	display: flex;
 }

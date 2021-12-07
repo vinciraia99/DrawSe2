@@ -710,6 +710,11 @@ var locomotiveurl;
 	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export from XML'
 	 * Ottenuto il Json lo carica nel localstorage del browser
 	 */
+	EditorUi.prototype.definePriority = function() {
+		createPriorityTable(this.editor.graph)
+		debugger;
+
+	}
 
 	EditorUi.prototype.exportShapeXML = function() {
 		var graph = this.editor.graph;
@@ -800,12 +805,12 @@ var locomotiveurl;
 			var shape = shapes[i];
 			var stencil = shape.getStyle();
 			var base64 = stencil.substring(14, stencil.length - 2)
-			var desc = graph.decompress(base64);
+			let desc = graph.decompress(base64);
 			var shapeXml = mxUtils.parseXml(desc).documentElement;
 			shapeXml.setAttribute("graphicRef" , 'symbols/General/'
 				+ shapeXml.getAttribute('name') + '.xml');
 			console.log(shapeXml);
-			var desc = mxUtils.getXml(shapeXml);
+			desc = mxUtils.getXml(shapeXml);
 
 
 			xml = xml + desc + '\n'

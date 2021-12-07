@@ -25,7 +25,6 @@ StencilManager.prototype.mergeShapes = function(cellGroup, stroke, isPath, color
     root.setAttribute('aspect','variable');
     root.setAttribute('strokewidth','inherit');
     root.setAttribute("occurrences" , '>=0');
-
     var k;
     var tempName;
     var tempOcc;
