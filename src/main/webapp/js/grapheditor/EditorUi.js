@@ -4568,7 +4568,9 @@ EditorUi.prototype.createOutline = function(wnd)
 };
 
 // Alt+Shift+Keycode mapping to action
-EditorUi.prototype.altShiftActions = {67: 'clearWaypoints', // Alt+Shift+C
+EditorUi.prototype.altShiftActions = {
+	67: 'clearWaypoints', // Alt+Shift+C
+  69: 'editTable', //Alt+Shift+E
   65: 'connectionArrows', // Alt+Shift+A
   76: 'editLink', // Alt+Shift+L
   80: 'connectionPoints', // Alt+Shift+P

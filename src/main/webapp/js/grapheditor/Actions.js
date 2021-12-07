@@ -629,7 +629,7 @@ Actions.prototype.init = function()
 	this.addAction('editTable', function (){
 		showTable(graph);
 
-	},null,null,null);
+	},null,null,'Alt+Shift+E');
 	this.put('insertImage', new Action(mxResources.get('image') + '...', function()
 	{
 		if (graph.isEnabled() && !graph.isCellLocked(graph.getDefaultParent()))
