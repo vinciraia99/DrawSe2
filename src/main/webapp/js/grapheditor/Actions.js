@@ -626,7 +626,6 @@ Actions.prototype.init = function()
 			});
 		}
 	}, null, null, 'Alt+Shift+L');
-	debugger;
 	this.addAction('editTable', function (){
 		showTable(graph);
 

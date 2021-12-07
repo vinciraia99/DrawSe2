@@ -394,6 +394,7 @@ var locomotiveurl;
 		var connectionMode = graph.isConstraintMode();
 		document.getElementById("expButton").style.display = "none";
 		document.getElementById("expButton2").style.display = "none";
+		document.getElementById("expButton3").style.display = "none";
 		if(graph.isShapeMode()) {
 			graph.editorMode = mxResources.get('connectionMode');
 			graph.showConstraints();
@@ -435,6 +436,7 @@ var locomotiveurl;
 		} else if(graph.isConstraintMode()) {
 			document.getElementById("expButton").style.display = "inline-block";
 			document.getElementById("expButton2").style.display = "inline-block";
+			document.getElementById("expButton3").style.display = "inline-block";
 			/*graph.editorMode = mxResources.get('shapeMode');
 			graph.hideConstraints();
 			/*Nascondo l'highlight del simbolo
@@ -664,46 +666,50 @@ var locomotiveurl;
 		if(this.title == null) {
 			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
 		}
+		if(this.title != null) {
 
-		//Ricavo tutti i shape per i quali è definito uno stencil
-		var allShapes = graph.getModel().filterDescendants(function(cell) {
-			if((cell.vertex || cell.edge)){
-				if(cell.getStyle().includes('stencil')){
-					return true;
+			//Ricavo tutti i shape per i quali è definito uno stencil
+			var allShapes = graph.getModel().filterDescendants(function (cell) {
+				if ((cell.vertex || cell.edge)) {
+					if (cell.getStyle().includes('stencil')) {
+						return true;
+					}
 				}
-			}
-		});
+			});
 
-		//Ricavo tutti gli archi orientati per i quali è definito un attack type
-		var allConns = graph.getModel().filterDescendants(function(cell) {
-			if((cell.vertex || cell.edge)){
-				if(cell.getStyle().includes('ap=')){
-					return true;
+			//Ricavo tutti gli archi orientati per i quali è definito un attack type
+			var allConns = graph.getModel().filterDescendants(function (cell) {
+				if ((cell.vertex || cell.edge)) {
+					if (cell.getStyle().includes('ap=')) {
+						return true;
+					}
 				}
+			});
+
+			var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+
+			var defaultStencil = this.createStencilXml(allShapes, this.title);
+			var defaultConnectors = this.createConnectorsXml(allConns, this.title);
+
+			console.log("\n\nJson File:\n" + json);
+
+			localStorage.setItem('STENCIL', defaultStencil);
+			localStorage.setItem('CONNECTOR', defaultConnectors);
+			localStorage.setItem('RULES', json);
+
+
+			if (this.locomotiveurl == null) {
+				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8080/?dev=1');
 			}
-		});
 
-		var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+			if(this.locomotiveurl != null) {
 
-		var defaultStencil = this.createStencilXml(allShapes,this.title);
-		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
+				window.open(this.locomotiveurl, 'locomotive');
+			}
 
-		console.log("\n\nJson File:\n" + json);
-
-		localStorage.setItem('STENCIL', defaultStencil);
-		localStorage.setItem('CONNECTOR', defaultConnectors);
-		localStorage.setItem('RULES' , json);
-
-
-		if(this.locomotiveurl == null){
-			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8080/?dev=1');
+			//xml che non ho capito a cosa serve
+			//this.createXML();
 		}
-
-		window.open(this.locomotiveurl, 'locomotive');
-
-		//xml che non ho capito a cosa serve
-		//this.createXML();
-
 	}
 
 	/**
@@ -711,83 +717,90 @@ var locomotiveurl;
 	 * Ottenuto il Json lo carica nel localstorage del browser
 	 */
 	EditorUi.prototype.definePriority = function() {
-		createPriorityTable(this.editor.graph)
-		debugger;
+		showPriorityTable(this.editor.graph)
 
 	}
 
 	EditorUi.prototype.exportShapeXML = function() {
 		var graph = this.editor.graph;
 		var xmlconversion;
+
 		if(this.title == null) {
 			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
 		}
 
-		//Ricavo tutti i shape per i quali è definito uno stencil
-		var allShapes = graph.getModel().filterDescendants(function(cell) {
-			if((cell.vertex || cell.edge)){
-				if(cell.getStyle().includes('stencil')){
-					return true;
+		if(this.title != null) {
+
+			//Ricavo tutti i shape per i quali è definito uno stencil
+			var allShapes = graph.getModel().filterDescendants(function (cell) {
+				if ((cell.vertex || cell.edge)) {
+					if (cell.getStyle().includes('stencil')) {
+						return true;
+					}
 				}
-			}
-		});
+			});
 
-		//Ricavo tutti gli archi orientati per i quali è definito un attack type
-		var allConns = graph.getModel().filterDescendants(function(cell) {
-			if((cell.vertex || cell.edge)){
-				if(cell.getStyle().includes('ap=')){
-					return true;
+			//Ricavo tutti gli archi orientati per i quali è definito un attack type
+			var allConns = graph.getModel().filterDescendants(function (cell) {
+				if ((cell.vertex || cell.edge)) {
+					if (cell.getStyle().includes('ap=')) {
+						return true;
+					}
 				}
+			});
+
+			var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
+
+			var defaultStencil = this.createStencilXml(allShapes, this.title);
+			var defaultConnectors = this.createConnectorsXml(allConns, this.title);
+
+			//Converte il JSON in XML compatibile con il tive servlet
+			xmlconversion = xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
+
+			defaultStencil = stencilXMLTive(defaultStencil);
+
+
+			localStorage.setItem('STENCIL', defaultStencil);
+			localStorage.setItem('CONNECTOR', defaultConnectors);
+			localStorage.setItem('RULES', xmlconversion);
+
+
+			if (this.locomotiveurl == null) {
+				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/uploadexternal');
 			}
-		});
 
-		var json = this.createShapesJSON(allShapes) + this.createConnectorsJSON(allConns);
-
-		var defaultStencil = this.createStencilXml(allShapes,this.title);
-		var defaultConnectors = this.createConnectorsXml(allConns,this.title);
-
-		//Converte il JSON in XML compatibile con il tive servlet
-		xmlconversion= xmlConversionTive(ConversionJSONtoXML(JSON.parse(json)));
-
-		defaultStencil = stencilXMLTive(defaultStencil);
+			if(this.locomotiveurl != null) {
 
 
-		localStorage.setItem('STENCIL', defaultStencil);
-		localStorage.setItem('CONNECTOR', defaultConnectors);
-		localStorage.setItem('RULES' , xmlconversion);
+				var form = document.createElement("form");
+				form.setAttribute("id", "formupload")
+				var element1 = document.createElement("input");
+				var element2 = document.createElement("input");
+				var element3 = document.createElement("input");
 
+				form.method = "POST";
+				form.action = this.locomotiveurl;
 
-		if(this.locomotiveurl == null){
-			this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/uploadexternal');
+				element1.value = defaultStencil;
+				element1.name = "stencil";
+				form.appendChild(element1);
+
+				element2.value = defaultConnectors;
+				element2.name = "connector";
+				form.appendChild(element2);
+
+				element3.value = xmlconversion;
+				element3.name = "rules";
+				form.appendChild(element3);
+
+				document.body.appendChild(form);
+
+				form.submit();
+			}
+
+			//xml che non ho capito a cosa serve
+			//this.createXML();
 		}
-
-		var form = document.createElement("form");
-		form.setAttribute("id","formupload")
-		var element1 = document.createElement("input");
-		var element2 = document.createElement("input");
-		var element3 = document.createElement("input");
-
-		form.method = "POST";
-		form.action = this.locomotiveurl;
-
-		element1.value=defaultStencil;
-		element1.name="stencil";
-		form.appendChild(element1);
-
-		element2.value=defaultConnectors;
-		element2.name="connector";
-		form.appendChild(element2);
-
-		element3.value= xmlconversion;
-		element3.name="rules";
-		form.appendChild(element3);
-
-		document.body.appendChild(form);
-
-		form.submit();
-
-		//xml che non ho capito a cosa serve
-		//this.createXML();
 
 	}
 

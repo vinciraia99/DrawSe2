@@ -1,7 +1,6 @@
 var tempGraph;
 function showTable(graph) {
     tempGraph = graph;
-    debugger
         if(graph.editorMode == "Shape Editor Mode"){
             var stencil = graph.getSelectionCell().getStyle();
             var base64 = stencil.substring(14, stencil.length-2);
@@ -269,7 +268,6 @@ function saveDataTable(){
 }
 
 function checkInput(input,array){
-    debugger;
     var find = 0;
     var tot = 0;
     var splitting = input.split(/\s+|\(|\)|;/gm);
@@ -324,9 +322,13 @@ function removeWhiteLine(){
 
 }
 
-function createPriorityTable(graph){
-    var stencilList = new Array();
-    var connectorList = new Array();
+var stencilList;
+var connectorList;
+
+function showPriorityTable(graph){
+    tempGraph = graph;
+    stencilList = new Array();
+    connectorList = new Array();
 
     var allShapes = graph.getModel().filterDescendants(function(cell) {
         if((cell.vertex || cell.edge)){
@@ -344,58 +346,59 @@ function createPriorityTable(graph){
             }
         }
     });
-
-    debugger;
-
-    for(var i=0;i<allShapes.length;i++) {
-        var shape = allShapes[i];
-        var stencil = shape.getStyle();
-        var base64 = stencil.substring(14, stencil.length - 2);
-        var name = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name');
-        if(shape.priority !=null){
-            var data ={
-                name: name,
-                priority: shape.priority
-            };
-            stencilList.push(data);
-        }else{
-            var data ={
-                name: name,
-                priority: 0
-            };
-            stencilList.push(data);
+    if(allShapes.length >0 || allConns.length>0){
+        for(var i=0;i<allShapes.length;i++) {
+            var shape = allShapes[i];
+            var stencil = shape.getStyle();
+            var base64 = stencil.substring(14, stencil.length - 2);
+            var name = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name');
+            if(shape.priority !=null){
+                var data ={
+                    name: name,
+                    priority: shape.priority
+                };
+                stencilList.push(data);
+            }else{
+                var data ={
+                    name: name,
+                    priority: 0
+                };
+                stencilList.push(data);
+            }
         }
-    }
 
-    for(var i=0;i<allConns.length;i++) {
-        var edge = allConns[i];
-        var edgeStyle = edge.getStyle();
-        var initCut = edgeStyle.indexOf("name=")
-        edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
-        var toCut = edgeStyle.indexOf(";");
-        edgeStyle = edgeStyle.substring(5,toCut);
-        var name = edgeStyle;
-        if(edge.priority !=null){
-            var data ={
-                name: name,
-                priority: edge.priority
-            };
-            connectorList.push(data);
-        }else{
-            var data ={
-                name: name,
-                priority: 0
-            };
-            connectorList.push(data);
+        for(var i=0;i<allConns.length;i++) {
+            var edge = allConns[i];
+            var edgeStyle = edge.getStyle();
+            var initCut = edgeStyle.indexOf("name=")
+            edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
+            var toCut = edgeStyle.indexOf(";");
+            edgeStyle = edgeStyle.substring(5,toCut);
+            var name = edgeStyle;
+            if(edge.priority !=null){
+                var data ={
+                    name: name,
+                    priority: edge.priority
+                };
+                connectorList.push(data);
+            }else{
+                var data ={
+                    name: name,
+                    priority: 0
+                };
+                connectorList.push(data);
+            }
         }
-    }
 
-    generateHTMLTablePiority(stencilList,connectorList);
-    document.getElementById("overlay").style.display = "flex";
+        generateHTMLTablePiority();
+        document.getElementById("overlay").style.display = "flex";
+    }else{
+        mxUtils.alert("Define at least one connector or stencil");
+    }
 
 }
 
-function generateHTMLTablePiority(stencil,connector){
+function generateHTMLTablePiority(){
     var div = document.getElementById("overlay1");
     div.setAttribute("style","width: 50%;");
     var tbl = document.createElement("table");
@@ -418,35 +421,38 @@ function generateHTMLTablePiority(stencil,connector){
     var row4 = row3.cloneNode(true);
     row4.innerHTML = "Priority"
 
-    var row5 = document.createElement("tr");
-    var row6 = document.createElement("td");
-    row6.innerHTML = "Stencil"
-    row6.setAttribute("class","tg-l93j");
-    row6.setAttribute("colspan","2");
-    row5.appendChild(row6);
-
 
     row2.appendChild(row3);
     row2.appendChild(row4);
     tblBody.appendChild(row2);
-    tblBody.appendChild(row6);
     row.appendChild(row1);
     tblHead.appendChild(row);
-    tblBody.appendChild(row5);
 
-    for(var i=0;i<stencil.length;i++){
-        var row2 = document.createElement("tr");
-        var row3 = document.createElement("td");
-        row3.setAttribute("class","tg-0pky");
-        row3.innerHTML = stencil[i]["name"];
-        var row4 = row3.cloneNode(true);
-        row4.innerHTML = "<input type=\"text\" class=\"priority\" value='"+ stencil[i]["priority"] +"'>"
-        row2.appendChild(row3);
-        row2.appendChild(row4);
-        tblBody.appendChild(row2);
+    if(stencilList.length >0){
+        var row5 = document.createElement("tr");
+        var row6 = document.createElement("td");
+        row6.innerHTML = "Stencil"
+        row6.setAttribute("class","tg-l93j");
+        row6.setAttribute("colspan","2");
+        row5.appendChild(row6);
+
+        tblBody.appendChild(row5);
+
+
+        for(var i=0;i<stencilList.length;i++){
+            var row2 = document.createElement("tr");
+            var row3 = document.createElement("td");
+            row3.setAttribute("class","tg-0pky");
+            row3.innerHTML = stencilList[i]["name"];
+            var row4 = row3.cloneNode(true);
+            row4.innerHTML = "<input type=\"number\" class=\"priority\" value='"+ stencilList[i]["priority"] +"'>"
+            row2.appendChild(row3);
+            row2.appendChild(row4);
+            tblBody.appendChild(row2);
+        }
     }
 
-    if(connector.length >0){
+    if(connectorList.length >0){
         var row5 = document.createElement("tr");
         var row6 = document.createElement("td");
         row6.innerHTML = "Connector"
@@ -455,13 +461,13 @@ function generateHTMLTablePiority(stencil,connector){
         row5.appendChild(row6);
         tblBody.appendChild(row5);
 
-        for(var i=0;i<connector.length;i++){
+        for(var i=0;i<connectorList.length;i++){
             var row2 = document.createElement("tr");
             var row3 = document.createElement("td");
             row3.setAttribute("class","tg-0pky");
-            row3.innerHTML = connector[i]["name"];
+            row3.innerHTML = connectorList[i]["name"];
             var row4 = row3.cloneNode(true);
-            row4.innerHTML = "<input type=\"text\" class=\"priority\" value='"+ connector[i]["priority"] +"'>"
+            row4.innerHTML = "<input type=\"number\" class=\"priority\" value='"+ connectorList[i]["priority"] +"'>"
             row2.appendChild(row3);
             row2.appendChild(row4);
             tblBody.appendChild(row2);
@@ -472,16 +478,58 @@ function generateHTMLTablePiority(stencil,connector){
     tbl.appendChild(tblBody);
     div.appendChild(tbl);
 
-    /*var ConnectorLine = stencilLine.cloneNode(true);
-    stencilLine.innerHTML = "Connector"
-    div.appendChild(ConnectorLine);*/
+    var confirmButton = document.createElement("p");
+    confirmButton.setAttribute("class","pop-x");
+    confirmButton.setAttribute("onclick","hideTablePriority()");
+    confirmButton.innerHTML="Confirm"
 
+    div.appendChild(confirmButton);
+
+    var p = document.createElement("p");
+    p.innerHTML = "<b>Hint:</b> Connectors appear in the priority table only if they have at least one attack point";
+    div.appendChild(p);
 
 }
 
+function hideTablePriority(){
+    var tot =0;
+    if(stencilList.length >0){
+        var allShapes = tempGraph.getModel().filterDescendants(function(cell) {
+            if((cell.vertex || cell.edge)){
+                if(cell.getStyle().includes('stencil')){
+                    return true;
+                }
+            }
+        });
+        for(var i=0;i<allShapes.length;i++) {
+            var edge = allShapes[i];
+            edge.priority = document.getElementsByClassName("priority")[tot].value;
+            tot++;
+        }
+    }
 
-/*for(i=0;i<shapes.length;i++) {
-			var shape = shapes[i];
-			var stencil = shape.getStyle();
-			var base64 = stencil.substring(14, stencil.length - 2)
-			let desc = graph.decompress(base64);*/
+    if(connectorList.length >0){
+        //Ricavo tutti gli archi orientati per i quali è definito un attack type
+        var allConns = tempGraph.getModel().filterDescendants(function(cell) {
+            if((cell.vertex || cell.edge)){
+                if(cell.getStyle().includes('ap=')){
+                    return true;
+                }
+            }
+        });
+        for(var i=0;i<allConns.length;i++) {
+            var edge = allConns[i];
+            edge.priority = document.getElementsByClassName("priority")[tot].value;
+            tot++;
+        }
+    }
+
+    var div = document.getElementById("overlay1");
+    div.removeAttribute("style");
+    div.innerHTML ="";
+    document.getElementById("overlay").style.display = "none";
+    tempGraph=null;
+    stencilList = null;
+    connectorList = null;
+
+}
