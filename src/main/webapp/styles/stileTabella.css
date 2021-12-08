@@ -103,6 +103,11 @@
 	margin-top: 20px;
 }
 
+.btn{
+	cursor: pointer;
+	border-radius: 6px;
+}
+
 .plusbutton {
 	text-align: center;
 	font-size: 30px;

@@ -100,7 +100,7 @@ function saveNameConnector(name){
     tempGraph.getSelectionModel().clear();
     tempGraph.refresh();
 }
-
+var rowcount =2;
 function createSingleTable(nome){
     var div = document.getElementById("overlay1");
     var tbl = document.createElement("table");
@@ -159,7 +159,7 @@ function createSingleTable(nome){
     tbl.appendChild(tblHead);
     tbl.appendChild(tblBody);
     div.appendChild(tbl);
-
+    rowcount =2;
     if(tempGraph.getSelectionCell().datiTabella != null){
         for(var i=0;i<tempGraph.getSelectionCell().datiTabella.length;i++){
             createRow(tempGraph.getSelectionCell().datiTabella[i]["property"],tempGraph.getSelectionCell().datiTabella[i]["type"],tempGraph.getSelectionCell().datiTabella[i]["procedure"],tempGraph.getSelectionCell().datiTabella[i]["params"]);
@@ -211,7 +211,19 @@ function createRow(property,propertyType,procudure,params){
         row7.innerHTML="<input type=\"text\" class=\"params\">";
     }
     row4.appendChild(row7);
+    var row9 = document.createElement("td");
+    row9.innerHTML = "<button class=\"btn\" onclick='removeRow(" + rowcount++ +")'><i class=\"fa fa-trash\"></i></button>"
+    row4.appendChild(row9);
     a.insertBefore(row4.cloneNode(true), a.children[a.children.length-2]);
+}
+
+function removeRow(i){
+    document.getElementsByTagName('tr')[i].remove();
+    rowcount--;
+    for(var y=i-2;y<rowcount-2;y++){
+        var sum = parseInt(y)+2;
+        document.getElementsByClassName("btn")[y].setAttribute("onclick", 'removeRow(' + sum +')');
+    }
 }
 
 function createConfirmButton(){
@@ -260,7 +272,7 @@ function saveDataTable(){
         savePrint();
         return true;
     }else{
-        mxUtils.alert("errore");
+        mxUtils.alert("The properties you invoked have not been defined. I have created the field for you to fill in to be able to continue");
         removeWhiteLine();
         return false;
     }
