@@ -239,6 +239,16 @@ function createConfirmButton(){
 function saveDataTable(){
     let array = new Array();
     for(var i=0;i<document.getElementsByClassName("property").length;i++){
+        document.getElementsByClassName("params")[i].style.background  ="white"
+        document.getElementsByClassName("params")[i].style.color = "black"
+        document.getElementsByClassName("procedure")[i].style.background  ="white"
+        document.getElementsByClassName("procedure")[i].style.color = "black"
+        document.getElementsByClassName("type")[i].style.background  ="white"
+        document.getElementsByClassName("type")[i].style.color = "black"
+        document.getElementsByClassName("property")[i].style.background  ="white"
+        document.getElementsByClassName("property")[i].style.color = "black"
+    }
+    for(var i=0;i<document.getElementsByClassName("property").length;i++){
         var params = document.getElementsByClassName("params")[i].value;
         var procedure = document.getElementsByClassName("procedure")[i].value;
         var property = document.getElementsByClassName("property")[i].value;
@@ -326,9 +336,8 @@ function removeWhiteLine(){
         document.getElementsByClassName("property")[i].style.background  ="white"
         document.getElementsByClassName("property")[i].style.color = "black"
         if(params == "" && procedure == "" && property == "" && type == ""){
-            document.getElementsByTagName('td')[(3*i)+3].remove();
-            document.getElementsByTagName('td')[(3*i)+3].remove();
-            document.getElementsByTagName('td')[(3*i)+3].remove();
+            removeRow(i+2);
+            i--;
         }
     }
 
