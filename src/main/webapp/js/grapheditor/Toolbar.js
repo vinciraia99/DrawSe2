@@ -186,6 +186,7 @@ Toolbar.prototype.init = function()
 	if(graph.isShapeMode()) {
 		this.addSeparator();
 		this.addExportLocalButton();
+		this.addVisitTableButton();
 	}
 };
 
@@ -235,8 +236,6 @@ Toolbar.prototype.addExportLocalButton = function() {
 	inputNode2.id = 'expButton';
 	label2.appendChild(inputNode2);
 
-
-
 	this.container.appendChild(label2);
 
 	var switchEvent = mxUtils.bind(this, function(evt) {
@@ -253,27 +252,35 @@ Toolbar.prototype.addExportLocalButton = function() {
 	inputNode22.className = 'expButton2';
 	inputNode22.id = 'expButton2';
 	label22.appendChild(inputNode22);
+	this.container.appendChild(label22);
 
+
+	var switchEvent = mxUtils.bind(this, function(evt) {
+		this.editorUi.exportShapeXML();
+	});
+	mxEvent.addListener(inputNode22, 'click', switchEvent);
+
+
+}
+
+Toolbar.prototype.addVisitTableButton = function() {
+	var label222 = document.createElement('label');
+	label222.className = 'exportShape2';
 	var inputNode3 = document.createElement('input');
 	inputNode3.setAttribute('type', 'button');
 	inputNode3.setAttribute('value', 'Define visit table');
 	inputNode3.style.margin = '7px';
 	inputNode3.className = 'expButton3';
 	inputNode3.id = 'expButton3';
-	label22.appendChild(inputNode3);
+	label222.appendChild(inputNode3);
+	this.container.appendChild(label222);
 
-
-	this.container.appendChild(label22);
-
-	var switchEvent = mxUtils.bind(this, function(evt) {
-		this.editorUi.exportShapeXML();
-	});
-	mxEvent.addListener(inputNode22, 'click', switchEvent);
 	var switchEvent = mxUtils.bind(this, function(evt) {
 		this.editorUi.definePriority();
 	});
 	mxEvent.addListener(inputNode3, 'click', switchEvent);
 }
+
 
 /**
  * Adds the toolbar elements.

@@ -26,8 +26,10 @@ function showPriorityTable(graph){
         for(var k=0;k<2;k++){
             if(k==0){
                 var sub = allShapes;
+                var sub1 ="Stencil";
             }else if(k==1){
                 var sub = allConns;
+                var sub1 ="Conncector";
             }
             for(var i=0;i<sub.length;i++) {
                 if(k==0){
@@ -74,7 +76,7 @@ function showPriorityTable(graph){
                 }
             }
         }
-
+        debugger;
         generateHTMLTablePiority();
         document.getElementById("overlay").style.display = "flex";
     }else{
@@ -125,7 +127,6 @@ function generateHTMLTablePiority(){
             var lname = "Connector";
         }
 
-        debugger;
         if(list.length >0){
             for(var i=0;i<list.length;i++){
                 var row2 = document.createElement("tr");
@@ -252,4 +253,59 @@ function hideTablePriority(){
     stencilList = null;
     connectorList = null;
 
+}
+
+function getVisitTableData(name){
+    try{
+        let array = new Array();
+        try{
+            var cell = tempGraph.getSelectionCell();
+            var stencil = cell.getStyle();
+            var base64 = stencil.substring(14, stencil.length-2);
+            var desc = tempGraph.decompress(base64);
+            var shapeXml = mxUtils.parseXml(desc).documentElement;
+            var table =  shapeXml.getElementsByTagName("visittable")[0];
+        }catch (e){
+            var edge = tempGraph.getSelectionCell();
+            var edgeStyle = edge.getStyle();
+            var initCut = edgeStyle.indexOf("visittable=");
+            if(initCut != -1){
+                edgeStyle = getTableInfoFromConnector(edgeStyle,"visittable=");
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(edgeStyle, "application/xml");
+                const errorNode = doc.querySelector("parsererror");
+                if (errorNode) {
+                    console.log("error while parsing");
+                    return null;
+                }else{
+                    var table = doc.getElementsByTagName("visittable")[0];;
+                }
+            }else{
+                return null;
+            }
+        }
+
+        for(var i=0;i<table.childElementCount;i++){
+            var id = table.getElementsByTagName("id" + i)[0];
+            var order = id.getElementsByTagName("order")[0].innerHTML;
+            var priority = id.getElementsByTagName("priority")[0].innerHTML;
+            var path1 = id.getElementsByTagName("path1")[0].innerHTML;
+            var path2 = id.getElementsByTagName("path2")[0].innerHTML;
+            var reference = id.getElementsByTagName("reference")[0].innerHTML;
+            var postcondition = id.getElementsByTagName("postcondition")[0].innerHTML;
+            var data ={
+                property: property,
+                type: type,
+                procedure: procedure,
+                params: params,
+                params2: params2,
+                postcondition : postcondition
+            };
+            array.push(data);
+        }
+        return array;
+    }catch (e){
+        console.error(e);
+        return null;
+    }
 }

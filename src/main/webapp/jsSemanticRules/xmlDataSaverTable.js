@@ -47,7 +47,6 @@ function savePrintXML(text){
         var edge = tempGraph.getSelectionCell();
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("print=");
-        debugger;
         if(initCut != -1){
             edgeStyle = removeTableInfo(edge,"print=");
         }
@@ -105,7 +104,6 @@ function saveSemanticTableXML(array){
         var edge = tempGraph.getSelectionCell();
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("tableinfo=");
-        debugger;
         if(initCut != -1){
             edgeStyle = removeTableInfo(edge,"tableinfo=");
         }
@@ -224,7 +222,6 @@ function saveReferenceXML(text){
         var edge = tempGraph.getSelectionCell();
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("reference=");
-        debugger;
         if(initCut != -1){
             edgeStyle = removeTableInfo(edge,"reference=");
         }
@@ -260,3 +257,59 @@ function getReference(){
     }
 }
 
+function getInputString(){
+    try{
+        var cell = tempGraph.getSelectionCell();
+        var stencil = cell.getStyle();
+        var base64 = stencil.substring(14, stencil.length-2);
+        var desc = tempGraph.decompress(base64);
+        var shapeXml = mxUtils.parseXml(desc).documentElement;
+        var print =  shapeXml.getElementsByTagName("inputstring")[0];
+        if(print != null){
+            return print.innerHTML;
+        }else{
+            return null;
+        }
+    }catch (e) {
+        var edge = tempGraph.getSelectionCell();
+        var edgeStyle = edge.getStyle();
+        var initCut = edgeStyle.indexOf("inputstring=");
+        if(initCut != -1){
+            edgeStyle = getTableInfoFromConnector(edgeStyle,"inputstring=");
+            return  edgeStyle;
+        }else{
+            return null;
+        }
+    }
+}
+
+function saveInputStringXML(text){
+    try {
+        var cell = tempGraph.getSelectionCell();
+        var stencil = cell.getStyle();
+        var base64 = stencil.substring(14, stencil.length-2);
+        var desc = tempGraph.decompress(base64);
+        var shapeXml = mxUtils.parseXml(desc).documentElement;
+        var print = shapeXml.getElementsByTagName("inputstring")[0];
+        if(print == null){
+            var xml = document.createElement("inputstring");
+            xml.innerHTML = text;
+            shapeXml.appendChild(xml);
+        }else{
+            print.innerHTML = text;
+        }
+        var xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
+        cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+    }catch (e){
+        text = text.replaceAll(";", '[puntovirgola]');
+        var edge = tempGraph.getSelectionCell();
+        var edgeStyle = edge.getStyle();
+        var initCut = edgeStyle.indexOf("inputstring=");
+        if(initCut != -1){
+            edgeStyle = removeTableInfo(edge,"inputstring=");
+        }
+        edgeStyle = edgeStyle +"inputstring="+ text + ";";
+        edge.setStyle(edgeStyle);
+    }
+
+}

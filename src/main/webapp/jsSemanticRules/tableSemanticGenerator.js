@@ -1,4 +1,6 @@
 var tempGraph;
+var stencilList;
+var connectorList;
 function showTable(graph) {
     tempGraph = graph;
         if(graph.editorMode == "Shape Editor Mode"){
@@ -8,16 +10,20 @@ function showTable(graph) {
                 var nomeOggetto = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name');
             }else {
                 if(tempGraph.getSelectionCell().style.search("endArrow")!= -1){
-                    nomeOggetto= getNameConnector();
+                    nomeOggetto= getNameConnector(tempGraph.getSelectionCell());
                 }
             }
             if(nomeOggetto==null){
                 mxUtils.alert("First define the points of the object in Constraint Mode!");
             }else{
                 var reference = getReference();
-                if(reference != null){
+                var checkboxString = getInputString();
+                if(reference != null && checkboxString!= null){
+                    createSingleTable(nomeOggetto,reference,checkboxString);
+                }else if(reference != null){
                     createSingleTable(nomeOggetto,reference);
-                }else{
+                }
+                else{
                     createSingleTable(nomeOggetto);
                 }
                 console.log(nomeOggetto);
@@ -29,15 +35,15 @@ function showTable(graph) {
         }
 }
 
-function getNameConnector(){
-    if(!tempGraph.getSelectionCell().getStyle().includes("name=")){
-        var id = tempGraph.getSelectionCell().id
+function getNameConnector(graph){
+    if(!graph.getStyle().includes("name=")){
+        var id = graph.id
         var name = "EDGE_" + id;
-        var style = tempGraph.getSelectionCell().getStyle() +"name="+ name +";";
-        tempGraph.getSelectionCell().setStyle(style);
+        var style = tgraph.getStyle() +"name="+ name +";";
+        graph.setStyle(style);
     }
     else{
-        var edge = tempGraph.getSelectionCell();
+        var edge = graph;
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("name=")
         edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
@@ -48,6 +54,12 @@ function getNameConnector(){
     return name;
 }
 
+function getNameStencil(element,graph){
+    var stencil = element.getStyle();
+    var base64 = stencil.substring(14, stencil.length-2);
+    var nomeOggetto = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name');
+    return nomeOggetto;
+}
 
 function hideTable() {
     if(saveDataTable()){
@@ -72,6 +84,11 @@ function savePrint(){
 function saveReference(){
     var x =document.getElementById("reference").value
     saveReferenceXML(x);
+}
+
+function saveInputString(){
+    var x =document.getElementById("inputstring").value
+    saveInputStringXML(x);
 }
 
 function saveNameStencil(name){
@@ -112,8 +129,71 @@ function saveNameConnector(name){
 }
 var rowcount =2;
 
-function createSingleTable(nome,reference){
+function getAllShapeConnectorName(){
+    graph = tempGraph;
+    stencilList = new Array();
+    connectorList = new Array();
+    var output =
+        "    <datalist id=\"listname\">";
+    var allShapes = graph.getModel().filterDescendants(function(cell) {
+        if((cell.vertex || cell.edge)){
+            if(cell.getStyle().includes('stencil')){
+                return true;
+            }
+        }
+    });
+
+    var allConns = graph.getModel().filterDescendants(function(cell) {
+        if((cell.vertex || cell.edge)){
+            if(cell.getStyle().includes('ap=')){
+                return true;
+            }
+        }
+    });
+
+    if(allShapes.length >0 || allConns.length>0){
+        for(var i=0;i<allConns.length;i++) {
+            connectorList = connectorList.push(allConns[i]);
+            var namea = getNameConnector(allConns[i]);
+            output = output + " <option value=\"" + namea + "\">" + namea + "</option>";
+        }
+        for(var i=0;i<allShapes.length;i++) {
+            stencilList = stencilList.push(allShapes[i]);
+            if(allShapes[i].style.search("stencil") > 0){
+                var nomeOggetto = getNameStencil(allShapes[i],tempGraph);
+            }
+            output = output + " <option value=\""+ nomeOggetto + "\">" + nomeOggetto + "</option>";
+        }
+    }
+    output = output + "</datalist>";
+    return output;
+}
+
+function createSingleTable(nome,reference,inputstring){
+
     var div = document.getElementById("overlay1");
+
+    var divbox = document.createElement("div");
+    divbox.setAttribute("class","rowinline");
+    var checkbox = document.createElement("input");
+    checkbox.setAttribute("type","checkbox");
+    checkbox.setAttribute("id","checkbox");
+    if(inputstring!=null){
+        checkbox.setAttribute("onchange","showTableString()");
+        checkbox.setAttribute("checked","");
+        showTableString(inputstring);
+    }else{
+        checkbox.setAttribute("onchange","showTableString()");
+    }
+    divbox.appendChild(checkbox);
+    divbox.innerHTML= divbox.innerHTML+ "Add input string";
+    divbox.setAttribute("style", "height: 30px;")
+    div.appendChild(divbox);
+
+
+
+
+
     var tbl = document.createElement("table");
     tbl.setAttribute("class", "tabella");
     tbl.setAttribute("id", "tabella");
@@ -123,7 +203,8 @@ function createSingleTable(nome,reference){
     var row1 = document.createElement("th");
     row1.setAttribute("colspan","2");
     row1.setAttribute("class","tg-l93j");
-    row1.innerHTML="Name<br><input id=\"nameshape\" type=\"text\" value=\"" + nome + "\">";
+    var liststencil = getAllShapeConnectorName();
+    row1.innerHTML="Name<br><input list=\"listname\" id=\"nameshape\" type=\"text\" value=\"" + nome + "\">" + liststencil;
     var row1w = document.createElement("th");
     row1w.setAttribute("colspan","3");
     row1w.setAttribute("class","tg-l93j");
@@ -276,6 +357,7 @@ function createConfirmButton(){
     var div = document.getElementById("overlay1");
     var confirmButton = document.createElement("p");
     confirmButton.setAttribute("class","pop-x");
+    confirmButton.setAttribute("id","confirmbutton");
     confirmButton.setAttribute("onclick","hideTable()");
     confirmButton.innerHTML="Confirm"
 
@@ -331,6 +413,7 @@ function saveDataTable(){
         saveSemanticTableXML(array);
         savePrint();
         saveReference();
+        saveInputString();
         return true;
     }else{
         mxUtils.alert("The properties you invoked have not been defined. I have created the field for you to fill in to be able to continue");
@@ -362,6 +445,28 @@ function checkInput(input,array){
             createRow(splitting[i]);
         }
     }
+    /*
+    if(stencilList != null || connectorList != null){
+        for(var i=0;i<stencilList.length;i++){
+            for(var k=0;k<array.length;k++){
+                if(array[k]["reference"] == getNameStencil(stencilList[i],tempGraph)){
+                    mxUtils.alert("The reference value entered is already present in another stencil or connector")
+                    return false;
+                }
+            }
+        }
+        for(var i=0;i<connectorList.length;i++){
+            for(var k=0;k<array.length;k++){
+                if(array[k]["reference"] == getNameConnector(connectorList[i],tempGraph)){
+                    mxUtils.alert("The reference value entered is already present in another stencil or connector")
+                    return false;
+                }
+            }
+        }
+
+    }*/
+
+
     if(find == tot){
         return true;
     }else{
