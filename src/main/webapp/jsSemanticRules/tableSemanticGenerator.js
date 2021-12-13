@@ -14,8 +14,13 @@ function showTable(graph) {
             if(nomeOggetto==null){
                 mxUtils.alert("First define the points of the object in Constraint Mode!");
             }else{
+                var reference = getReference();
+                if(reference != null){
+                    createSingleTable(nomeOggetto,reference);
+                }else{
+                    createSingleTable(nomeOggetto);
+                }
                 console.log(nomeOggetto);
-                createSingleTable(nomeOggetto);
                 createConfirmButton();
                 document.getElementById("overlay").style.display = "flex";
             }
@@ -61,7 +66,12 @@ function hideTable() {
 
 function savePrint(){
     var x =document.getElementsByClassName("print")[0].value;
-    tempGraph.getSelectionCell().print = x;
+    savePrintXML(x);
+}
+
+function saveReference(){
+    var x =document.getElementById("reference").value
+    saveReferenceXML(x);
 }
 
 function saveNameStencil(name){
@@ -101,7 +111,8 @@ function saveNameConnector(name){
     tempGraph.refresh();
 }
 var rowcount =2;
-function createSingleTable(nome){
+
+function createSingleTable(nome,reference){
     var div = document.getElementById("overlay1");
     var tbl = document.createElement("table");
     tbl.setAttribute("class", "tabella");
@@ -110,20 +121,29 @@ function createSingleTable(nome){
     var tblHead = document.createElement("thead");
     var row = document.createElement("tr");
     var row1 = document.createElement("th");
-    row1.setAttribute("colspan","3");
+    row1.setAttribute("colspan","2");
     row1.setAttribute("class","tg-l93j");
-    row1.innerHTML="Nome stencil<br><input id=\"nameshape\" type=\"text\" value=\"" + nome + "\">";
+    row1.innerHTML="Name<br><input id=\"nameshape\" type=\"text\" value=\"" + nome + "\">";
+    var row1w = document.createElement("th");
+    row1w.setAttribute("colspan","3");
+    row1w.setAttribute("class","tg-l93j");
+    if(reference != null){
+        row1w.innerHTML="Rerefence<br><input id=\"reference\" type=\"text\" value=\"" + reference + "\">";
+    }else{
+        row1w.innerHTML="Rerefence<br><input id=\"reference\" type=\"text\" value=\"" + nome + "\">";
+    }
     //Fine crea riga titolo
     var tblBody = document.createElement("tbody");
     tblBody.setAttribute("class", "bodytable");
     var row2 = document.createElement("tr");
     var row3 = document.createElement("td");
     row3.setAttribute("class","tg-0pky");
-    row3.setAttribute("colspan","3");
-    if(tempGraph.getSelectionCell().print != null){
-        row3.innerHTML="<input type=\"text\" placeholder=\"print\" class='print' value='"+ tempGraph.getSelectionCell().print +"'>";
+    row3.setAttribute("colspan","5");
+    var print = getPrintXML();
+    if(print != null){
+        row3.innerHTML="<textarea  type=\"text\" placeholder=\"print\" class=\"print\">" + print + "</textarea>";
     }else{
-        row3.innerHTML="<input type=\"text\" placeholder=\"print\" class='print' value='print();'>";
+        row3.innerHTML="<textarea   class='print'>print();</textarea>";
     }
 
 
@@ -135,13 +155,17 @@ function createSingleTable(nome){
     rowproperty2.innerHTML="<b>Procedure</b>";
     var rowproperty3 =rowproperty1.cloneNode(true);
     rowproperty3.innerHTML="<b>Params</b>";
+    rowproperty3.setAttribute("colspan",2);
+    var rowproperty4 =rowproperty1.cloneNode(true);
+    rowproperty4.innerHTML="<b>Post-condition</b>";
     rowproperty.appendChild(rowproperty1);
     rowproperty.appendChild(rowproperty2);
     rowproperty.appendChild(rowproperty3);
+    rowproperty.appendChild(rowproperty4);
 
     var row4 = document.createElement("tr");
     var row5 = document.createElement("td");
-    row5.setAttribute("colspan",3);
+    row5.setAttribute("colspan","5");
     var confirmButton = document.createElement("p");
     confirmButton.setAttribute("class","plusbutton");
     confirmButton.setAttribute("onclick","createRow()");
@@ -152,6 +176,7 @@ function createSingleTable(nome){
 
     row2.appendChild(row3);
     row.appendChild(row1);
+    row.appendChild(row1w);
     tblBody.appendChild(rowproperty);
     tblBody.appendChild(row4);
     tblBody.appendChild(row2);
@@ -160,14 +185,15 @@ function createSingleTable(nome){
     tbl.appendChild(tblBody);
     div.appendChild(tbl);
     rowcount =2;
-    if(tempGraph.getSelectionCell().datiTabella != null){
-        for(var i=0;i<tempGraph.getSelectionCell().datiTabella.length;i++){
-            createRow(tempGraph.getSelectionCell().datiTabella[i]["property"],tempGraph.getSelectionCell().datiTabella[i]["type"],tempGraph.getSelectionCell().datiTabella[i]["procedure"],tempGraph.getSelectionCell().datiTabella[i]["params"]);
+    var tabelladati = getSemanticTableXML();
+    if(tabelladati != null){
+        for(var i=0;i<tabelladati.length;i++){
+            createRow(tabelladati[i]["property"],tabelladati[i]["type"],tabelladati[i]["procedure"],tabelladati[i]["params"],tabelladati[i]["params2"],tabelladati[i]["postcondition"]);
         }
     }
 }
 
-function createRow(property,propertyType,procudure,params){
+function createRow(property,propertyType,procedure,params,params2,postcondition){
     var a = document.getElementsByClassName("bodytable")[0];
     var row4 = document.createElement("tr");
     var row5 = document.createElement("td");
@@ -198,8 +224,8 @@ function createRow(property,propertyType,procudure,params){
         "        <option value=\"size\">size</option>\n" +
         "        <option value=\"exist\">exist</option>\n" +
         "    </datalist>"
-    if(procudure!=null) {
-        row6.innerHTML = "<input type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ procudure +"'>" + s;
+    if(procedure!=null) {
+        row6.innerHTML = "<input type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ procedure +"'>" + s;
     }else{
         row6.innerHTML = "<input type=\"text\" class=\"procedure\" list=\"listObj\">" + s;
     }
@@ -211,19 +237,39 @@ function createRow(property,propertyType,procudure,params){
         row7.innerHTML="<input type=\"text\" class=\"params\">";
     }
     row4.appendChild(row7);
-    var row9 = document.createElement("td");
-    row9.innerHTML = "<button class=\"btn\" onclick='removeRow(" + rowcount++ +")'><i class=\"fa fa-trash\"></i></button>"
-    row4.appendChild(row9);
-    a.insertBefore(row4.cloneNode(true), a.children[a.children.length-2]);
-}
 
-function removeRow(i){
-    document.getElementsByTagName('tr')[i].remove();
-    rowcount--;
-    for(var y=i-2;y<rowcount-2;y++){
-        var sum = parseInt(y)+2;
-        document.getElementsByClassName("btn")[y].setAttribute("onclick", 'removeRow(' + sum +')');
+    var row8 = row5.cloneNode(true);
+    var datalistrow5 =
+        "    <datalist id=\"paramlist\">\n" +
+        "        <option value=\"#id\">#id</option>\n" +
+        "        <option value=\"#name\">#name</option>\n" +
+        "        <option value=\"#isSymbol\">#isSymbol</option>\n" +
+        "        <option value=\"#attType\">#attType</option>\n" +
+        "        <option value=\"#attConName\">#attConName</option>\n" +
+        "        <option value=\"#visited\">#visited</option>\n" +
+        "        <option value=\"#status\">#status</option>\n" +
+        "    </datalist>";
+    if(params2 != null){
+        row8.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\" value='"+ params2 +"'>" + datalistrow5;
+    }else{
+        row8.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\">"+ datalistrow5;
     }
+    row4.appendChild(row8);
+
+    var row9 = row5.cloneNode(true);
+    if(postcondition != null){
+        row9.innerHTML="<input placeholder='optional' type=\"text\" class=\"postcondition\" value='"+ postcondition +"'>";
+    }else{
+        row9.innerHTML="<input placeholder='optional' type=\"text\" class=\"postcondition\">";
+    }
+    row4.appendChild(row9);
+
+
+
+    var row10 = document.createElement("td");
+    row10.innerHTML = "<button class=\"btn\" onclick='removeRow(" + rowcount++ +")'><i class=\"fa fa-trash\"></i></button>"
+    row4.appendChild(row10);
+    a.insertBefore(row4.cloneNode(true), a.children[a.children.length-2]);
 }
 
 function createConfirmButton(){
@@ -253,6 +299,8 @@ function saveDataTable(){
         var procedure = document.getElementsByClassName("procedure")[i].value;
         var property = document.getElementsByClassName("property")[i].value;
         var type = document.getElementsByClassName("type")[i].value;
+        var params2 = document.getElementsByClassName("params2")[i].value;
+        var postcondition = document.getElementsByClassName("postcondition")[i].value;
         if(params == "" && procedure == "" && property == "" && type == ""){
 
         } else{
@@ -272,14 +320,17 @@ function saveDataTable(){
                 property: property,
                 type: type,
                 procedure: procedure,
-                params: params
+                params: params,
+                params2: params2,
+                postcondition: postcondition
             };
             array.push(data);
         }
     }
     if(checkInput(document.getElementsByClassName("print")[0].value,array)){
-        tempGraph.getSelectionCell().datiTabella = array;
+        saveSemanticTableXML(array);
         savePrint();
+        saveReference();
         return true;
     }else{
         mxUtils.alert("The properties you invoked have not been defined. I have created the field for you to fill in to be able to continue");
@@ -316,8 +367,6 @@ function checkInput(input,array){
     }else{
         return false;
     }
-    //savePrint();
-
 
 }
 
@@ -343,214 +392,5 @@ function removeWhiteLine(){
 
 }
 
-var stencilList;
-var connectorList;
-
-function showPriorityTable(graph){
-    tempGraph = graph;
-    stencilList = new Array();
-    connectorList = new Array();
-
-    var allShapes = graph.getModel().filterDescendants(function(cell) {
-        if((cell.vertex || cell.edge)){
-            if(cell.getStyle().includes('stencil')){
-                return true;
-            }
-        }
-    });
-
-    //Ricavo tutti gli archi orientati per i quali è definito un attack type
-    var allConns = graph.getModel().filterDescendants(function(cell) {
-        if((cell.vertex || cell.edge)){
-            if(cell.getStyle().includes('ap=')){
-                return true;
-            }
-        }
-    });
-    if(allShapes.length >0 || allConns.length>0){
-        for(var i=0;i<allShapes.length;i++) {
-            var shape = allShapes[i];
-            var stencil = shape.getStyle();
-            var base64 = stencil.substring(14, stencil.length - 2);
-            var name = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name');
-            if(shape.priority !=null){
-                var data ={
-                    name: name,
-                    priority: shape.priority
-                };
-                stencilList.push(data);
-            }else{
-                var data ={
-                    name: name,
-                    priority: 0
-                };
-                stencilList.push(data);
-            }
-        }
-
-        for(var i=0;i<allConns.length;i++) {
-            var edge = allConns[i];
-            var edgeStyle = edge.getStyle();
-            var initCut = edgeStyle.indexOf("name=")
-            edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
-            var toCut = edgeStyle.indexOf(";");
-            edgeStyle = edgeStyle.substring(5,toCut);
-            var name = edgeStyle;
-            if(edge.priority !=null){
-                var data ={
-                    name: name,
-                    priority: edge.priority
-                };
-                connectorList.push(data);
-            }else{
-                var data ={
-                    name: name,
-                    priority: 0
-                };
-                connectorList.push(data);
-            }
-        }
-
-        generateHTMLTablePiority();
-        document.getElementById("overlay").style.display = "flex";
-    }else{
-        mxUtils.alert("Define at least one connector or stencil");
-    }
-
-}
-
-function generateHTMLTablePiority(){
-    var div = document.getElementById("overlay1");
-    div.setAttribute("style","width: 50%;");
-    var tbl = document.createElement("table");
-    tbl.setAttribute("class", "tabella");
-    tbl.setAttribute("id", "tabella");
-    //Creo riga titolo
-    var tblHead = document.createElement("thead");
-    var row = document.createElement("tr");
-    var row1 = document.createElement("th");
-    row1.setAttribute("colspan","3");
-    row1.setAttribute("class","tg-l93j");
-    row1.innerHTML="Priority Table";
-    //Fine crea riga titolo
-    var tblBody = document.createElement("tbody");
-    tblBody.setAttribute("class", "bodytable");
-    var row2 = document.createElement("tr");
-    var row3 = document.createElement("td");
-    row3.setAttribute("class","tg-0pky");
-    row3.innerHTML = "Name"
-    var row4 = row3.cloneNode(true);
-    row4.innerHTML = "Priority"
 
 
-    row2.appendChild(row3);
-    row2.appendChild(row4);
-    tblBody.appendChild(row2);
-    row.appendChild(row1);
-    tblHead.appendChild(row);
-
-    if(stencilList.length >0){
-        var row5 = document.createElement("tr");
-        var row6 = document.createElement("td");
-        row6.innerHTML = "Stencil"
-        row6.setAttribute("class","tg-l93j");
-        row6.setAttribute("colspan","2");
-        row5.appendChild(row6);
-
-        tblBody.appendChild(row5);
-
-
-        for(var i=0;i<stencilList.length;i++){
-            var row2 = document.createElement("tr");
-            var row3 = document.createElement("td");
-            row3.setAttribute("class","tg-0pky");
-            row3.innerHTML = stencilList[i]["name"];
-            var row4 = row3.cloneNode(true);
-            row4.innerHTML = "<input type=\"number\" class=\"priority\" value='"+ stencilList[i]["priority"] +"'>"
-            row2.appendChild(row3);
-            row2.appendChild(row4);
-            tblBody.appendChild(row2);
-        }
-    }
-
-    if(connectorList.length >0){
-        var row5 = document.createElement("tr");
-        var row6 = document.createElement("td");
-        row6.innerHTML = "Connector"
-        row6.setAttribute("class","tg-l93j");
-        row6.setAttribute("colspan","2");
-        row5.appendChild(row6);
-        tblBody.appendChild(row5);
-
-        for(var i=0;i<connectorList.length;i++){
-            var row2 = document.createElement("tr");
-            var row3 = document.createElement("td");
-            row3.setAttribute("class","tg-0pky");
-            row3.innerHTML = connectorList[i]["name"];
-            var row4 = row3.cloneNode(true);
-            row4.innerHTML = "<input type=\"number\" class=\"priority\" value='"+ connectorList[i]["priority"] +"'>"
-            row2.appendChild(row3);
-            row2.appendChild(row4);
-            tblBody.appendChild(row2);
-        }
-    }
-
-    tbl.appendChild(tblHead);
-    tbl.appendChild(tblBody);
-    div.appendChild(tbl);
-
-    var confirmButton = document.createElement("p");
-    confirmButton.setAttribute("class","pop-x");
-    confirmButton.setAttribute("onclick","hideTablePriority()");
-    confirmButton.innerHTML="Confirm"
-
-    div.appendChild(confirmButton);
-
-    var p = document.createElement("p");
-    p.innerHTML = "<b>Hint:</b> Connectors appear in the priority table only if they have at least one attack point";
-    div.appendChild(p);
-
-}
-
-function hideTablePriority(){
-    var tot =0;
-    if(stencilList.length >0){
-        var allShapes = tempGraph.getModel().filterDescendants(function(cell) {
-            if((cell.vertex || cell.edge)){
-                if(cell.getStyle().includes('stencil')){
-                    return true;
-                }
-            }
-        });
-        for(var i=0;i<allShapes.length;i++) {
-            var edge = allShapes[i];
-            edge.priority = document.getElementsByClassName("priority")[tot].value;
-            tot++;
-        }
-    }
-
-    if(connectorList.length >0){
-        //Ricavo tutti gli archi orientati per i quali è definito un attack type
-        var allConns = tempGraph.getModel().filterDescendants(function(cell) {
-            if((cell.vertex || cell.edge)){
-                if(cell.getStyle().includes('ap=')){
-                    return true;
-                }
-            }
-        });
-        for(var i=0;i<allConns.length;i++) {
-            var edge = allConns[i];
-            edge.priority = document.getElementsByClassName("priority")[tot].value;
-            tot++;
-        }
-    }
-
-    var div = document.getElementById("overlay1");
-    div.removeAttribute("style");
-    div.innerHTML ="";
-    document.getElementById("overlay").style.display = "none";
-    tempGraph=null;
-    stencilList = null;
-    connectorList = null;
-
-}

@@ -1,4 +1,3 @@
-console.log("ci sono");
 
 //Specifica se il simbolo è un punto di attacco
 mxCell.prototype.constraint = -1;

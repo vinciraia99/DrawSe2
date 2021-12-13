@@ -1,7 +1,8 @@
 .tabella {
 	border-collapse: collapse;
 	border-spacing: 0;
-	width: 100%
+	width: -moz-available;
+	width: -webkit-fill-available;
 }
 
 .tabella td {
@@ -19,6 +20,25 @@
 	width: -moz-available;
 	width: -webkit-fill-available;
 	text-align: center;
+}
+
+.tabella label,
+textarea {
+	font-size: .8rem;
+	letter-spacing: 1px;
+}
+
+.tabella textarea {
+	line-height: 1.5;
+	box-shadow: 1px 1px 1px #999;
+	max-width: -webkit-fill-available;
+	min-width: -webkit-fill-available;
+	min-height: 120px;
+}
+
+.tabella label {
+	display: block;
+	margin-bottom: 10px;
 }
 
 .tabella th {
@@ -101,9 +121,21 @@
 	cursor: pointer;
 	border-radius: 10px;
 	margin-top: 20px;
+	width: -moz-available;
+	width: -webkit-fill-available;
 }
 
 .btn{
+	cursor: pointer;
+	border-radius: 6px;
+}
+
+.btnup{
+	cursor: pointer;
+	border-radius: 6px;
+}
+
+.btndown{
 	cursor: pointer;
 	border-radius: 6px;
 }
@@ -122,4 +154,31 @@
 
 .rowinline{
 	display: flex;
+}
+
+.arrow {
+	border: solid black;
+	border-width: 0 3px 3px 0;
+	display: inline-block;
+	padding: 3px;
+}
+
+.right {
+	transform: rotate(-45deg);
+	-webkit-transform: rotate(-45deg);
+}
+
+.left {
+	transform: rotate(135deg);
+	-webkit-transform: rotate(135deg);
+}
+
+.up {
+	transform: rotate(-135deg);
+	-webkit-transform: rotate(-135deg);
+}
+
+.down {
+	transform: rotate(45deg);
+	-webkit-transform: rotate(45deg);
 }

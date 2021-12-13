@@ -256,7 +256,7 @@ Toolbar.prototype.addExportLocalButton = function() {
 
 	var inputNode3 = document.createElement('input');
 	inputNode3.setAttribute('type', 'button');
-	inputNode3.setAttribute('value', 'Define priority table');
+	inputNode3.setAttribute('value', 'Define visit table');
 	inputNode3.style.margin = '7px';
 	inputNode3.className = 'expButton3';
 	inputNode3.id = 'expButton3';
