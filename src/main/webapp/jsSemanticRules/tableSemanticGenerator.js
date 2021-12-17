@@ -156,17 +156,21 @@ function getAllShapeConnectorName(){
     });
 
     if(allShapes.length >0 || allConns.length>0){
-        for(var i=0;i<allConns.length;i++) {
-            connectorList = connectorList.push(allConns[i]);
-            var namea = getNameConnector(allConns[i]);
-            output = output + " <option value=\"" + namea + "\">" + namea + "</option>";
-        }
-        for(var i=0;i<allShapes.length;i++) {
-            stencilList = stencilList.push(allShapes[i]);
-            if(allShapes[i].style.search("stencil") > 0){
-                var nomeOggetto = getNameStencil(allShapes[i],tempGraph);
+        if(allConns.length>0){
+            for(var i=0;i<allConns.length;i++) {
+                connectorList.push(allConns[i]);
+                var namea = getNameConnector(allConns[i]);
+                output = output + " <option value=\"" + namea + "\">" + namea + "</option>";
             }
-            output = output + " <option value=\""+ nomeOggetto + "\">" + nomeOggetto + "</option>";
+        }
+        if(allShapes.length>0){
+            for(var i=0;i<allShapes.length;i++) {
+                stencilList.push(allShapes[i]);
+                if(allShapes[i].style.search("stencil") > 0){
+                    var nomeOggetto = getNameStencil(allShapes[i],tempGraph);
+                }
+                output = output + " <option value=\""+ nomeOggetto + "\">" + nomeOggetto + "</option>";
+            }
         }
     }
     output = output + "</datalist>";

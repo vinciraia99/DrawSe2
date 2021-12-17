@@ -182,3 +182,12 @@ textarea {
 	transform: rotate(45deg);
 	-webkit-transform: rotate(45deg);
 }
+
+select.patht {
+	display: flow-root;
+}
+
+.tablepath {
+	width: -moz-available;
+	width: -webkit-fill-available;
+}

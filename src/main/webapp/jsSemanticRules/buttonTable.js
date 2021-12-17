@@ -1,13 +1,31 @@
 function setOrderUpBex(i){
-    if(i!=2){
+    if(i!=0){
         var j=i-1;
-        var k = i-2;
-        document.getElementsByClassName("btnup")[k].setAttribute("onclick","setOrderUpBex("+ j +")");
-        document.getElementsByClassName("btndown")[k].setAttribute("onclick","setOrderDownBex("+ j +")");
-        document.getElementsByClassName("btnup")[k-1].setAttribute("onclick","setOrderUpBex("+ i +")");
-        document.getElementsByClassName("btndown")[k-1].setAttribute("onclick","setOrderDownBex("+ i +")");
-        document.getElementsByTagName("tbody")[0].insertBefore(document.getElementsByTagName("tr")[i],document.getElementsByTagName("tr")[j]);
-        arraymove(elementFigureList,i,j);
+        var tableold =  document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[i];
+        var tablenew = document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[j];
+        tableold.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ j +")");
+        tableold.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ j +")");
+        tablenew.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ i +")");
+        tablenew.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ i +")");
+
+        tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ i +")");
+        tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ j +")");
+
+        var deleteButton = tableold.getElementsByClassName("btn");
+        if(deleteButton.length>0) {
+            for(var k=0;i<deleteButton.length;k++){
+                deleteButton[k].setAttribute("onclick","removePath("+ j +",this)");
+            }
+        }
+        var deleteButton = tablenew.getElementsByClassName("btn");
+        if(deleteButton.length>0) {
+            for(var k=0;i<deleteButton.length;k++){
+                deleteButton[k].setAttribute("onclick","removePath("+ i +",this)");
+            }
+        }
+
+        document.getElementsByTagName("tbody")[0].insertBefore(tableold,tablenew);
+        arraymove(elementOrderedFigureList,i,j);
 
     }
 
@@ -16,13 +34,32 @@ function setOrderUpBex(i){
 function setOrderDownBex(i){
     if((indexprioritytable-1) !=i){
         var j=i+1;
-        var k = i-2;
-        document.getElementsByClassName("btnup")[k].setAttribute("onclick","setOrderUpBex("+ j +")");
-        document.getElementsByClassName("btndown")[k].setAttribute("onclick","setOrderDownBex("+ j +")");
-        document.getElementsByClassName("btnup")[k+1].setAttribute("onclick","setOrderUpBex("+ i +")");
-        document.getElementsByClassName("btndown")[k+1].setAttribute("onclick","setOrderDownBex("+ i +")");
-        document.getElementsByTagName("tbody")[0].insertBefore(document.getElementsByTagName("tr")[j],document.getElementsByTagName("tr")[i]);
-        arraymove(elementFigureList,i,j);
+        var tableold =  document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[i];
+        var tablenew = document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[j];
+
+        tableold.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ j +")");
+        tableold.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ j +")");
+        tablenew.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ i +")");
+        tablenew.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ i +")");
+
+        tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ i +")");
+        tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ j +")");
+
+        var deleteButton = tableold.getElementsByClassName("btn");
+        if(deleteButton.length>0) {
+            for (var k = 0; k < deleteButton.length; k++) {
+                deleteButton[k].setAttribute("onclick", "removePath(" + j + ",this)");
+            }
+        }
+        var deleteButton = tablenew.getElementsByClassName("btn");
+        if(deleteButton.length>0) {
+            for(var k=0;k<deleteButton.length;k++){
+                deleteButton[k].setAttribute("onclick","removePath("+ i +",this)");
+            }
+        }
+
+        document.getElementsByTagName("tbody")[0].insertBefore(tablenew,tableold);
+        arraymove(elementOrderedFigureList,i,j);
     }
 
 }
@@ -110,6 +147,48 @@ function showTableString(name){
         document.getElementById("stringtable").remove();
         document.getElementById("blankspace").remove();
         document.getElementById("blankspace2").remove();
+    }
+
+}
+
+function createPathRow(th,index){
+    for(var k=0;k<document.getElementsByTagName("td").length;k++){
+        if(document.getElementsByTagName("td")[k].getElementsByClassName("plusbutton")[0] != null && document.getElementsByTagName("td")[k].getElementsByClassName("plusbutton")[0] == th){
+            var t = document.getElementsByTagName("td")[k];
+            break;
+        }
+    }
+    var table = document.getElementsByClassName("tablepath")[index];
+    if(table == null){
+        var tablee = document.createElement("table");
+        tablee.setAttribute("class","tablepath");
+    }
+    var tr  = document.createElement("tr");
+    var td = document.createElement("td");
+    td.setAttribute("style","border-color:transparent");
+    td.innerHTML = "<select name=\"patht\" class=\"patht\"><option value=\"D\" >D</option><option value=\"A\">A</option> </select>";
+    var td2 = td.cloneNode(true);
+    td2.innerHTML = "<input type=\"text\" class=\"path\">" + "<br>";
+    tr.appendChild(td);
+    var row10 = td.cloneNode(true);
+    tr.appendChild(td2);
+    tr.appendChild(row10);
+    if(table != null){
+        table.appendChild(tr);
+    }else{
+        tablee.appendChild(tr);
+        t.insertBefore(tablee,t.getElementsByClassName("plusbutton")[0]);
+    }
+    row10.innerHTML = "<button class=\"btn\" onclick='removePath(" + index.toString() + ", this)'><i class=\"fa fa-trash\"></i></button>"
+}
+
+function removePath(index,obj){
+    for(var i=0;i<document.getElementsByClassName("tablepath")[index].getElementsByTagName("tr").length;i++){
+        var t = document.getElementsByClassName("tablepath")[index].getElementsByTagName("tr")[i]
+        if(t.getElementsByClassName("btn")[0] == obj){
+           t.remove();
+           break;
+        }
     }
 
 }
