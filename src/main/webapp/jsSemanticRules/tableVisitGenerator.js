@@ -23,57 +23,20 @@ function showPriorityTable(graph){
     });
 
     if(allShapes.length >0 || allConns.length>0){
-        for(var k=0;k<2;k++){
-            if(k==0){
-                var sub = allShapes;
-                var sub1 ="Stencil";
-            }else if(k==1){
-                var sub = allConns;
-                var sub1 ="Conncector";
-            }
-            for(var i=0;i<sub.length;i++) {
-                if(k==0){
-                    var shape = sub[i];
-                    var stencil = shape.getStyle();
-                    var base64 = stencil.substring(14, stencil.length - 2);
-                    var name = mxUtils.parseXml(graph.decompress(base64)).documentElement.getAttribute('name');
-                }else if (k==1){
-                    var edge = sub[i];
-                    var stencil = edge.getStyle();
-                    var edgeStyle = edge.getStyle();
-                    var initCut = edgeStyle.indexOf("name=")
-                    edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
-                    var toCut = edgeStyle.indexOf(";");
-                    edgeStyle = edgeStyle.substring(5,toCut);
-                    var name = edgeStyle;
-                }
-                var base64 = stencil.substring(14, stencil.length-2);
-                var desc = tempGraph.decompress(base64);
-                var shapeXml = mxUtils.parseXml(desc).documentElement;
-                if(shapeXml.getElementsByTagName("prioritytable")[0] !=null){
-                    var data ={
-                        name: name,
-                        priority: shape.priority
-                    };
-                    elementFigureList.unshift(data);
-                }else{
-                    if(k==0){
-                        var data ={
-                            name: name,
-                            priority: 0,
-                            oggetto: shape,
-                            tipo: "Stencil"
-                        };
-                    }else if(k==1){
-                        var data ={
-                            name: name,
-                            priority: 0,
-                            oggetto: shape,
-                            tipo: "Connector"
-                        };
-                    }
-                    elementFigureList.unshift(data);
-                }
+        for(var i=0;i<allShapes.length;i++){
+            var reference = getGeneric(allShapes[i],"reference");
+            var priority = getGeneric(allShapes[i],"priority");
+            var order = getGeneric(allShapes[i],"order");
+            var pathxml = getGeneric(allShapes[i],"path");
+            if(priority != null){
+                var data ={
+                    reference: reference,
+                    priority: priority,
+                    order: order,
+                    path: pathxml,
+                    type: "Stencil"
+                };
+                elementFigureList.push(data);
             }
         }
         debugger;
@@ -118,23 +81,14 @@ function generateHTMLTablePiority(){
     row.appendChild(row1);
     tblHead.appendChild(row);
 
-    for (var k=0;k<2;k++){
-        if(k==0){
-            var list = stencilList;
-            var lname = "Stencil";
-        }else if (k==1){
-            var list = connectorList;
-            var lname = "Connector";
-        }
-
-        if(list.length >0){
-            for(var i=0;i<list.length;i++){
+    if(elementFigureList.length >0){
+        for(var i=0;i<elementFigureList.length;i++){
                 var row2 = document.createElement("tr");
                 var row3 = document.createElement("td");
                 row3.setAttribute("class","tg-0pky");
-                row3.innerHTML = list[i]["name"] + " (<b>" + lname+ "</b>)";
+                row3.innerHTML = elementFigureList[i]["reference"] + " (<b>" + lname+ "</b>)";
                 var row4 = row3.cloneNode(true);
-                row4.innerHTML = "<input type=\"number\" class=\"priority\" value='"+ list[i]["priority"] +"'>"
+                row4.innerHTML = "<input type=\"number\" class=\"priority\" value='"+ elementFigureList[i]["priority"] +"'>"
 
                 var row5 = row3.cloneNode(true);
                 if(list[i]["patht"] == null){

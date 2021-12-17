@@ -291,12 +291,18 @@ function saveInputStringXML(text){
         var desc = tempGraph.decompress(base64);
         var shapeXml = mxUtils.parseXml(desc).documentElement;
         var print = shapeXml.getElementsByTagName("inputstring")[0];
-        if(print == null){
-            var xml = document.createElement("inputstring");
-            xml.innerHTML = text;
-            shapeXml.appendChild(xml);
+        if(text != null){
+            if(print == null){
+                var xml = document.createElement("inputstring");
+                xml.innerHTML = text;
+                shapeXml.appendChild(xml);
+            }else{
+                print.innerHTML = text;
+            }
         }else{
-            print.innerHTML = text;
+            if(print != null){
+                print.remove();
+            }
         }
         var xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
         cell.setStyle('shape=stencil(' + xmlBase64 + ');')
@@ -308,8 +314,73 @@ function saveInputStringXML(text){
         if(initCut != -1){
             edgeStyle = removeTableInfo(edge,"inputstring=");
         }
-        edgeStyle = edgeStyle +"inputstring="+ text + ";";
-        edge.setStyle(edgeStyle);
+        if(text != null){
+            edgeStyle = edgeStyle +"inputstring="+ text + ";";
+            edge.setStyle(edgeStyle);
+        }
     }
+}
 
+function saveGenericValue(element,text,type){
+    try {
+        var cell = element;
+        var stencil = cell.getStyle();
+        var base64 = stencil.substring(14, stencil.length-2);
+        var desc = tempGraph.decompress(base64);
+        var shapeXml = mxUtils.parseXml(desc).documentElement;
+        var print = shapeXml.getElementsByTagName(type)[0];
+        if(text != null){
+            if(print == null){
+                var xml = document.createElement(type);
+                xml.innerHTML = text;
+                shapeXml.appendChild(xml);
+            }else{
+                print.innerHTML = text;
+            }
+        }else{
+            if(print != null){
+                print.remove();
+            }
+        }
+        var xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
+        cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+    }catch (e){
+        text = text.replaceAll(";", '[puntovirgola]');
+        var edge = tempGraph.getSelectionCell();
+        var edgeStyle = edge.getStyle();
+        var initCut = edgeStyle.indexOf(type+"=");
+        if(initCut != -1){
+            edgeStyle = removeTableInfo(edge,type+"=");
+        }
+        if(text != null){
+            edgeStyle = edgeStyle + type+"="+ text + ";";
+            edge.setStyle(edgeStyle);
+        }
+    }
+}
+
+function getGeneric(element,type){
+    try{
+        var cell = element;
+        var stencil = cell.getStyle();
+        var base64 = stencil.substring(14, stencil.length-2);
+        var desc = tempGraph.decompress(base64);
+        var shapeXml = mxUtils.parseXml(desc).documentElement;
+        var print =  shapeXml.getElementsByTagName(type)[0];
+        if(print != null){
+            return print.innerHTML;
+        }else{
+            return null;
+        }
+    }catch (e) {
+        var edge = tempGraph.getSelectionCell();
+        var edgeStyle = edge.getStyle();
+        var initCut = edgeStyle.indexOf(type+"=");
+        if(initCut != -1){
+            edgeStyle = getTableInfoFromConnector(edgeStyle,type+ "=");
+            return  edgeStyle;
+        }else{
+            return null;
+        }
+    }
 }

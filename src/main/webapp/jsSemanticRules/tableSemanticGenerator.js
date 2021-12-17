@@ -87,8 +87,12 @@ function saveReference(){
 }
 
 function saveInputString(){
-    var x =document.getElementById("inputstring").value
-    saveInputStringXML(x);
+    var x =document.getElementById("inputstring")
+    if(x != null && x.value != ""){
+        saveInputStringXML(x.value);
+    }else{
+        saveInputStringXML(null);
+    }
 }
 
 function saveNameStencil(name){
@@ -170,7 +174,7 @@ function getAllShapeConnectorName(){
 }
 
 function createSingleTable(nome,reference,inputstring){
-
+    var checkedbool = false;
     var div = document.getElementById("overlay1");
 
     var divbox = document.createElement("div");
@@ -181,7 +185,7 @@ function createSingleTable(nome,reference,inputstring){
     if(inputstring!=null){
         checkbox.setAttribute("onchange","showTableString()");
         checkbox.setAttribute("checked","");
-        showTableString(inputstring);
+        checkedbool = true;
     }else{
         checkbox.setAttribute("onchange","showTableString()");
     }
@@ -265,6 +269,9 @@ function createSingleTable(nome,reference,inputstring){
     tbl.appendChild(tblHead);
     tbl.appendChild(tblBody);
     div.appendChild(tbl);
+    if(checkedbool){
+        showTableString(inputstring);
+    }
     rowcount =2;
     var tabelladati = getSemanticTableXML();
     if(tabelladati != null){
