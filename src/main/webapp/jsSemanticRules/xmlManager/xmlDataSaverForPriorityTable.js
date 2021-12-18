@@ -66,14 +66,16 @@ function getGeneric(element,type){
 function visitTableToXML(object) {
     var xml = document.createElement("pathinfo");
     for(var i=0;i<object.length;i++){
-        var id = document.createElement("id" + i);
-        var patht = document.createElement("patht");
-        patht.innerHTML = object[i]["patht"];
-        var path = document.createElement("path");
-        path.innerHTML = object[i]["path"];
-        id.appendChild(patht);
-        id.appendChild(path);
-        xml.appendChild(id);
+        if(object[i]["path"] != "") {
+            var id = document.createElement("id" + i);
+            var patht = document.createElement("patht");
+            patht.innerHTML = object[i]["patht"];
+            var path = document.createElement("path");
+            path.innerHTML = object[i]["path"];
+            id.appendChild(patht);
+            id.appendChild(path);
+            xml.appendChild(id);
+        }
     }
     return getXmlString(xml);
 }

@@ -139,18 +139,23 @@ function removeTableInfo(edge,keyword){
     return str;
 }
 
-function getSemanticTableXML(){
+function getSemanticTableXML(element,graph){
+    if(element!= null && graph!= null){
+        tempGraph = graph;
+    }else {
+        element = tempGraph.getSelectionCell();
+    }
     try{
         let array = new Array();
         try{
-            var cell = tempGraph.getSelectionCell();
+            var cell = element
             var stencil = cell.getStyle();
             var base64 = stencil.substring(14, stencil.length-2);
             var desc = tempGraph.decompress(base64);
             var shapeXml = mxUtils.parseXml(desc).documentElement;
             var table =  shapeXml.getElementsByTagName("tableinfo")[0];
         }catch (e){
-            var edge = tempGraph.getSelectionCell();
+            var edge = element
             var edgeStyle = edge.getStyle();
             var initCut = edgeStyle.indexOf("tableinfo=");
             if(initCut != -1){
@@ -189,7 +194,6 @@ function getSemanticTableXML(){
         }
         return array;
     }catch (e){
-        console.error(e);
         return null;
     }
 

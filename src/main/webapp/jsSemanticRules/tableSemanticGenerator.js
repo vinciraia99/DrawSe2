@@ -53,15 +53,15 @@ function showTable(graph) {
         }
 }
 
-function getNameConnector(graph){
-    if(!graph.getStyle().includes("name=")){
-        var id = graph.id
+function getNameConnector(element){
+    if(!element.getStyle().includes("name=")){
+        var id = element.id
         var name = "EDGE_" + id;
-        var style = tgraph.getStyle() +"name="+ name +";";
-        graph.setStyle(style);
+        var style = element.getStyle() +"name="+ name +";";
+        element.setStyle(style);
     }
     else{
-        var edge = graph;
+        var edge = element;
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("name=")
         edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);

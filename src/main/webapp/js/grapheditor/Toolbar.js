@@ -264,6 +264,23 @@ Toolbar.prototype.addToggleSwitch = function() {
 }*/
 
 Toolbar.prototype.addVisitTableButton = function() {
+	var label2 = document.createElement('label');
+	label2.className = 'exportShape4';
+	label2.id = 'exportShape4';
+	var inputNode33 = document.createElement('input');
+	inputNode33.setAttribute('type', 'button');
+	inputNode33.setAttribute('value', 'View summary of semantic rules');
+	inputNode33.style.margin = '7px';
+	inputNode33.className = 'expButton4';
+	inputNode33.id = 'expButton4';
+	label2.appendChild(inputNode33);
+	this.container.appendChild(label2);
+
+	var switchEvent = mxUtils.bind(this, function(evt) {
+		this.editorUi.defineSummary();
+	});
+	mxEvent.addListener(inputNode33, 'click', switchEvent);
+
 	var label222 = document.createElement('label');
 	label222.className = 'exportShape2';
 	label222.id = 'exportShape2';

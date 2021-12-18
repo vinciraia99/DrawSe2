@@ -764,6 +764,11 @@ var locomotiveurl;
 
 	}
 
+	EditorUi.prototype.defineSummary = function() {
+		showSummaryTable(this.editor.graph)
+
+	}
+
 	/**
 	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export from XML'
 	 * Ottenuto il Json lo carica nel localstorage del browser
