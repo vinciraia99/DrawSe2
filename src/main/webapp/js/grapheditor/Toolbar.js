@@ -185,7 +185,7 @@ Toolbar.prototype.init = function()
 
 	if(graph.isShapeMode()) {
 		this.addSeparator();
-		this.addExportLocalButton();
+		//this.addExportLocalButton();
 		this.addVisitTableButton();
 	}
 };
@@ -224,8 +224,10 @@ Toolbar.prototype.addToggleSwitch = function() {
 
 /**
  * Questa funzione aggiunge un toggle switch button alla toolbar
+ * Sostituita con menu laterale
  */
-Toolbar.prototype.addExportLocalButton = function() {
+/*Toolbar.prototype.addExportLocalButton = function() {
+
 	var label2 = document.createElement('label');
 	label2.className = 'exportShape';
 	var inputNode2 = document.createElement('input');
@@ -259,13 +261,12 @@ Toolbar.prototype.addExportLocalButton = function() {
 		this.editorUi.exportShapeXML();
 	});
 	mxEvent.addListener(inputNode22, 'click', switchEvent);
-
-
-}
+}*/
 
 Toolbar.prototype.addVisitTableButton = function() {
 	var label222 = document.createElement('label');
 	label222.className = 'exportShape2';
+	label222.id = 'exportShape2';
 	var inputNode3 = document.createElement('input');
 	inputNode3.setAttribute('type', 'button');
 	inputNode3.setAttribute('value', 'Define visit table');
@@ -279,6 +280,24 @@ Toolbar.prototype.addVisitTableButton = function() {
 		this.editorUi.definePriority();
 	});
 	mxEvent.addListener(inputNode3, 'click', switchEvent);
+
+	var label1 = document.createElement('label');
+	label1.id = 'checkboxpriority';
+	var inputNode33 = document.createElement('input');
+	inputNode33.setAttribute('type', 'checkbox');
+	inputNode33.setAttribute('id', 'disablevisit');
+	inputNode33.setAttribute('onclick', 'disablePriority()');
+	label1.appendChild(inputNode33);
+	label1.innerHTML = label1.innerHTML + "Disable visit table";
+	this.container.appendChild(label1);
+}
+
+function disablePriority(){
+	if(document.getElementById("disablevisit").checked){
+		document.getElementById("expButton3").disabled = true;
+	}else{
+		document.getElementById("expButton3").disabled = false;
+	}
 }
 
 

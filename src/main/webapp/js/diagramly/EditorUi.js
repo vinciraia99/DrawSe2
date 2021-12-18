@@ -392,9 +392,10 @@ var locomotiveurl;
 	EditorUi.prototype.switchMode = function() {
 		var graph = this.editor.graph;
 		var connectionMode = graph.isConstraintMode();
-		document.getElementById("expButton").style.display = "none";
-		document.getElementById("expButton2").style.display = "none";
-		document.getElementById("expButton3").style.display = "none";
+		//document.getElementById("expButton").style.display = "none";
+		//document.getElementById("expButton2").style.display = "none";
+		document.getElementById("exportShape2").style.display = "none";
+		document.getElementById("checkboxpriority").style.display = "none";
 		if(graph.isShapeMode()) {
 			globalGraph = saveData(this.editor.graph);
 			graph.editorMode = mxResources.get('connectionMode');
@@ -435,9 +436,10 @@ var locomotiveurl;
 				}
 			};*/
 		} else if(graph.isConstraintMode()) {
-			document.getElementById("expButton").style.display = "inline-block";
-			document.getElementById("expButton2").style.display = "inline-block";
-			document.getElementById("expButton3").style.display = "inline-block";
+			//document.getElementById("expButton").style.display = "inline-block";
+			//document.getElementById("expButton2").style.display = "inline-block";
+			document.getElementById("exportShape2").style.display = "inline-block";
+			document.getElementById("checkboxpriority").style.display = "inline-block";
 			/*graph.editorMode = mxResources.get('shapeMode');
 			graph.hideConstraints();
 			/*Nascondo l'highlight del simbolo
@@ -702,8 +704,13 @@ var locomotiveurl;
 
 	EditorUi.prototype.exportShapeJSON = function() {
 		var graph = this.editor.graph;
+		if(graph.editorMode != "Shape Editor Mode"){
+			mxUtils.alert("You can use this function only in Shape Mode");
+			return;
+		}
 
-		if(this.title == null) {
+
+			if(this.title == null) {
 			this.title = mxUtils.prompt('Insert a name for the language ', 'NoName');
 		}
 		if(this.title != null) {
@@ -752,17 +759,22 @@ var locomotiveurl;
 		}
 	}
 
-	/**
-	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export from XML'
-	 * Ottenuto il Json lo carica nel localstorage del browser
-	 */
 	EditorUi.prototype.definePriority = function() {
 		showPriorityTable(this.editor.graph)
 
 	}
 
+	/**
+	 * Questa funzione viene invocata quando si interagisce con il button nella toolbar 'Export from XML'
+	 * Ottenuto il Json lo carica nel localstorage del browser
+	 */
+
 	EditorUi.prototype.exportShapeXML = function() {
 		var graph = this.editor.graph;
+		if(graph.editorMode != "Shape Editor Mode"){
+			mxUtils.alert("You can use this function only in Shape Mode");
+			return;
+		}
 		var xmlconversion;
 
 		if(this.title == null) {

@@ -1155,6 +1155,14 @@ Actions.prototype.init = function()
 			showingAbout = true;
 		}
 	}));
+
+	this.addAction('exporttotivejson', mxUtils.bind(this, function(evt) {
+		this.editorUi.exportShapeJSON();
+	}));
+
+	this.addAction('exporttotivexml', mxUtils.bind(this, function(evt) {
+		this.editorUi.exportShapeXML();
+	}));
 	
 	// Font style actions
 	var toggleFontStyle = mxUtils.bind(this, function(key, style, fn, shortcut)

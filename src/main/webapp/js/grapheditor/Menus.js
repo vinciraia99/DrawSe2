@@ -30,7 +30,7 @@ Menus.prototype.defaultFontSize = '12';
 /**
  * Sets the default font size.
  */
-Menus.prototype.defaultMenuItems = ['file', 'edit', 'view', 'arrange', 'extras', 'help'];
+Menus.prototype.defaultMenuItems = ['file', 'edit', 'view', 'arrange', 'extras', 'help','exporttotive'];
 
 /**
  * Adds the label menu items to the given menu and parent.
@@ -489,6 +489,10 @@ Menus.prototype.init = function()
 	this.put('help', new Menu(mxUtils.bind(this, function(menu, parent)
 	{
 		this.addMenuItems(menu, ['help', '-', 'about']);
+	})));
+	this.put('exporttotive', new Menu(mxUtils.bind(this, function(menu, parent)
+	{
+		this.addMenuItems(menu, ['exporttotivejson', 'exporttotivexml']);
 	})));
 };
 
