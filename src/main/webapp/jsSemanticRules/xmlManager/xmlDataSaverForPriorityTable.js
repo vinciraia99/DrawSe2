@@ -7,7 +7,7 @@ function saveGenericValue(element,text,type){
         var shapeXml = mxUtils.parseXml(desc).documentElement;
         var print = shapeXml.getElementsByTagName(type)[0];
         if(text != null){
-            if(print == null){
+            if(print == null || print == undefined){
                 var xml = document.createElement(type);
                 xml.innerHTML = text;
                 shapeXml.appendChild(xml);
@@ -81,11 +81,12 @@ function visitTableToXML(object) {
 function getPathForElementXML(xml){
     var array = new Array();
     const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "application/xml");
+    let doc = parser.parseFromString(xml, "application/xml");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) {
         return null;
     }else {
+        doc = doc.getElementsByTagName("pathinfo")[0];
         for (var i = 0; i < doc.childElementCount; i++) {
             var id = doc.getElementsByTagName("id" + i)[0];
             var patht = id.getElementsByTagName("patht")[0].innerHTML;
@@ -94,7 +95,7 @@ function getPathForElementXML(xml){
                 patht: patht,
                 path: path,
             };
-            array.unshift(data);
+            array.push(data);
         }
         return array;
     }

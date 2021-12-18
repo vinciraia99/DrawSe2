@@ -13,13 +13,13 @@ function setOrderUpBex(i){
 
         var deleteButton = tableold.getElementsByClassName("btn");
         if(deleteButton.length>0) {
-            for(var k=0;i<deleteButton.length;k++){
+            for(var k=0;k<deleteButton.length;k++){
                 deleteButton[k].setAttribute("onclick","removePath("+ j +",this)");
             }
         }
         var deleteButton = tablenew.getElementsByClassName("btn");
         if(deleteButton.length>0) {
-            for(var k=0;i<deleteButton.length;k++){
+            for(var k=0;k<deleteButton.length;k++){
                 deleteButton[k].setAttribute("onclick","removePath("+ i +",this)");
             }
         }

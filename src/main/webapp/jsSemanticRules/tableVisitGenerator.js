@@ -32,7 +32,7 @@ function showPriorityTable(graph) {
             }
             var priority = getGeneric(allShapes[i], "priority");
             var order = getGeneric(allShapes[i], "order");
-            var pathxml = getGeneric(allShapes[i], "path");
+            var pathxml = getGeneric(allShapes[i], "pathlist");
             if (priority != null) {
                 var data = {
                     element: allShapes[i],
@@ -228,6 +228,7 @@ function hideTablePriority() {
             removeTableInfo(elementOrderedFigureList[i]["element"],"pathlist=");
         }
         saveGenericValue(elementOrderedFigureList[i]["element"],i+"","order");
+        elementOrderedFigureList[i]["element"].parent.backup =  elementOrderedFigureList[i]["element"].style;
     }
 
     var div = document.getElementById("overlay1");

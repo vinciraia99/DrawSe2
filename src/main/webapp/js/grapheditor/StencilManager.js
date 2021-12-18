@@ -1366,7 +1366,6 @@ StencilManager.prototype.unmergeShape = function(cellToTransform) {
     var connectionsNode = shapeXml.getElementsByTagName('connections')[0];
     var connectionChildNodes = this.getAllElementChildNodes(connectionsNode);
 
-
     var i;
     var inArea = false;
     for(i=0; i<connectionChildNodes.length; i++) {

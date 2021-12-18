@@ -396,6 +396,7 @@ var locomotiveurl;
 		document.getElementById("expButton2").style.display = "none";
 		document.getElementById("expButton3").style.display = "none";
 		if(graph.isShapeMode()) {
+			globalGraph = saveData(this.editor.graph);
 			graph.editorMode = mxResources.get('connectionMode');
 			graph.showConstraints();
 			/*Mostro l'highlight del simbolo se ha il contorno come punto d'attacco*/
@@ -474,7 +475,9 @@ var locomotiveurl;
 				graph.getModel().setStyle(cells[i], style);
 			}
 			graph.hideConstraints();
+			restoreSemanticData(graph);
 		}
+
 		//Deseleziona tutti i simboli
 		graph.setSelectionCells([]);
 		//Modifica le palette della sidebar
@@ -483,6 +486,43 @@ var locomotiveurl;
 		this.format.refresh();
 
 	}
+
+	function saveData(graph){
+		var allShapes = graph.getModel().filterDescendants(function (cell) {
+			if ((cell.vertex || cell.edge)) {
+				if (cell.getStyle().includes('stencil')) {
+					return true;
+				}
+			}
+		});
+		var ar = new Array();
+		for(var i=0;i<allShapes.length;i++){
+			var data = {
+				xml : allShapes[i].getStyle(),
+				id:  allShapes[i].getId()
+			}
+			ar.push(data);
+		}
+		return ar;
+	}
+
+	function restoreSemanticData(graph){
+		var allShapes = graph.getModel().filterDescendants(function (cell) {
+			if ((cell.vertex || cell.edge)) {
+				if (cell.getStyle().includes('stencil')) {
+					return true;
+				}
+			}
+		});
+		var k = allShapes.length-1;
+		if(globalGraph.length != 0){
+			for(var i=globalGraph.length-1;i>=0;i--){
+				allShapes[k].style = globalGraph[i]["xml"];
+				k--;
+			}
+		}
+	}
+
 	//qusta funzione converte il JSON in XML
 	function ConversionJSONtoXML(obj) {
 		var xml = '';

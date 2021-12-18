@@ -1,9 +1,27 @@
 var tempGraph;
 var stencilList;
 var connectorList;
+let globalGraph;
 function showTable(graph) {
     tempGraph = graph;
         if(graph.editorMode == "Shape Editor Mode"){
+            if(graph.getSelectionCell().connectable != null){
+                var fix = true;
+                if(graph.getSelectionCell().children != null){
+                    for(var i=0;i<tempGraph.getSelectionCell().children.length;i++){
+                        if(tempGraph.getSelectionCell().children[0].style.includes("stencil(") || tempGraph.getSelectionCell().children[0].style.includes("ap=(")){
+                            tempGraph.setSelectionCell(tempGraph.getSelectionCell().children[i]);
+                            fix = false;
+                            break;
+                        }
+                    }
+                }
+                if(fix && (tempGraph.getSelectionCell().connectable == false || tempGraph.getSelectionCell().connectable == "0")){
+                    mxUtils.alert("You have selected an attach point and not the stencil / connector");
+                    tempGraph = null;
+                    return;
+                }
+            }
             var stencil = graph.getSelectionCell().getStyle();
             var base64 = stencil.substring(14, stencil.length-2);
             if(tempGraph.getSelectionCell().style.search("stencil") > 0){
@@ -104,8 +122,7 @@ function saveNameStencil(name){
     var shapeXml = mxUtils.parseXml(desc).documentElement;
     shapeXml.setAttribute("name" ,name);
     var xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
-    console.log(xmlBase64)
-    cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+    cell.setStyle('shape=stencil(' + xmlBase64 + ');');
     tempGraph.getSelectionModel().clear();
     tempGraph.refresh();
 }
