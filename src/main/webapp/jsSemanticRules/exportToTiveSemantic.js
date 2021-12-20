@@ -31,9 +31,11 @@ function generateXMLSemanticRules(graph,languageName){
             }
             for(let k=0;k<alltable[i]["semantic"]["table"].length;k++){
                 let property = document.createElement("property");
-                property.setAttribute("name",alltable[i]["semantic"]["table"][k]["property"]);
-                property.setAttribute("type",alltable[i]["semantic"]["table"][k]["type"]);
-                property.setAttribute("condition",alltable[i]["semantic"]["table"][k]["postcondition"]);
+                if(alltable[i]["semantic"]["table"][k]["property"] != "" && alltable[i]["semantic"]["table"][k]["type"] != null){
+                    property.setAttribute("name",alltable[i]["semantic"]["table"][k]["property"]);
+                    property.setAttribute("type",alltable[i]["semantic"]["table"][k]["type"]);
+                    property.setAttribute("condition",alltable[i]["semantic"]["table"][k]["postcondition"]);
+                }
                 for(let x=0;x<alltable[i]["semantic"]["table"][k]["params"].length;x++){
                     let functions = document.createElement("function");
                     functions.setAttribute("name",alltable[i]["semantic"]["table"][k]["params"][x]["procedure"]);
@@ -48,7 +50,7 @@ function generateXMLSemanticRules(graph,languageName){
             }
             let property = document.createElement("property");
             property.setAttribute("name","print");
-            property.setAttribute("path","");
+            property.setAttribute("path",alltable[i]["semantic"]["printpath"]);
             property.setAttribute("param",alltable[i]["semantic"]["print"]);
             semantic.appendChild(property);
             if(alltable[i]["visit"] == null && checkIsSelected() == false){

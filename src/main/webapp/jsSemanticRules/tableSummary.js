@@ -48,6 +48,7 @@ function loadAllTable(graph){
                 var name = getNameConnector(element[i]);
             }
             var print = getGeneric(element[i],"print");
+            var printpath = getGeneric(element[i],"printpath");
             var reference = getGeneric(element[i],"reference");
             var inputstring = getGeneric(element[i],"inputstring");
             var tableinfo = getSemanticTableXML(element[i],graph);
@@ -61,6 +62,7 @@ function loadAllTable(graph){
                     var data={
                         name: name,
                         print: print,
+                        printpath: printpath,
                         reference: reference,
                         inputstring: inputstring,
                         table: tableinfo,
@@ -70,6 +72,7 @@ function loadAllTable(graph){
                     var data={
                         name: name,
                         print: print,
+                        printpath: printpath,
                         reference: reference,
                         inputstring: inputstring,
                         table: tableinfo

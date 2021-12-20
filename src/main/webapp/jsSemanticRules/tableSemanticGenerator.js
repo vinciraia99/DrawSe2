@@ -246,9 +246,15 @@ function createSingleTable(nome,reference,inputstring){
     row3.setAttribute("colspan","3");
     var print = getPrintXML();
     if(print != null){
-        row3.innerHTML="<textarea  type=\"text\" placeholder=\"print\" class=\"print\">" + print + "</textarea>";
+        row3.innerHTML="<textarea  type=\"text\" placeholder=\"print param (optional)\" class=\"print\">" + print + "</textarea>";
     }else{
-        row3.innerHTML="<textarea   class='print'></textarea>";
+        row3.innerHTML="<textarea placeholder=\"print param(optional)\"  class='print'></textarea>";
+    }
+    var printpath = getGeneric(tempGraph.getSelectionCell(),"printpath");
+    if(printpath != null){
+        row3.innerHTML=row3.innerHTML + "<br>" + "<input placeholder='print path(optional)' type=\"text\" class=\"printpath\" value='"+ printpath +"'>";
+    }else{
+        row3.innerHTML=row3.innerHTML + "<br>" + "<input placeholder='print path(optional)' type=\"text\" class=\"printpath\">";
     }
 
 
@@ -302,11 +308,11 @@ function createRow(property,propertyType,params,postcondition){
     var row4 = document.createElement("tr");
     var row5 = document.createElement("td");
     if(property!=null && propertyType!=null){
-        row5.innerHTML="<input type=\"text\" class=\"property\" value='"+ property +"'>" + " <b>:</b> " +"<input list=\"typelist\" type=\"text\" class=\"type\" value='"+ propertyType +"'>";
+        row5.innerHTML="<input type=\"text\" placeholder='optional' class=\"property\" value='"+ property +"'>" + " <b>:</b> " +"<input placeholder='type (optional)' list=\"typelist\" type=\"text\" class=\"type\" value='"+ propertyType +"'>";
     }else if(property!=null){
-        row5.innerHTML="<input type=\"text\" class=\"property\" value='"+ property +"'>" + " <b>:</b> " +"<input type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
+        row5.innerHTML="<input type=\"text\" placeholder='optional'  class=\"property\" value='"+ property +"'>" + " <b>:</b> " +"<input placeholder='type (optional)' type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
     }else{
-        row5.innerHTML="<input type=\"text\" placeholder='$value' class=\"property\">"+ " <b>:</b> " +"<input type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
+        row5.innerHTML="<input type=\"text\" placeholder='optional'  placeholder='$value' class=\"property\">"+ " <b>:</b> " +"<input placeholder='type (optional)' type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
     }
     row4.appendChild(row5);
     var datalistrow5 =
@@ -388,17 +394,17 @@ function createProcedureRow(t,paramselement,element){
     let td = document.createElement("td");
     td.setAttribute("style","border-color:transparent");
     if(paramselement!=null) {
-        td.innerHTML = "<input type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ paramselement["procedure"] +"'>";
+        td.innerHTML = "<input placeholder='name' type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ paramselement["procedure"] +"'>";
     }else{
-        td.innerHTML = "<input type=\"text\" class=\"procedure\" list=\"listObj\">";
+        td.innerHTML = "<input placeholder='name' type=\"text\" class=\"procedure\" list=\"listObj\">";
     }
     tr.appendChild(td);
 
     let td2 = td.cloneNode(true);
     if(paramselement!=null) {
-        td2.innerHTML="<input type=\"text\" class=\"params\" value='"+ paramselement["param"] +"'>";
+        td2.innerHTML="<input placeholder='path' type=\"text\" class=\"params\" value='"+ paramselement["param"] +"'>";
     }else{
-        td2.innerHTML="<input type=\"text\" class=\"params\">";
+        td2.innerHTML="<input placeholder='path' type=\"text\" class=\"params\">";
     }
     tr.appendChild(td2);
 
@@ -414,9 +420,9 @@ function createProcedureRow(t,paramselement,element){
         "        <option value=\"#status\">#status</option>\n" +
         "    </datalist>";
     if(paramselement != null){
-        td3.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\" value='"+ paramselement["param2"] +"'>" + datalistrow5;
+        td3.innerHTML="<input placeholder='param(optional)' type=\"text\" class=\"params2\" list=\"paramlist\" value='"+ paramselement["param2"] +"'>" + datalistrow5;
     }else{
-        td3.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\">"+ datalistrow5;
+        td3.innerHTML="<input placeholder='param(optional)' type=\"text\" class=\"params2\" list=\"paramlist\">"+ datalistrow5;
     }
     tr.appendChild(td3);
 
@@ -445,25 +451,25 @@ function createConfirmButton(){
 
 function saveDataTable(){
     let array = new Array();
-    for(var i=0;i<document.getElementsByClassName("property").length;i++){
+    /*for(var i=0;i<document.getElementsByClassName("property").length;i++){
         document.getElementsByClassName("type")[i].style.background  ="white"
         document.getElementsByClassName("type")[i].style.color = "black"
         document.getElementsByClassName("property")[i].style.background  ="white"
         document.getElementsByClassName("property")[i].style.color = "black"
-    }
+    }*/
     for(let i=0;i<document.getElementsByClassName("property").length;i++){
         let property = document.getElementsByClassName("property")[i].value;
         let type = document.getElementsByClassName("type")[i].value;
         let postcondition = document.getElementsByClassName("postcondition")[i].value;
         let params = getPropertyData(document.getElementsByClassName("property")[i].parentNode.parentNode.parentNode);
-        if(property == "" && type == ""){
+        /*if(property == "" && type == ""){
 
-        } else{
-            if(property == "" || type == "" || (params!= null && params == false) || params== null){
-                document.getElementsByClassName("type")[i].style.background  ="red"
+        } else{*/
+            if(/*property == "" || type == "" ||*/ (params!= null && params == false) || params== null){
+                /*document.getElementsByClassName("type")[i].style.background  ="red"
                 document.getElementsByClassName("type")[i].style.color = "white"
                 document.getElementsByClassName("property")[i].style.background  ="red"
-                document.getElementsByClassName("property")[i].style.color = "white"
+                document.getElementsByClassName("property")[i].style.color = "white"*/
                 if(params!= null && params == false){
                     mxUtils.alert("A field of a row is empty if you do not want to load a row leave all fields empty");
                 }else if(params== null){
@@ -479,16 +485,17 @@ function saveDataTable(){
                 params: params
             };
             array.push(data);
-        }
+        //}
     }
     if(checkInput(document.getElementsByClassName("print")[0].value,array)){
-        if(document.getElementsByClassName("print")[0].value == "" && array.length ==0){
+        if(document.getElementsByClassName("print")[0].value == "" && array.length ==0 && getPrintXML() == null){
             return true;
         }
         saveSemanticTableXML(array);
         savePrint();
         saveReference();
         saveInputString();
+        saveGenericValue(tempGraph.getSelectionCell(),document.getElementsByClassName("printpath")[0].value,"printpath");
         return true;
     }else{
         mxUtils.alert("The properties you invoked have not been defined. I have created the field for you to fill in to be able to continue");
@@ -509,22 +516,22 @@ function getPropertyData(element){
             let procedure = element.getElementsByClassName("procedure")[i].value;
             let params = element.getElementsByClassName("params")[i].value;
             let params2 = element.getElementsByClassName("params2")[i].value;
-            if(procedure != "" && params != ""){
+            if(procedure != ""/*&& params != ""*/){
                 let data ={
                     procedure: procedure,
                     param: params,
                     param2: params2
                 };
                 array.push(data);
-            }else if(procedure != "" || params != ""){
+            }else /*if(procedure != "" || params != "")*/{
                 element.getElementsByClassName("procedure")[i].style.background  ="red"
                 element.getElementsByClassName("procedure")[i].style.color = "white"
                 element.getElementsByClassName("params")[i].style.background  ="red"
                 element.getElementsByClassName("params")[i].style.color = "white"
                 return false;
-            }else{
+            }/*else{
                 return null;
-            }
+            }*/
         }
         return array;
     }else{
