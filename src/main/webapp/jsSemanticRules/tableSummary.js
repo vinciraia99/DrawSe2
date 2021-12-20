@@ -7,6 +7,8 @@ function showSummaryTable(graph){
             return;
         }
 
+        generateXMLSemanticRules(graph,"test");
+
         debugger;
         //document.getElementById("overlay").style.display = "flex";
 
@@ -49,7 +51,7 @@ function loadAllTable(graph){
             var reference = getGeneric(element[i],"reference");
             var inputstring = getGeneric(element[i],"inputstring");
             var tableinfo = getSemanticTableXML(element[i],graph);
-            if(document.getElementById("disablevisit").checked == false){
+            if(checkIsSelected() == false){
                 var priority = getGeneric(element[i],"priority");
                 var order = getGeneric(element[i],"order");
                 var path = getPathForElementXML(getGeneric(element[i],"pathlist"));

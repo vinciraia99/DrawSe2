@@ -1,24 +1,32 @@
 function semanticTableToXml(object) {
     var xml = document.createElement("tableinfo");
     for(var i=0;i<object.length;i++){
-        var id = document.createElement("id" + i);
-        var property = document.createElement("property");
+        let id = document.createElement("id" + i);
+        let property = document.createElement("property");
         property.innerHTML = object[i]["property"];
-        var type = document.createElement("type");
+        let type = document.createElement("type");
         type.innerHTML = object[i]["type"];
-        var params = document.createElement("params");
-        params.innerHTML = object[i]["params"];
-        var procedure = document.createElement("procedure");
-        procedure.innerHTML = object[i]["procedure"];
-        var params2 = document.createElement("params2");
-        params2.innerHTML = object[i]["params2"];
+        if(object[i]["params"] != null){
+            let params = document.createElement("params");
+            for(let k=0;k<object[i]["params"].length;k++){
+                let id2 = document.createElement("id" + k);
+                let param = document.createElement("param");
+                param.innerHTML = object[i]["params"][k]["param"];
+                let procedure = document.createElement("procedure");
+                procedure.innerHTML =  object[i]["params"][k]["procedure"];
+                let param2 = document.createElement("param2");
+                param2.innerHTML = object[i]["params"][k]["param2"];
+                id2.appendChild(param);
+                id2.appendChild(procedure);
+                id2.appendChild(param2);
+                params.appendChild(id2);
+            }
+            id.appendChild(params);
+        }
         var postcondition = document.createElement("postcondition");
         postcondition.innerHTML = object[i]["postcondition"];
         id.appendChild(property);
         id.appendChild(type);
-        id.appendChild(params);
-        id.appendChild(procedure);
-        id.appendChild(params2);
         id.appendChild(postcondition);
         xml.appendChild(id);
     }
@@ -174,20 +182,19 @@ function getSemanticTableXML(element,graph){
             }
         }
 
-        for(var i=0;i<table.childElementCount;i++){
-            var id = table.getElementsByTagName("id" + i)[0];
-            var property = id.getElementsByTagName("property")[0].innerHTML;
-            var type = id.getElementsByTagName("type")[0].innerHTML;
-            var procedure = id.getElementsByTagName("procedure")[0].innerHTML;
-            var params = id.getElementsByTagName("params")[0].innerHTML;
-            var params2 = id.getElementsByTagName("params2")[0].innerHTML;
-            var postcondition = id.getElementsByTagName("postcondition")[0].innerHTML;
-            var data ={
+        for(let i=0;i<table.childElementCount;i++){
+            let id = table.getElementsByTagName("id" + i)[0];
+            let property = id.getElementsByTagName("property")[0].innerHTML;
+            let type = id.getElementsByTagName("type")[0].innerHTML;
+            let params = getFunctionXML(id);
+            //var procedure = id.getElementsByTagName("procedure")[0].innerHTML;
+            //var params = id.getElementsByTagName("params")[0].innerHTML;
+            //var params2 = id.getElementsByTagName("params2")[0].innerHTML;
+            let postcondition = id.getElementsByTagName("postcondition")[0].innerHTML;
+            let data ={
                 property: property,
                 type: type,
-                procedure: procedure,
-                params: params,
-                params2: params2,
+                params : params,
                 postcondition : postcondition
             };
             array.push(data);
@@ -198,6 +205,29 @@ function getSemanticTableXML(element,graph){
     }
 
 }
+
+function getFunctionXML(id){
+    let array = new Array();
+    let params = id.getElementsByTagName("params")[0];
+    if(params!=null){
+        for(let i=0;i<params.childElementCount;i++){
+            let ids = params.getElementsByTagName("id" + i)[0];
+            let procedure = ids.getElementsByTagName("procedure")[0].innerHTML;
+            let param = ids.getElementsByTagName("param")[0].innerHTML;
+            let param2 = ids.getElementsByTagName("param2")[0].innerHTML;
+            var data ={
+                procedure: procedure,
+                param: param,
+                param2 : param2
+            };
+            array.push(data);
+        }
+        return array;
+    }else{
+        return null;
+    }
+}
+
 
 function getXmlString(xml) {
     if (window.ActiveXObject) { return xml.xml; }
@@ -262,15 +292,19 @@ function getReference(){
 }
 
 function getInputString(){
+    var ar = new Array();
     try{
         var cell = tempGraph.getSelectionCell();
         var stencil = cell.getStyle();
         var base64 = stencil.substring(14, stencil.length-2);
         var desc = tempGraph.decompress(base64);
         var shapeXml = mxUtils.parseXml(desc).documentElement;
-        var print =  shapeXml.getElementsByTagName("inputstring")[0];
-        if(print != null){
-            return print.innerHTML;
+        var elem1 =  shapeXml.getElementsByTagName("inputstring")[0];
+        var elem2 =  shapeXml.getElementsByTagName("inputstringtype")[0];
+        if(elem1 != null && elem2 !=null){
+            ar.push(elem1.innerHTML);
+            ar.push(elem2.innerHTML);
+            return ar;
         }else{
             return null;
         }
@@ -278,16 +312,22 @@ function getInputString(){
         var edge = tempGraph.getSelectionCell();
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("inputstring=");
-        if(initCut != -1){
-            edgeStyle = getTableInfoFromConnector(edgeStyle,"inputstring=");
-            return  edgeStyle;
+        var initCut2 = edgeStyle.indexOf("inputstringtype=");
+        if(initCut != -1 && initCut2 != -1){
+            var edgeStyle1 = getTableInfoFromConnector(edgeStyle,"inputstring=");
+            var edgeStyle2 = getTableInfoFromConnector(edgeStyle,"inputstringtype=");
+            edgeStyle1 = edgeStyle1.replaceAll("[puntovirgola]", ';');
+            edgeStyle2 = edgeStyle2.replaceAll("[puntovirgola]", ';');
+            ar.push(edgeStyle1);
+            ar.push(edgeStyle2);
+            return  ar;
         }else{
             return null;
         }
     }
 }
 
-function saveInputStringXML(text){
+function saveInputStringXML(text,type){
     try {
         var cell = tempGraph.getSelectionCell();
         var stencil = cell.getStyle();
@@ -295,17 +335,28 @@ function saveInputStringXML(text){
         var desc = tempGraph.decompress(base64);
         var shapeXml = mxUtils.parseXml(desc).documentElement;
         var print = shapeXml.getElementsByTagName("inputstring")[0];
-        if(text != null){
+        var print2 = shapeXml.getElementsByTagName("inputstringtype")[0];
+        if(text != null && type != null){
             if(print == null){
-                var xml = document.createElement("inputstring");
+                let xml = document.createElement("inputstring");
                 xml.innerHTML = text;
                 shapeXml.appendChild(xml);
             }else{
                 print.innerHTML = text;
             }
+            if(print2 == null){
+                let xml = document.createElement("inputstringtype");
+                xml.innerHTML = type;
+                shapeXml.appendChild(xml);
+            }else{
+                print2.innerHTML = type;
+            }
         }else{
             if(print != null){
                 print.remove();
+            }
+            if(print2 != null){
+                print2.remove();
             }
         }
         var xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
@@ -314,12 +365,21 @@ function saveInputStringXML(text){
         var edge = tempGraph.getSelectionCell();
         var edgeStyle = edge.getStyle();
         var initCut = edgeStyle.indexOf("inputstring=");
+        var initCut2 = edgeStyle.indexOf("inputstringtype=");
         if(initCut != -1){
             edgeStyle = removeTableInfo(edge,"inputstring=");
+        }
+        if(initCut2 != -1){
+            edgeStyle = removeTableInfo(edge,"inputstringtype=");
         }
         if(text != null){
             text = text.replaceAll(";", '[puntovirgola]');
             edgeStyle = edgeStyle +"inputstring="+ text + ";";
+            edge.setStyle(edgeStyle);
+        }
+        if(type != null){
+            type = type.replaceAll(";", '[puntovirgola]');
+            edgeStyle = edgeStyle +"inputstringtype="+ type + ";";
             edge.setStyle(edgeStyle);
         }
     }

@@ -1,8 +1,8 @@
 function setOrderUpBex(i){
     if(i!=0){
-        var j=i-1;
-        var tableold =  document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[i];
-        var tablenew = document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[j];
+        let j=i-1;
+        let tableold =  document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[i];
+        let tablenew = document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[j];
         tableold.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ j +")");
         tableold.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ j +")");
         tablenew.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ i +")");
@@ -10,19 +10,6 @@ function setOrderUpBex(i){
 
         tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ i +")");
         tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ j +")");
-
-        var deleteButton = tableold.getElementsByClassName("btn");
-        if(deleteButton.length>0) {
-            for(var k=0;k<deleteButton.length;k++){
-                deleteButton[k].setAttribute("onclick","removePath("+ j +",this)");
-            }
-        }
-        var deleteButton = tablenew.getElementsByClassName("btn");
-        if(deleteButton.length>0) {
-            for(var k=0;k<deleteButton.length;k++){
-                deleteButton[k].setAttribute("onclick","removePath("+ i +",this)");
-            }
-        }
 
         document.getElementsByTagName("tbody")[0].insertBefore(tableold,tablenew);
         arraymove(elementOrderedFigureList,i,j);
@@ -33,9 +20,9 @@ function setOrderUpBex(i){
 
 function setOrderDownBex(i){
     if((indexprioritytable-1) !=i){
-        var j=i+1;
-        var tableold =  document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[i];
-        var tablenew = document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[j];
+        let j=i+1;
+        let tableold =  document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[i];
+        let tablenew = document.getElementsByTagName("tbody")[0].getElementsByClassName("trmain")[j];
 
         tableold.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ j +")");
         tableold.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ j +")");
@@ -45,31 +32,22 @@ function setOrderDownBex(i){
         tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ i +")");
         tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ j +")");
 
-        var deleteButton = tableold.getElementsByClassName("btn");
-        if(deleteButton.length>0) {
-            for (var k = 0; k < deleteButton.length; k++) {
-                deleteButton[k].setAttribute("onclick", "removePath(" + j + ",this)");
-            }
-        }
-        var deleteButton = tablenew.getElementsByClassName("btn");
-        if(deleteButton.length>0) {
-            for(var k=0;k<deleteButton.length;k++){
-                deleteButton[k].setAttribute("onclick","removePath("+ i +",this)");
-            }
-        }
-
         document.getElementsByTagName("tbody")[0].insertBefore(tablenew,tableold);
         arraymove(elementOrderedFigureList,i,j);
     }
 
 }
 
-function removeRow(i){
-    document.getElementsByTagName('tr')[i].remove();
-    rowcount--;
-    for(var y=i-2;y<rowcount-2;y++){
-        var sum = parseInt(y)+2;
-        document.getElementsByClassName("btn")[y].setAttribute("onclick", 'removeRow(' + sum +')');
+function removeRow(element){
+    if(element.localName == "tr"){
+        element.remove();
+    }else{
+        for(var k=0;k<document.getElementsByClassName("btn").length;k++){
+            if(document.getElementsByClassName("btn")[k] == element){
+                document.getElementsByClassName("btn")[k].parentNode.parentNode.remove();
+                break;
+            }
+        }
     }
 }
 
@@ -114,13 +92,16 @@ function showTableString(name){
         row3.innerHTML= "<input type=\"text\" class=\"graphicRef\" value=\"Center\" disabled>"
         var row4 = row3.cloneNode(true);
         if(name != null){
-            row4.innerHTML="<input id='inputstring' type=\"text\" class=\"name\" value='"+ name +"'>"
+            row4.innerHTML="<input id='inputstring' type=\"text\" class=\"name\" value='"+ name[0] +"'>"
         }else{
             row4.innerHTML= "<input id='inputstring' type=\"text\" class=\"name\">"
         }
-
         var row5 = row3.cloneNode(true);
-        row5.innerHTML= "<input type=\"text\" class=\"type\" value=\"string\" disabled>"
+        if(name != null){
+            row5.innerHTML="<input id='inputstringtype' type=\"text\" class=\"type\" value='"+ name[1] +"'>"
+        }else{
+            row5.innerHTML= "<input id='inputstringtype' type=\"text\" class=\"type\" value='string'>"
+        }
         row2.appendChild(row3);
         row2.appendChild(row4);
         row2.appendChild(row5);
@@ -179,16 +160,32 @@ function createPathRow(th,index){
         tablee.appendChild(tr);
         t.insertBefore(tablee,t.getElementsByClassName("plusbutton")[0]);
     }
-    row10.innerHTML = "<button class=\"btn\" onclick='removePath(" + index.toString() + ", this)'><i class=\"fa fa-trash\"></i></button>"
+    row10.innerHTML = "<button class=\"btn\" onclick='removePath(this)'><i class=\"fa fa-trash\"></i></button>"
 }
 
-function removePath(index,obj){
-    for(var i=0;i<document.getElementsByClassName("tablepath")[index].getElementsByTagName("tr").length;i++){
-        var t = document.getElementsByClassName("tablepath")[index].getElementsByTagName("tr")[i]
-        if(t.getElementsByClassName("btn")[0] == obj){
-           t.remove();
-           break;
+function removePath(obj){
+    for(let i=0;i<document.getElementsByClassName("btn").length;i++){
+        if(document.getElementsByClassName("btn")[i] == obj){
+            document.getElementsByClassName("btn")[i].parentNode.parentNode.remove();
+            break
         }
     }
 
+}
+
+function checkIsSelected(){
+    return document.getElementById("disablevisit").checked;
+}
+
+function removeParamsRow(element){
+    for(var k=0;k<document.getElementsByClassName("btn").length;k++){
+        if(document.getElementsByClassName("btn")[k] == element){
+            document.getElementsByClassName("btn")[k].parentNode.parentNode.remove();
+            break;
+        }
+    }
+}
+
+function changeReferenceValue(element){
+    document.getElementById("reference").value = element.value;
 }

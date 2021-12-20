@@ -191,3 +191,8 @@ select.patht {
 	width: -moz-available;
 	width: -webkit-fill-available;
 }
+
+.tableparams {
+	width: -moz-available;
+	width: -webkit-fill-available;
+}

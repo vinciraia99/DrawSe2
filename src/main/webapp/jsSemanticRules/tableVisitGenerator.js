@@ -26,59 +26,55 @@ function showPriorityTable(graph) {
     if (allShapes.length > 0 || allConns.length > 0) {
         for (var i = 0; i < allShapes.length; i++) {
             var reference = getGeneric(allShapes[i], "reference");
-            if (reference == null) {
-                mxUtils.alert("First define the reference for each shapes and stencil")
-                return;
+            if (reference != null) {
+                var priority = getGeneric(allShapes[i], "priority");
+                var order = getGeneric(allShapes[i], "order");
+                var pathxml = getGeneric(allShapes[i], "pathlist");
+                if (priority != null) {
+                    var data = {
+                        element: allShapes[i],
+                        reference: reference,
+                        priority: priority,
+                        order: order,
+                        path: pathxml,
+                        type: "Stencil"
+                    };
+                } else {
+                    var data = {
+                        element: allShapes[i],
+                        reference: reference,
+                        priority: 0,
+                        type: "Stencil"
+                    };
+                }
+                elementFigureList.push(data);
             }
-            var priority = getGeneric(allShapes[i], "priority");
-            var order = getGeneric(allShapes[i], "order");
-            var pathxml = getGeneric(allShapes[i], "pathlist");
-            if (priority != null) {
-                var data = {
-                    element: allShapes[i],
-                    reference: reference,
-                    priority: priority,
-                    order: order,
-                    path: pathxml,
-                    type: "Stencil"
-                };
-            } else {
-                var data = {
-                    element: allShapes[i],
-                    reference: reference,
-                    priority: 0,
-                    type: "Stencil"
-                };
-            }
-            elementFigureList.push(data);
         }
         for (var i = 0; i < allConns.length; i++) {
             var reference = getGeneric(allConns[i], "reference");
-            if (reference == null) {
-                mxUtils.alert("First define the reference for each shapes and stencil")
-                return;
+            if (reference != null) {
+                var priority = getGeneric(allConns[i], "priority");
+                var order = getGeneric(allConns[i], "order");
+                var pathxml = getGeneric(allConns[i], "pathlist");
+                if (priority != null) {
+                    var data = {
+                        element: allConns[i],
+                        reference: reference,
+                        priority: priority,
+                        order: order,
+                        path: pathxml,
+                        type: "Connector"
+                    };
+                } else {
+                    var data = {
+                        element: allConns[i],
+                        reference: reference,
+                        priority: 0,
+                        type: "Connector"
+                    };
+                }
+                elementFigureList.push(data);
             }
-            var priority = getGeneric(allConns[i], "priority");
-            var order = getGeneric(allConns[i], "order");
-            var pathxml = getGeneric(allConns[i], "pathlist");
-            if (priority != null) {
-                var data = {
-                    element: allConns[i],
-                    reference: reference,
-                    priority: priority,
-                    order: order,
-                    path: pathxml,
-                    type: "Connector"
-                };
-            } else {
-                var data = {
-                    element: allConns[i],
-                    reference: reference,
-                    priority: 0,
-                    type: "Connector"
-                };
-            }
-            elementFigureList.push(data);
         }
         var order = 0;
         for (var i = 0; i < elementFigureList.length; i++) {
@@ -295,6 +291,6 @@ function createPathRow2(list,t,index){
         tablee.appendChild(tr);
         t.insertBefore(tablee,t.getElementsByClassName("plusbutton")[0]);
     }
-    row10.innerHTML = "<button class=\"btn\" onclick='removePath(" + index.toString() + ", this)'><i class=\"fa fa-trash\"></i></button>"
+    row10.innerHTML = "<button class=\"btn\" onclick='removePath(this)'><i class=\"fa fa-trash\"></i></button>"
 }
 

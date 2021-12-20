@@ -2,6 +2,8 @@ var tempGraph;
 var stencilList;
 var connectorList;
 let globalGraph;
+//TODO Creare un tasto X per uscire senza salvare
+
 function showTable(graph) {
     tempGraph = graph;
         if(graph.editorMode == "Shape Editor Mode"){
@@ -80,18 +82,24 @@ function getNameStencil(element,graph){
 }
 
 function hideTable() {
-    if(saveDataTable()){
-        var name =  document.getElementById("nameshape").value;
-        try{
-            saveNameStencil(name);
-        }catch (error){
-            saveNameConnector(name);
+    var name =  document.getElementById("nameshape").value;
+    if(checkNameIsNotUsed(name)){
+        if(saveDataTable()){
+            try{
+                saveNameStencil(name);
+            }catch (error){
+                saveNameConnector(name);
+            }
+            var div = document.getElementById("overlay1");
+            div.innerHTML ="";
+            document.getElementById("overlay").style.display = "none";
+            tempGraph=null;
         }
-        var div = document.getElementById("overlay1");
-        div.innerHTML ="";
-        document.getElementById("overlay").style.display = "none";
-        tempGraph=null;
+    }else{
+        mxUtils.alert("The name you used has already been used for another stencil or connector");
+        return;
     }
+
 }
 
 function savePrint(){
@@ -100,14 +108,15 @@ function savePrint(){
 }
 
 function saveReference(){
-    var x =document.getElementById("reference").value
+    var x =document.getElementById("nameshape").value
     saveReferenceXML(x);
 }
 
 function saveInputString(){
-    var x =document.getElementById("inputstring")
-    if(x != null && x.value != ""){
-        saveInputStringXML(x.value);
+    var x =document.getElementById("inputstring");
+    var x2 =document.getElementById("inputstringtype")
+    if(x != null && x.value != "" && x2 != null && x2.value != ""){
+        saveInputStringXML(x.value,x2.value);
     }else{
         saveInputStringXML(null);
     }
@@ -148,7 +157,6 @@ function saveNameConnector(name){
     tempGraph.getSelectionModel().clear();
     tempGraph.refresh();
 }
-var rowcount =2;
 
 function getAllShapeConnectorName(){
     graph = tempGraph;
@@ -215,10 +223,6 @@ function createSingleTable(nome,reference,inputstring){
     divbox.setAttribute("style", "height: 30px;")
     div.appendChild(divbox);
 
-
-
-
-
     var tbl = document.createElement("table");
     tbl.setAttribute("class", "tabella");
     tbl.setAttribute("id", "tabella");
@@ -226,30 +230,25 @@ function createSingleTable(nome,reference,inputstring){
     var tblHead = document.createElement("thead");
     var row = document.createElement("tr");
     var row1 = document.createElement("th");
-    row1.setAttribute("colspan","2");
+    row1.setAttribute("colspan","1");
     row1.setAttribute("class","tg-l93j");
-    var liststencil = getAllShapeConnectorName();
-    row1.innerHTML="Name<br><input list=\"listname\" id=\"nameshape\" type=\"text\" value=\"" + nome + "\">" + liststencil;
+    row1.innerHTML="Name<br><input onchange='changeReferenceValue(this)' id=\"nameshape\" type=\"text\" value=\"" + nome + "\">" ;
     var row1w = document.createElement("th");
-    row1w.setAttribute("colspan","3");
+    row1w.setAttribute("colspan","2");
     row1w.setAttribute("class","tg-l93j");
-    if(reference != null){
-        row1w.innerHTML="Rerefence<br><input id=\"reference\" type=\"text\" value=\"" + reference + "\">";
-    }else{
-        row1w.innerHTML="Rerefence<br><input id=\"reference\" type=\"text\" value=\"" + nome + "\">";
-    }
+    row1w.innerHTML="Rerefence<br><input disabled id=\"reference\" type=\"text\" value=\"" + nome + "\">";
     //Fine crea riga titolo
     var tblBody = document.createElement("tbody");
     tblBody.setAttribute("class", "bodytable");
     var row2 = document.createElement("tr");
     var row3 = document.createElement("td");
     row3.setAttribute("class","tg-0pky");
-    row3.setAttribute("colspan","5");
+    row3.setAttribute("colspan","3");
     var print = getPrintXML();
     if(print != null){
         row3.innerHTML="<textarea  type=\"text\" placeholder=\"print\" class=\"print\">" + print + "</textarea>";
     }else{
-        row3.innerHTML="<textarea   class='print'>print();</textarea>";
+        row3.innerHTML="<textarea   class='print'></textarea>";
     }
 
 
@@ -257,15 +256,11 @@ function createSingleTable(nome,reference,inputstring){
     var rowproperty1 =document.createElement("td");
     rowproperty1.setAttribute("class","tg-0pky");
     rowproperty1.innerHTML="<b>Property</b>";
-    var rowproperty2 =rowproperty1.cloneNode(true);
-    rowproperty2.innerHTML="<b>Procedure</b>";
     var rowproperty3 =rowproperty1.cloneNode(true);
     rowproperty3.innerHTML="<b>Params</b>";
-    rowproperty3.setAttribute("colspan",2);
     var rowproperty4 =rowproperty1.cloneNode(true);
     rowproperty4.innerHTML="<b>Post-condition</b>";
     rowproperty.appendChild(rowproperty1);
-    rowproperty.appendChild(rowproperty2);
     rowproperty.appendChild(rowproperty3);
     rowproperty.appendChild(rowproperty4);
 
@@ -293,16 +288,16 @@ function createSingleTable(nome,reference,inputstring){
     if(checkedbool){
         showTableString(inputstring);
     }
-    rowcount =2;
+
     var tabelladati = getSemanticTableXML();
     if(tabelladati != null){
-        for(var i=0;i<tabelladati.length;i++){
-            createRow(tabelladati[i]["property"],tabelladati[i]["type"],tabelladati[i]["procedure"],tabelladati[i]["params"],tabelladati[i]["params2"],tabelladati[i]["postcondition"]);
+        for(let i=0;i<tabelladati.length;i++){
+            createRow(tabelladati[i]["property"],tabelladati[i]["type"],tabelladati[i]["params"],tabelladati[i]["postcondition"]);
         }
     }
 }
 
-function createRow(property,propertyType,procedure,params,params2,postcondition){
+function createRow(property,propertyType,params,postcondition){
     var a = document.getElementsByClassName("bodytable")[0];
     var row4 = document.createElement("tr");
     var row5 = document.createElement("td");
@@ -313,6 +308,7 @@ function createRow(property,propertyType,procedure,params,params2,postcondition)
     }else{
         row5.innerHTML="<input type=\"text\" placeholder='$value' class=\"property\">"+ " <b>:</b> " +"<input type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
     }
+    row4.appendChild(row5);
     var datalistrow5 =
         "    <datalist id=\"typelist\">\n" +
         "        <option value=\"string\">string</option>\n" +
@@ -322,48 +318,22 @@ function createRow(property,propertyType,procedure,params,params2,postcondition)
         "        <option value=\"list<int>\">list&lt;int&gt;</option>\n" +
         "    </datalist>";
     row5.innerHTML = "<div class=\"rowinline\">" +row5.innerHTML + datalistrow5 + "</div>";
-
     row4.appendChild(row5);
-    var row6 = row5.cloneNode(true);
-    var s =
-        "    <datalist id=\"listObj\">\n" +
-        "        <option value=\"assign\">assign</option>\n" +
-        "        <option value=\"add\">add</option>\n" +
-        "        <option value=\"addAll\">addAll</option>\n" +
-        "        <option value=\"size\">size</option>\n" +
-        "        <option value=\"exist\">exist</option>\n" +
-        "    </datalist>"
-    if(procedure!=null) {
-        row6.innerHTML = "<input type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ procedure +"'>" + s;
-    }else{
-        row6.innerHTML = "<input type=\"text\" class=\"procedure\" list=\"listObj\">" + s;
-    }
-    row4.appendChild(row6);
-    var row7 = row5.cloneNode(true);
-    if(params!=null) {
-        row7.innerHTML="<input type=\"text\" class=\"params\" value='"+ params +"'>";
-    }else{
-        row7.innerHTML="<input type=\"text\" class=\"params\">";
-    }
-    row4.appendChild(row7);
 
-    var row8 = row5.cloneNode(true);
-    var datalistrow5 =
-        "    <datalist id=\"paramlist\">\n" +
-        "        <option value=\"#id\">#id</option>\n" +
-        "        <option value=\"#name\">#name</option>\n" +
-        "        <option value=\"#isSymbol\">#isSymbol</option>\n" +
-        "        <option value=\"#attType\">#attType</option>\n" +
-        "        <option value=\"#attConName\">#attConName</option>\n" +
-        "        <option value=\"#visited\">#visited</option>\n" +
-        "        <option value=\"#status\">#status</option>\n" +
-        "    </datalist>";
-    if(params2 != null){
-        row8.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\" value='"+ params2 +"'>" + datalistrow5;
-    }else{
-        row8.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\">"+ datalistrow5;
+
+    let row6 = document.createElement("td");
+    if(params!=null){
+        for(let i=0;i<params.length;i++){
+            createProcedureRow(row6,params[i],i);
+        }
     }
-    row4.appendChild(row8);
+    let confirmButton = document.createElement("p");
+    confirmButton.setAttribute("class", "plusbutton");
+    confirmButton.setAttribute("onclick", "createProcedureRow(null,null,this)");
+    confirmButton.innerHTML = "+"
+    row6.appendChild(confirmButton);
+    row4.appendChild(row6);
+
 
     var row9 = row5.cloneNode(true);
     if(postcondition != null){
@@ -374,11 +344,92 @@ function createRow(property,propertyType,procedure,params,params2,postcondition)
     row4.appendChild(row9);
 
 
-
     var row10 = document.createElement("td");
-    row10.innerHTML = "<button class=\"btn\" onclick='removeRow(" + rowcount++ +")'><i class=\"fa fa-trash\"></i></button>"
+    row10.innerHTML = "<button class=\"btn\" onclick='removeRow(this)'><i class=\"fa fa-trash\"></i></button>"
     row4.appendChild(row10);
     a.insertBefore(row4.cloneNode(true), a.children[a.children.length-2]);
+}
+
+function createProcedureRow(t,paramselement,element){
+    if (element!=null){
+        for(let k=0;k<document.getElementsByTagName("td").length;k++){
+            if(document.getElementsByTagName("td")[k].getElementsByClassName("plusbutton")[0] != null && document.getElementsByTagName("td")[k].getElementsByClassName("plusbutton")[0] == element){
+                t = document.getElementsByTagName("td")[k];
+                break;
+            }
+        }
+    }
+
+    var tablee = t.getElementsByClassName("tableparams")[0];
+    if(tablee == null){
+        var tablee = document.createElement("table");
+        tablee.setAttribute("class","tableparams");
+        var s =
+            "    <datalist id=\"listObj\">\n" +
+            "        <option value=\"assign\">assign</option>\n" +
+            "        <option value=\"add\">add</option>\n" +
+            "        <option value=\"addAll\">addAll</option>\n" +
+            "        <option value=\"size\">size</option>\n" +
+            "        <option value=\"exist\">exist</option>\n" +
+            "    </datalist>"
+        tablee.innerHTML = s;
+        let tr  = document.createElement("tr");
+        let td11 = document.createElement("td");
+        td11.innerHTML = "Procedure";
+        let td12 = document.createElement("td");
+        td12.setAttribute("colspan","2");
+        td12.innerHTML = "Params";
+        tr.appendChild(td11);
+        tr.appendChild(td12);
+        tablee.appendChild(tr);
+    }
+
+    let tr  = document.createElement("tr");
+    let td = document.createElement("td");
+    td.setAttribute("style","border-color:transparent");
+    if(paramselement!=null) {
+        td.innerHTML = "<input type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ paramselement["procedure"] +"'>";
+    }else{
+        td.innerHTML = "<input type=\"text\" class=\"procedure\" list=\"listObj\">";
+    }
+    tr.appendChild(td);
+
+    let td2 = td.cloneNode(true);
+    if(paramselement!=null) {
+        td2.innerHTML="<input type=\"text\" class=\"params\" value='"+ paramselement["param"] +"'>";
+    }else{
+        td2.innerHTML="<input type=\"text\" class=\"params\">";
+    }
+    tr.appendChild(td2);
+
+    let td3 = td.cloneNode(true);
+    var datalistrow5 =
+        "    <datalist id=\"paramlist\">\n" +
+        "        <option value=\"#id\">#id</option>\n" +
+        "        <option value=\"#name\">#name</option>\n" +
+        "        <option value=\"#isSymbol\">#isSymbol</option>\n" +
+        "        <option value=\"#attType\">#attType</option>\n" +
+        "        <option value=\"#attConName\">#attConName</option>\n" +
+        "        <option value=\"#visited\">#visited</option>\n" +
+        "        <option value=\"#status\">#status</option>\n" +
+        "    </datalist>";
+    if(paramselement != null){
+        td3.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\" value='"+ paramselement["param2"] +"'>" + datalistrow5;
+    }else{
+        td3.innerHTML="<input placeholder='optional' type=\"text\" class=\"params2\" list=\"paramlist\">"+ datalistrow5;
+    }
+    tr.appendChild(td3);
+
+    let td4 = td.cloneNode(true);
+    td4.innerHTML = "<button class=\"btn\" onclick='removeParamsRow(this)'><i class=\"fa fa-trash\"></i></button>"
+    tr.appendChild(td4);
+
+    if(t.getElementsByClassName("tableparams")[0] != null){
+        tablee.appendChild(tr);
+    }else{
+        tablee.appendChild(tr);
+        t.insertBefore(tablee,t.getElementsByClassName("plusbutton")[0]);
+    }
 }
 
 function createConfirmButton(){
@@ -395,49 +446,45 @@ function createConfirmButton(){
 function saveDataTable(){
     let array = new Array();
     for(var i=0;i<document.getElementsByClassName("property").length;i++){
-        document.getElementsByClassName("params")[i].style.background  ="white"
-        document.getElementsByClassName("params")[i].style.color = "black"
-        document.getElementsByClassName("procedure")[i].style.background  ="white"
-        document.getElementsByClassName("procedure")[i].style.color = "black"
         document.getElementsByClassName("type")[i].style.background  ="white"
         document.getElementsByClassName("type")[i].style.color = "black"
         document.getElementsByClassName("property")[i].style.background  ="white"
         document.getElementsByClassName("property")[i].style.color = "black"
     }
-    for(var i=0;i<document.getElementsByClassName("property").length;i++){
-        var params = document.getElementsByClassName("params")[i].value;
-        var procedure = document.getElementsByClassName("procedure")[i].value;
-        var property = document.getElementsByClassName("property")[i].value;
-        var type = document.getElementsByClassName("type")[i].value;
-        var params2 = document.getElementsByClassName("params2")[i].value;
-        var postcondition = document.getElementsByClassName("postcondition")[i].value;
-        if(params == "" && procedure == "" && property == "" && type == ""){
+    for(let i=0;i<document.getElementsByClassName("property").length;i++){
+        let property = document.getElementsByClassName("property")[i].value;
+        let type = document.getElementsByClassName("type")[i].value;
+        let postcondition = document.getElementsByClassName("postcondition")[i].value;
+        let params = getPropertyData(document.getElementsByClassName("property")[i].parentNode.parentNode.parentNode);
+        if(property == "" && type == ""){
 
         } else{
-            if(params == "" || procedure == "" || property == "" || type == ""){
-                document.getElementsByClassName("params")[i].style.background  ="red"
-                document.getElementsByClassName("params")[i].style.color = "white"
-                document.getElementsByClassName("procedure")[i].style.background  ="red"
-                document.getElementsByClassName("procedure")[i].style.color = "white"
+            if(property == "" || type == "" || (params!= null && params == false) || params== null){
                 document.getElementsByClassName("type")[i].style.background  ="red"
                 document.getElementsByClassName("type")[i].style.color = "white"
                 document.getElementsByClassName("property")[i].style.background  ="red"
                 document.getElementsByClassName("property")[i].style.color = "white"
-                mxUtils.alert("A field of a row is empty if you do not want to load a row leave all fields empty");
+                if(params!= null && params == false){
+                    mxUtils.alert("A field of a row is empty if you do not want to load a row leave all fields empty");
+                }else if(params== null){
+                    mxUtils.alert("Define at least one params for each property");
+                }
                 return false;
+
             }
             var data ={
                 property: property,
                 type: type,
-                procedure: procedure,
-                params: params,
-                params2: params2,
-                postcondition: postcondition
+                postcondition: postcondition,
+                params: params
             };
             array.push(data);
         }
     }
     if(checkInput(document.getElementsByClassName("print")[0].value,array)){
+        if(document.getElementsByClassName("print")[0].value == "" && array.length ==0){
+            return true;
+        }
         saveSemanticTableXML(array);
         savePrint();
         saveReference();
@@ -448,6 +495,42 @@ function saveDataTable(){
         removeWhiteLine();
         return false;
     }
+
+}
+
+function getPropertyData(element){
+    let array = new Array();
+    if(element.getElementsByClassName("procedure").length>0){
+        for(let i=0;i<element.getElementsByClassName("procedure").length;i++){
+            element.getElementsByClassName("procedure")[i].style.background  ="white"
+            element.getElementsByClassName("procedure")[i].style.color = "black"
+            element.getElementsByClassName("params")[i].style.background  ="white"
+            element.getElementsByClassName("params")[i].style.color = "black"
+            let procedure = element.getElementsByClassName("procedure")[i].value;
+            let params = element.getElementsByClassName("params")[i].value;
+            let params2 = element.getElementsByClassName("params2")[i].value;
+            if(procedure != "" && params != ""){
+                let data ={
+                    procedure: procedure,
+                    param: params,
+                    param2: params2
+                };
+                array.push(data);
+            }else if(procedure != "" || params != ""){
+                element.getElementsByClassName("procedure")[i].style.background  ="red"
+                element.getElementsByClassName("procedure")[i].style.color = "white"
+                element.getElementsByClassName("params")[i].style.background  ="red"
+                element.getElementsByClassName("params")[i].style.color = "white"
+                return false;
+            }else{
+                return null;
+            }
+        }
+        return array;
+    }else{
+        return null;
+    }
+
 
 }
 
@@ -505,23 +588,55 @@ function checkInput(input,array){
 
 function removeWhiteLine(){
     for(var i=0;i<document.getElementsByClassName("property").length;i++){
-        var params = document.getElementsByClassName("params")[i].value;
-        var procedure = document.getElementsByClassName("procedure")[i].value;
         var property = document.getElementsByClassName("property")[i].value;
         var type = document.getElementsByClassName("type")[i].value;
-        document.getElementsByClassName("params")[i].style.background  ="white"
-        document.getElementsByClassName("params")[i].style.color = "black"
-        document.getElementsByClassName("procedure")[i].style.background  ="white"
-        document.getElementsByClassName("procedure")[i].style.color = "black"
         document.getElementsByClassName("type")[i].style.background  ="white"
         document.getElementsByClassName("type")[i].style.color = "black"
         document.getElementsByClassName("property")[i].style.background  ="white"
         document.getElementsByClassName("property")[i].style.color = "black"
-        if(params == "" && procedure == "" && property == "" && type == ""){
-            removeRow(i+2);
+        if(property == "" && type == "" && getPropertyData(document.getElementsByClassName("property")[i].parentNode.parentNode.parentNode) == null){
+            removeRow(document.getElementsByClassName("property")[i].parentNode.parentNode.parentNode);
             i--;
         }
     }
+
+}
+
+function checkNameIsNotUsed(name){
+    let allShapes = tempGraph.getModel().filterDescendants(function (cell) {
+        if ((cell.vertex || cell.edge)) {
+            if (cell.getStyle().includes('stencil')) {
+                return true;
+            }
+        }
+    });
+
+    //Ricavo tutti gli archi orientati per i quali è definito un attack type
+    let allConns = tempGraph.getModel().filterDescendants(function (cell) {
+        if ((cell.vertex || cell.edge)) {
+            if (cell.getStyle().includes('ap=')) {
+                return true;
+            }
+        }
+    });
+
+    let elements = allShapes.concat(allConns);
+    let nomeOggetto;
+    for(let i=0;i<elements.length;i++){
+        if(elements[i] != tempGraph.getSelectionCell()){
+            let stencil = elements[i].getStyle();
+            let base64 = stencil.substring(14, stencil.length-2);
+            if(elements[i].style.search("stencil") > 0){
+                nomeOggetto = mxUtils.parseXml(tempGraph.decompress(base64)).documentElement.getAttribute('name');
+            }else if(elements[i].style.search("endArrow")!= -1){
+                nomeOggetto= getNameConnector(elements[i]);
+            }
+            if(nomeOggetto == name){
+                return false;
+            }
+        }
+    }
+    return true;
 
 }
 

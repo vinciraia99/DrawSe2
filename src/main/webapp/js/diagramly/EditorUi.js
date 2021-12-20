@@ -518,9 +518,29 @@ var locomotiveurl;
 		});
 		var k = allShapes.length-1;
 		if(globalGraph.length != 0){
-			for(var i=globalGraph.length-1;i>=0;i--){
-				allShapes[k].style = globalGraph[i]["xml"];
+			for(let i=globalGraph.length-1;i>=0 && k>=0;i--){
+				if(typeof allShapes[k] != "undefined" ){
+					var stencil = allShapes[k].getStyle();
+					let base64 = stencil.substring(14, stencil.length-2);
+					let xml = mxUtils.parseXml(graph.decompress(base64));
+					let t = globalGraph[i]["xml"];
+					let base642 = t.substring(14, globalGraph[i]["xml"].length-2);
+					let xml2 = mxUtils.parseXml(graph.decompress(base642));
+					xml2.getElementsByTagName("connections")[0].innerHTML = xml.getElementsByTagName("connections")[0].innerHTML;
+					xml2.getElementsByTagName("foreground")[0].innerHTML = xml.getElementsByTagName("foreground")[0].innerHTML;
+					xml2.getElementsByTagName("shape")[0].setAttribute("h",xml.getElementsByTagName("shape")[0].getAttribute("h"));
+					xml2.getElementsByTagName("shape")[0].setAttribute("w",xml.getElementsByTagName("shape")[0].getAttribute("w"));
+					xml2.getElementsByTagName("shape")[0].setAttribute("aspect",xml.getElementsByTagName("shape")[0].getAttribute("aspect"));
+					xml2.getElementsByTagName("shape")[0].setAttribute("strokewidth",xml.getElementsByTagName("shape")[0].getAttribute("strokewidth"));
+					xml2.getElementsByTagName("shape")[0].setAttribute("occurrences",xml.getElementsByTagName("shape")[0].getAttribute("occurrences"));
+					xml2.getElementsByTagName("shape")[0].setAttribute("name",xml.getElementsByTagName("shape")[0].getAttribute("name"));
+					let xmlBase64 = graph.compress(mxUtils.getXml(xml2));
+					allShapes[k].setStyle('shape=stencil(' + xmlBase64 + ');');
+				}
 				k--;
+			}
+			if(allShapes.length < globalGraph.length){
+				mxUtils.alert("Warning: Since a stencil has no attach point, the semantic rules associated with it have been removed");
 			}
 		}
 	}
@@ -816,14 +836,21 @@ var locomotiveurl;
 
 			defaultStencil = stencilXMLTive(defaultStencil);
 
+			let semanticrules = generateXMLSemanticRules(graph,this.title);
+			if(semanticrules == false){
+				this.title = null;
+				return;
+			}
+
 
 			localStorage.setItem('STENCIL', defaultStencil);
 			localStorage.setItem('CONNECTOR', defaultConnectors);
 			localStorage.setItem('RULES', xmlconversion);
+			localStorage.setItem('SEMANTIC_RULES', semanticrules);
 
 
 			if (this.locomotiveurl == null) {
-				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/uploadexternal');
+				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/');
 			}
 
 			if(this.locomotiveurl != null) {
@@ -831,9 +858,10 @@ var locomotiveurl;
 
 				var form = document.createElement("form");
 				form.setAttribute("id", "formupload")
-				var element1 = document.createElement("input");
-				var element2 = document.createElement("input");
-				var element3 = document.createElement("input");
+				let element1 = document.createElement("input");
+				let element2 = document.createElement("input");
+				let element3 = document.createElement("input");
+				let element4 = document.createElement("input");
 
 				form.method = "POST";
 				form.action = this.locomotiveurl;
@@ -849,6 +877,10 @@ var locomotiveurl;
 				element3.value = xmlconversion;
 				element3.name = "rules";
 				form.appendChild(element3);
+
+				element4.value = semanticrules;
+				element4.name = "semantic";
+				form.appendChild(element4);
 
 				document.body.appendChild(form);
 
