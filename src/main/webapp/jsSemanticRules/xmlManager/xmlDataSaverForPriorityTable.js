@@ -36,29 +36,39 @@ function saveGenericValue(element,text,type){
     }
 }
 
-function getGeneric(element,type){
-    try{
-        var cell = element;
-        var stencil = cell.getStyle();
-        var base64 = stencil.substring(14, stencil.length-2);
-        var desc = tempGraph.decompress(base64);
-        var shapeXml = mxUtils.parseXml(desc).documentElement;
-        var print =  shapeXml.getElementsByTagName(type)[0];
-        if(print != null){
-            return print.innerHTML;
-        }else{
-            return null;
+function getGeneric(element,type,graph){
+    if(tempGraph == null && graph == null){
+        return null
+    }
+    if(tempGraph == null && graph != null){
+        tempGraph = graph;
+    }
+    if(element!= null){
+        try{
+            var cell = element;
+            var stencil = cell.getStyle();
+            var base64 = stencil.substring(14, stencil.length-2);
+            var desc = tempGraph.decompress(base64);
+            var shapeXml = mxUtils.parseXml(desc).documentElement;
+            var print =  shapeXml.getElementsByTagName(type)[0];
+            if(print != null){
+                return print.innerHTML;
+            }else{
+                return null;
+            }
+        }catch (e) {
+            var edge = element;
+            var edgeStyle = edge.getStyle();
+            var initCut = edgeStyle.indexOf(type+"=");
+            if(initCut != -1){
+                edgeStyle = getTableInfoFromConnector(edgeStyle,type+ "=");
+                return  edgeStyle;
+            }else{
+                return null;
+            }
         }
-    }catch (e) {
-        var edge = element;
-        var edgeStyle = edge.getStyle();
-        var initCut = edgeStyle.indexOf(type+"=");
-        if(initCut != -1){
-            edgeStyle = getTableInfoFromConnector(edgeStyle,type+ "=");
-            return  edgeStyle;
-        }else{
-            return null;
-        }
+    }else{
+        return null;
     }
 }
 

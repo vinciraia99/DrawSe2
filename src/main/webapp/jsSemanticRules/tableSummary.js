@@ -9,7 +9,6 @@ function showSummaryTable(graph){
 
         generateXMLSemanticRules(graph,"test");
 
-        debugger;
         //document.getElementById("overlay").style.display = "flex";
 
     }else{

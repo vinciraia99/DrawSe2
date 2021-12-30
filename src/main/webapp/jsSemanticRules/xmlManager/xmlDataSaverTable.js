@@ -172,7 +172,7 @@ function getSemanticTableXML(element,graph){
                 const doc = parser.parseFromString(edgeStyle, "application/xml");
                 const errorNode = doc.querySelector("parsererror");
                 if (errorNode) {
-                    console.log("error while parsing");
+                    console.log("error while parsing tableinfo");
                     return null;
                 }else{
                     var table = doc.getElementsByTagName("tableinfo")[0];;
@@ -232,6 +232,73 @@ function getFunctionXML(id){
 function getXmlString(xml) {
     if (window.ActiveXObject) { return xml.xml; }
     return new XMLSerializer().serializeToString(xml);
+}
+
+
+function saveFigureName(text){
+    let foreground = getGeneric(tempGraph.getSelectionCell(), "foreground");
+    let allShapes = tempGraph.getModel().filterDescendants(function (cell) {
+        if ((cell.vertex || cell.edge)) {
+            if (cell.getStyle().includes('stencil')) {
+                return true;
+            }
+        }
+    });
+
+    let allConns = tempGraph.getModel().filterDescendants(function (cell) {
+        if ((cell.vertex || cell.edge)) {
+            if (cell.getStyle().includes('ap=')) {
+                return true;
+            }
+        }
+    });
+
+        if (allShapes.length > 0 || allConns.length > 0) {
+            if(foreground != null){
+                for (let i = 0; i < allShapes.length; i++) {
+                    let figurename = getGeneric(allShapes[i], "figurename");
+                    if(compareForeground(foreground,getGeneric(allShapes[i], "foreground")) && figurename != null && figurename == text){
+                        mxUtils.alert("The name of the stencil you have chosen is associated with the object called " + getNameStencil(allShapes[i],tempGraph) +  " which is an object with a different shape than the one you have chosen");
+                        return false;
+                    }
+                }
+            }else{
+                for (let i = 0; i < allConns.length; i++) {
+                    let figurename = getGeneric(allConns[i], "figurename");
+                    if(getGeneric(tempGraph.getSelectionCell(), "endArrow") != getGeneric(allConns[i], "endArrow") && figurename != null && figurename == text){
+                        mxUtils.alert("The name of the stencil you have chosen is associated with the object called " + getNameConnector(allConns[i]) +  " which is an object with a different shape than the one you have chosen");
+                        return false;
+                    }
+                }
+            }
+        }
+
+    saveGenericValue(tempGraph.getSelectionCell(),text,"figurename");
+    return true;
+
+}
+
+function compareForeground(t1,t2){
+    let t3 = t1.split(/(<| |\>)/gm);
+    let t4 = t2.split(/(<| |\>)/gm);
+    let max;
+    if(t3.length >= t4.length){
+        max = t3.length;
+    }else{
+        max = t4.length;
+    }
+
+    for(let i=0;i<max;i++){
+        if(t3[i] != t4[i]){
+            if(t3[i].indexOf("x") != -1 || t3[i].indexOf("y") != -1 || t3[i].indexOf("color") != -1){
+
+            }else{
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 function saveReferenceXML(text){

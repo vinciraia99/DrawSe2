@@ -201,12 +201,27 @@ function generateHTMLTablePiority() {
     tbl.appendChild(tblBody);
     div.appendChild(tbl);
 
-    var confirmButton = document.createElement("p");
-    confirmButton.setAttribute("class", "pop-x");
-    confirmButton.setAttribute("onclick", "hideTablePriority()");
-    confirmButton.innerHTML = "Confirm"
+    let divd = document.createElement("div");
+    divd.setAttribute("class","rowinline");
+    //TODO WIP - Da finire
+    let confirmButton2 = document.createElement("p");
+    confirmButton2.setAttribute("class", "pop-x");
+    confirmButton2.setAttribute("onclick", "hideTablePriority()");
+    confirmButton2.innerHTML = "Save"
 
-    div.appendChild(confirmButton);
+    let exitWithoutSaving = document.createElement("p");
+    exitWithoutSaving.setAttribute("class","buttonnosave");
+    exitWithoutSaving.setAttribute("id","buttonnosave");
+    exitWithoutSaving.setAttribute("onclick","hideTablePriorityWithoutSaving()");
+    exitWithoutSaving.innerHTML="Exit Without Saving"
+
+    divd.appendChild(exitWithoutSaving);
+    divd.innerHTML = divd.innerHTML + "&nbsp;";
+
+    divd.appendChild(confirmButton2);
+
+
+    div.appendChild(divd);
 
     var p = document.createElement("p");
     p.innerHTML = "<b>Hint:</b> Connectors appear in the priority table only if they have at least one attack point";
@@ -227,7 +242,7 @@ function hideTablePriority() {
         elementOrderedFigureList[i]["element"].parent.backup =  elementOrderedFigureList[i]["element"].style;
     }
 
-    var div = document.getElementById("overlay1");
+    let div = document.getElementById("overlay1");
     div.removeAttribute("style");
     div.innerHTML = "";
     document.getElementById("overlay").style.display = "none";
@@ -236,6 +251,17 @@ function hideTablePriority() {
     stencilList = null;
     connectorList = null;
 
+}
+
+function hideTablePriorityWithoutSaving(){
+    let div = document.getElementById("overlay1");
+    div.removeAttribute("style");
+    div.innerHTML = "";
+    document.getElementById("overlay").style.display = "none";
+    indexprioritytable = 0;
+    tempGraph = null;
+    stencilList = null;
+    connectorList = null;
 }
 
 function createPathArray(index){
@@ -277,13 +303,18 @@ function createPathRow2(list,t,index){
                 "  </select>";
     }
     td.innerHTML = formed;
-    var td2 = td.cloneNode(true);
-    if(list["path"] != null) {
-        td2.innerHTML = "<input type=\"text\" class=\"path\" value='" + list["path"] + "'>" + "<br>";
-    }
     tr.appendChild(td);
-    var row10 = td.cloneNode(true);
+    let td2 = document.createElement("td");
+    td2.setAttribute("style","border-color:transparent");
+    if(list["path"] != null) {
+        let input = document.createElement("input");
+        input.setAttribute("type","text");
+        input.setAttribute("class","path");
+        input.setAttribute("value",list["path"]);
+        td2.appendChild(input);
+    }
     tr.appendChild(td2);
+    var row10 = td.cloneNode(true);
     tr.appendChild(row10);
     if(table != null){
         table.appendChild(tr);

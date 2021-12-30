@@ -37,16 +37,26 @@ function showTable(graph) {
                 mxUtils.alert("First define the points of the object in Constraint Mode!");
             }else{
                 var reference = getReference();
-                var checkboxString = getInputString();
+                var checkboxString = getInputString()
+                var figurename = getGeneric(tempGraph.getSelectionCell(),"figurename");
                 if(reference != null && checkboxString!= null){
-                    createSingleTable(nomeOggetto,reference,checkboxString);
+                    if(figurename!= null){
+                        createSingleTable(nomeOggetto,reference,checkboxString,figurename);
+                    }else{
+                        createSingleTable(nomeOggetto,reference,checkboxString);
+                    }
+
                 }else if(reference != null){
-                    createSingleTable(nomeOggetto,reference);
+                    if(figurename!= null){
+                        createSingleTable(nomeOggetto,reference,null,figurename);
+                    }else{
+                        createSingleTable(nomeOggetto,reference);
+                    }
+
                 }
                 else{
                     createSingleTable(nomeOggetto);
                 }
-                console.log(nomeOggetto);
                 createConfirmButton();
                 document.getElementById("overlay").style.display = "flex";
             }
@@ -100,6 +110,13 @@ function hideTable() {
         return;
     }
 
+}
+
+function hideTableWithoutSaving(){
+    var div = document.getElementById("overlay1");
+    div.innerHTML ="";
+    document.getElementById("overlay").style.display = "none";
+    tempGraph=null;
 }
 
 function savePrint(){
@@ -202,7 +219,7 @@ function getAllShapeConnectorName(){
     return output;
 }
 
-function createSingleTable(nome,reference,inputstring){
+function createSingleTable(nome,reference,inputstring,figurename){
     var checkedbool = false;
     var div = document.getElementById("overlay1");
 
@@ -230,11 +247,16 @@ function createSingleTable(nome,reference,inputstring){
     var tblHead = document.createElement("thead");
     var row = document.createElement("tr");
     var row1 = document.createElement("th");
-    row1.setAttribute("colspan","1");
     row1.setAttribute("class","tg-l93j");
-    row1.innerHTML="Name<br><input onchange='changeReferenceValue(this)' id=\"nameshape\" type=\"text\" value=\"" + nome + "\">" ;
+    row1.innerHTML="UniqueName<br><input onchange='changeReferenceValue(this)' id=\"nameshape\" type=\"text\" value=\"" + nome + "\">" ;
+    var row1w2 = document.createElement("th");
+    row1w2.setAttribute("class","tg-l93j");
+    if(figurename != null){
+        row1w2.innerHTML="StencilName<br><input id=\"figurename\" list=\"figurenamelist\" type=\"text\" value=\"" + figurename + "\">" + getListOfFigureName();
+    }else{
+        row1w2.innerHTML="StencilName<br><input id=\"figurename\" list=\"figurenamelist\" type=\"text\" value=\"" + nome + "\">" + getListOfFigureName();
+    }
     var row1w = document.createElement("th");
-    row1w.setAttribute("colspan","2");
     row1w.setAttribute("class","tg-l93j");
     row1w.innerHTML="Rerefence<br><input disabled id=\"reference\" type=\"text\" value=\"" + nome + "\">";
     //Fine crea riga titolo
@@ -252,7 +274,13 @@ function createSingleTable(nome,reference,inputstring){
     }
     var printpath = getGeneric(tempGraph.getSelectionCell(),"printpath");
     if(printpath != null){
-        row3.innerHTML=row3.innerHTML + "<br>" + "<input placeholder='print path(optional)' type=\"text\" class=\"printpath\" value='"+ printpath +"'>";
+        row3.innerHTML=row3.innerHTML + "<br>";/*"<input placeholder='print path(optional)' type=\"text\" class=\"printpath\" value='"+ printpath +"'>"*/
+        let input = document.createElement("input");
+        input.setAttribute("type","text");
+        input.setAttribute("placeholder","print path(optional)");
+        input.setAttribute("class","printpath");
+        input.setAttribute("value",printpath);
+        row3.appendChild(input);
     }else{
         row3.innerHTML=row3.innerHTML + "<br>" + "<input placeholder='print path(optional)' type=\"text\" class=\"printpath\">";
     }
@@ -273,6 +301,7 @@ function createSingleTable(nome,reference,inputstring){
     var row4 = document.createElement("tr");
     var row5 = document.createElement("td");
     row5.setAttribute("colspan","5");
+
     var confirmButton = document.createElement("p");
     confirmButton.setAttribute("class","plusbutton");
     confirmButton.setAttribute("onclick","createRow()");
@@ -283,6 +312,7 @@ function createSingleTable(nome,reference,inputstring){
 
     row2.appendChild(row3);
     row.appendChild(row1);
+    row.appendChild(row1w2);
     row.appendChild(row1w);
     tblBody.appendChild(rowproperty);
     tblBody.appendChild(row4);
@@ -308,9 +338,28 @@ function createRow(property,propertyType,params,postcondition){
     var row4 = document.createElement("tr");
     var row5 = document.createElement("td");
     if(property!=null && propertyType!=null){
-        row5.innerHTML="<input type=\"text\" placeholder='optional' class=\"property\" value='"+ property +"'>" + " <b>:</b> " +"<input placeholder='type (optional)' list=\"typelist\" type=\"text\" class=\"type\" value='"+ propertyType +"'>";
+        let input = document.createElement("input");
+        input.setAttribute("type","text");
+        input.setAttribute("placeholder","optional");
+        input.setAttribute("class","property");
+        input.setAttribute("value",property);
+        row5.appendChild(input);
+        row5.innerHTML = row5.innerHTML + " <b>:</b> ";
+        let input2 = document.createElement("input");
+        input2.setAttribute("type","text");
+        input2.setAttribute("placeholder","type (optional)");
+        input2.setAttribute("class","type");
+        input2.setAttribute("value",propertyType);
+        input2.setAttribute("list","typelist");
+        row5.appendChild(input2);
     }else if(property!=null){
-        row5.innerHTML="<input type=\"text\" placeholder='optional'  class=\"property\" value='"+ property +"'>" + " <b>:</b> " +"<input placeholder='type (optional)' type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
+        let input = document.createElement("input");
+        input.setAttribute("type","text");
+        input.setAttribute("placeholder","optional");
+        input.setAttribute("class","property");
+        input.setAttribute("value",property);
+        row5.appendChild(input);
+        row5.innerHTML = row5.innerHTML + " <b>:</b> " +"<input placeholder='type (optional)' type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
     }else{
         row5.innerHTML="<input type=\"text\" placeholder='optional'  placeholder='$value' class=\"property\">"+ " <b>:</b> " +"<input placeholder='type (optional)' type=\"text\" class=\"type\" placeholder='value type' list=\"typelist\">";
     }
@@ -343,7 +392,13 @@ function createRow(property,propertyType,params,postcondition){
 
     var row9 = row5.cloneNode(true);
     if(postcondition != null){
-        row9.innerHTML="<input placeholder='optional' type=\"text\" class=\"postcondition\" value='"+ postcondition +"'>";
+        row9.innerHTML = "";
+        let input2 = document.createElement("input");
+        input2.setAttribute("type","text");
+        input2.setAttribute("placeholder","optional");
+        input2.setAttribute("class","postcondition");
+        input2.setAttribute("value",postcondition);
+        row9.appendChild(input2);
     }else{
         row9.innerHTML="<input placeholder='optional' type=\"text\" class=\"postcondition\">";
     }
@@ -394,7 +449,13 @@ function createProcedureRow(t,paramselement,element){
     let td = document.createElement("td");
     td.setAttribute("style","border-color:transparent");
     if(paramselement!=null) {
-        td.innerHTML = "<input placeholder='name' type=\"text\" class=\"procedure\"  list=\"listObj\" value='"+ paramselement["procedure"] +"'>";
+        let input2 = document.createElement("input");
+        input2.setAttribute("type","text");
+        input2.setAttribute("placeholder","name");
+        input2.setAttribute("class","procedure");
+        input2.setAttribute("value",paramselement["procedure"]);
+        input2.setAttribute("list","listObj");
+        td.appendChild(input2);
     }else{
         td.innerHTML = "<input placeholder='name' type=\"text\" class=\"procedure\" list=\"listObj\">";
     }
@@ -402,7 +463,13 @@ function createProcedureRow(t,paramselement,element){
 
     let td2 = td.cloneNode(true);
     if(paramselement!=null) {
-        td2.innerHTML="<input placeholder='path' type=\"text\" class=\"params\" value='"+ paramselement["param"] +"'>";
+        td2.innerHTML = "";
+        let input2 = document.createElement("input");
+        input2.setAttribute("type","text");
+        input2.setAttribute("placeholder","path");
+        input2.setAttribute("class","params");
+        input2.setAttribute("value",paramselement["param"]);
+        td2.appendChild(input2);
     }else{
         td2.innerHTML="<input placeholder='path' type=\"text\" class=\"params\">";
     }
@@ -420,7 +487,14 @@ function createProcedureRow(t,paramselement,element){
         "        <option value=\"#status\">#status</option>\n" +
         "    </datalist>";
     if(paramselement != null){
-        td3.innerHTML="<input placeholder='param(optional)' type=\"text\" class=\"params2\" list=\"paramlist\" value='"+ paramselement["param2"] +"'>" + datalistrow5;
+        td3.innerHTML = "";
+        let input2 = document.createElement("input");
+        input2.setAttribute("type","text");
+        input2.setAttribute("placeholder","param(optional)");
+        input2.setAttribute("class","params2");
+        input2.setAttribute("value",paramselement["param2"]);
+        input2.setAttribute("list","paramlist");
+        td3.appendChild(input2);
     }else{
         td3.innerHTML="<input placeholder='param(optional)' type=\"text\" class=\"params2\" list=\"paramlist\">"+ datalistrow5;
     }
@@ -439,57 +513,83 @@ function createProcedureRow(t,paramselement,element){
 }
 
 function createConfirmButton(){
-    var div = document.getElementById("overlay1");
-    var confirmButton = document.createElement("p");
+    let div = document.getElementById("overlay1");
+
+    let divd = document.createElement("div");
+    divd.setAttribute("class","rowinline");
+    //WIP - Da finre
+    let confirmButton = document.createElement("p");
     confirmButton.setAttribute("class","pop-x");
     confirmButton.setAttribute("id","confirmbutton");
     confirmButton.setAttribute("onclick","hideTable()");
-    confirmButton.innerHTML="Confirm"
+    confirmButton.innerHTML="Save"
 
-    div.appendChild(confirmButton);
+    let exitWithoutSaving = document.createElement("p");
+    exitWithoutSaving.setAttribute("class","buttonnosave");
+    exitWithoutSaving.setAttribute("id","buttonnosave");
+    exitWithoutSaving.setAttribute("onclick","hideTableWithoutSaving()");
+    exitWithoutSaving.innerHTML="Exit Without Saving"
+
+    let removeSemanticRules = document.createElement("p");
+    removeSemanticRules.setAttribute("class","buttonremove");
+    removeSemanticRules.setAttribute("id","buttonremove");
+    removeSemanticRules.setAttribute("onclick","hideTableRemoveReference()");
+    removeSemanticRules.innerHTML="Remove reference from this object"
+
+    divd.appendChild(removeSemanticRules);
+    divd.innerHTML = divd.innerHTML + "&nbsp;";
+
+    divd.appendChild(exitWithoutSaving);
+    divd.innerHTML = divd.innerHTML + "&nbsp;";
+
+    divd.appendChild(confirmButton);
+    div.appendChild(divd);
+    //div.appendChild(confirmButton);
 }
+
+function hideTableRemoveReference(){
+    alert("wip");
+    var div = document.getElementById("overlay1");
+    div.innerHTML ="";
+    document.getElementById("overlay").style.display = "none";
+    tempGraph=null;
+}
+
+
 
 function saveDataTable(){
     let array = new Array();
-    /*for(var i=0;i<document.getElementsByClassName("property").length;i++){
-        document.getElementsByClassName("type")[i].style.background  ="white"
-        document.getElementsByClassName("type")[i].style.color = "black"
-        document.getElementsByClassName("property")[i].style.background  ="white"
-        document.getElementsByClassName("property")[i].style.color = "black"
-    }*/
     for(let i=0;i<document.getElementsByClassName("property").length;i++){
         let property = document.getElementsByClassName("property")[i].value;
         let type = document.getElementsByClassName("type")[i].value;
         let postcondition = document.getElementsByClassName("postcondition")[i].value;
         let params = getPropertyData(document.getElementsByClassName("property")[i].parentNode.parentNode.parentNode);
-        /*if(property == "" && type == ""){
-
-        } else{*/
-            if(/*property == "" || type == "" ||*/ (params!= null && params == false) || params== null){
-                /*document.getElementsByClassName("type")[i].style.background  ="red"
-                document.getElementsByClassName("type")[i].style.color = "white"
-                document.getElementsByClassName("property")[i].style.background  ="red"
-                document.getElementsByClassName("property")[i].style.color = "white"*/
-                if(params!= null && params == false){
+        if((params!= null && params == false) || params== null){
+            if(params!= null && params == false){
                     mxUtils.alert("A field of a row is empty if you do not want to load a row leave all fields empty");
-                }else if(params== null){
+            }else if(params== null){
                     mxUtils.alert("Define at least one params for each property");
-                }
-                return false;
-
             }
-            var data ={
-                property: property,
-                type: type,
-                postcondition: postcondition,
-                params: params
-            };
-            array.push(data);
-        //}
+            return false;
+        }
+        let data ={
+            property: property,
+            type: type,
+            postcondition: postcondition,
+            params: params
+        };
+        array.push(data);
     }
     if(checkInput(document.getElementsByClassName("print")[0].value,array)){
         if(document.getElementsByClassName("print")[0].value == "" && array.length ==0 && getPrintXML() == null){
+            if(saveFigureName(document.getElementById("figurename").value) == false){
+                return false;
+            }
+            saveReference();
             return true;
+        }
+        if(saveFigureName(document.getElementById("figurename").value) == false){
+            return false;
         }
         saveSemanticTableXML(array);
         savePrint();
@@ -502,6 +602,55 @@ function saveDataTable(){
         removeWhiteLine();
         return false;
     }
+
+}
+
+function getListOfFigureName() {
+    let ar = new Array();
+    var foreground = getGeneric(tempGraph.getSelectionCell(), "foreground");
+    let allShapes = tempGraph.getModel().filterDescendants(function (cell) {
+        if ((cell.vertex || cell.edge)) {
+            if (cell.getStyle().includes('stencil')) {
+                return true;
+            }
+        }
+    });
+
+    //Ricavo tutti gli archi orientati per i quali è definito un attack type
+    let allConns = tempGraph.getModel().filterDescendants(function (cell) {
+        if ((cell.vertex || cell.edge)) {
+            if (cell.getStyle().includes('ap=')) {
+                return true;
+            }
+        }
+    });
+
+    if (allShapes.length > 0 || allConns.length > 0) {
+        if(foreground != null){
+            for (let i = 0; i < allShapes.length; i++) {
+                let figurename = getGeneric(allShapes[i], "figurename");
+                if(foreground == getGeneric(allShapes[i], "foreground") && figurename != null){
+                    ar.push(figurename);
+                }
+
+            }
+        }else{
+            for (var i = 0; i < allConns.length; i++) {
+                let figurename = getGeneric(allConns[i], "figurename");
+                if(getGeneric(tempGraph.getSelectionCell(), "endArrow") == getGeneric(allConns[i], "endArrow") && figurename != null){
+                    ar.push(figurename);
+                }
+            }
+        }
+    }
+
+    var datalist = " <datalist id=\"figurenamelist\">"
+    for(let i=0;i<ar.length;i++){
+        datalist = datalist + "<option value=\"" + ar[i] + "\">" + ar[i] + "</option>";
+
+    }
+    datalist = datalist + "</datalist>";
+    return datalist;
 
 }
 

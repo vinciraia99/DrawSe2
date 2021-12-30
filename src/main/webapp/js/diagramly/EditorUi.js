@@ -837,7 +837,7 @@ var locomotiveurl;
 			defaultStencil = stencilXMLTive(defaultStencil);
 
 			let semanticrules = generateXMLSemanticRules(graph,this.title);
-			if(semanticrules == false){
+			if(semanticrules != null && semanticrules == false){
 				this.title = null;
 				return;
 			}
@@ -846,11 +846,13 @@ var locomotiveurl;
 			localStorage.setItem('STENCIL', defaultStencil);
 			localStorage.setItem('CONNECTOR', defaultConnectors);
 			localStorage.setItem('RULES', xmlconversion);
-			localStorage.setItem('SEMANTIC_RULES', semanticrules);
+			if(semanticrules != null && semanticrules == "") {
+				localStorage.setItem('SEMANTIC_RULES', semanticrules);
+			}
 
 
 			if (this.locomotiveurl == null) {
-				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8082/DiagramEditor_war_exploded/');
+				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8077/DiagramEditor_war_exploded/');
 			}
 
 			if(this.locomotiveurl != null) {
@@ -878,9 +880,11 @@ var locomotiveurl;
 				element3.name = "rules";
 				form.appendChild(element3);
 
-				element4.value = semanticrules;
-				element4.name = "semantic";
-				form.appendChild(element4);
+				if(semanticrules != null && semanticrules != "") {
+					element4.value = semanticrules;
+					element4.name = "semantic";
+					form.appendChild(element4);
+				}
 
 				document.body.appendChild(form);
 
@@ -902,20 +906,31 @@ var locomotiveurl;
 		var xml = '<?xml version="1.0" encoding="UTF-8"' +
 			' standalone="no"?>\n' +
 			'<shapes name="' + title + '">\n'
-
+		var added = new Array();
 		for(i=0;i<shapes.length;i++) {
-			var shape = shapes[i];
-			var stencil = shape.getStyle();
-			var base64 = stencil.substring(14, stencil.length - 2)
+			let shape = shapes[i];
+			let stencil = shape.getStyle();
+			let base64 = stencil.substring(14, stencil.length - 2)
 			let desc = graph.decompress(base64);
-			var shapeXml = mxUtils.parseXml(desc).documentElement;
-			shapeXml.setAttribute("graphicRef" , 'symbols/General/'
-				+ shapeXml.getAttribute('name') + '.xml');
-			console.log(shapeXml);
-			desc = mxUtils.getXml(shapeXml);
+			let shapeXml = mxUtils.parseXml(desc).documentElement;
+			let figurename = getGeneric(shape,"figurename",graph);
+			if(figurename != null){
+				if(added.includes(figurename) == false){
+					shapeXml.setAttribute("name",figurename);
+					shapeXml.setAttribute("graphicRef" , 'symbols/General/'
+						+ shapeXml.getAttribute('name') + '.xml');
+					desc = mxUtils.getXml(shapeXml);
+					added.push(figurename);
+					xml = xml + desc + '\n'
+				}
+			}else
+			{
+				shapeXml.setAttribute("graphicRef" , 'symbols/General/'
+					+ shapeXml.getAttribute('name') + '.xml');
+				desc = mxUtils.getXml(shapeXml);
+				xml = xml + desc + '\n'
+			}
 
-
-			xml = xml + desc + '\n'
 
 		}
 
@@ -927,25 +942,29 @@ var locomotiveurl;
 	}
 
 	EditorUi.prototype.createConnectorsXml = function(shapes,title){
-
-		var i;
 		var graph = this.editor.graph;
-		var xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' +
+		let xml = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' +
 			'<connectors name="' + title + '">\n'
-		var types;
-
-		for(i=0;i<shapes.length;i++) {
+		let types;
+		let added = new Array();
+		for(let i=0;i<shapes.length;i++) {
 
 			var shape = shapes[i];
 
-			if(shape.getStyle().includes("name=")){
+			if(shape.getStyle().includes("name=") && added.includes(getGeneric(shape,"figurename",graph)) == false){
 
 				var edgeStyle = shape.getStyle();
 				var initCut = edgeStyle.indexOf("name=")
 				edgeStyle = edgeStyle.substring(edgeStyle.indexOf("name="), edgeStyle.length);
 				var toCut = edgeStyle.indexOf(";");
 				edgeStyle = edgeStyle.substring(5,toCut);
-				var name = edgeStyle;
+				let figurename = getGeneric(shape,"figurename",graph);
+				if(figurename != null){
+					var name = figurename;
+					added.push(figurename);
+				}else{
+					var name = edgeStyle;
+				}
 
 				var style = shape.getStyle()
 
@@ -1089,11 +1108,20 @@ var locomotiveurl;
 			}
 
 			json = json.slice(0, -2);
-			json = json + '\n                ],\n' +
-				'                        "_name": "' + name + '",\n' +
-				'                        "_ref": "symbols/General/' + name + '.xml",\n' +
-				'                        "_occurrences": "' + occurrences + '"\n' +
-				'            },\n'
+			if(getGeneric(shape,"figurename",graph) != null){
+				json = json + '\n                ],\n' +
+					'                        "_name": "' + name + '",\n' +
+					'                        "_ref": "symbols/General/' + getGeneric(shape,"figurename",graph) + '.xml",\n' +
+					'                        "_occurrences": "' + occurrences + '"\n' +
+					'            },\n';
+			}else{
+				json = json + '\n                ],\n' +
+					'                        "_name": "' + name + '",\n' +
+					'                        "_ref": "symbols/General/' + name + '.xml",\n' +
+					'                        "_occurrences": "' + occurrences + '"\n' +
+					'            },\n';
+			}
+
 		}
 
 		if(shapes.length > 0 )
@@ -1101,7 +1129,7 @@ var locomotiveurl;
 
 		json = json + '\n        ],\n'
 
-		//console.log(json);
+		console.log(json);
 
 		return json;
 
@@ -1190,13 +1218,19 @@ var locomotiveurl;
 				'                    }\n'
 
 
-
-			json = json + '\n                ],\n' +
-				'                        "_name": "' + edgeName + '",\n' +
-				'                        "_occurrences": ">=0",\n' +
-				'                        "_ref": "connectors/' + edgeName + '.svg"\n' +
-				'            },\n'
-
+			if(getGeneric(connector,"figurename",graph) != null) {
+				json = json + '\n                ],\n' +
+					'                        "_name": "' + edgeName + '",\n' +
+					'                        "_occurrences": ">=0",\n' +
+					'                        "_ref": "connectors/' + getGeneric(connector,"figurename",graph) + '.svg"\n' +
+					'            },\n'
+			}else{
+				json = json + '\n                ],\n' +
+					'                        "_name": "' + edgeName + '",\n' +
+					'                        "_occurrences": ">=0",\n' +
+					'                        "_ref": "connectors/' + edgeName + '.svg"\n' +
+					'            },\n';
+			}
 			if(connectors.length == i-1 ) {
 				json = json.slice(0, -2);
 				json = json + '\n';
@@ -1212,7 +1246,7 @@ var locomotiveurl;
 		json = json + '\n    }\n' +
 			' }\n'
 
-		//console.log(json);
+		console.log(json);
 
 
 		return json;
