@@ -1582,10 +1582,14 @@ ArrangePanel.prototype.init = function()
 	if(graph.isShapeMode() && graph.getSelectionCount()==1 && graph.getSelectionCell().style.includes('shape=stencil') ){
 		this.container.appendChild(this.addShapeName(this.createPanel()));
 		this.container.appendChild(this.addShapeOccurrences(this.createPanel()));
+		this.container.appendChild(this.addStencilName(this.createPanel()));
 	}
 
 	if(graph.isShapeMode() && graph.getSelectionCount()==1 && graph.getSelectionCell().style.includes('endArrow=') ){
 		this.container.appendChild(this.addEdgeName(this.createPanel()));
+		if(graph.getSelectionCell().style.includes('ap=')){
+			this.container.appendChild(this.addStencilName(this.createPanel()));
+		}
 	}
 
 	var selectedCell = graph.getSelectionCell();
@@ -2080,6 +2084,45 @@ ArrangePanel.prototype.addShapeOccurrences = function(div) {
 		var xmlBase64 = graph.compress(mxUtils.getXml(shapeXml));
 		console.log(xmlBase64)
 		cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+ArrangePanel.prototype.addStencilName = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	tempGraph = graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Stencil Name');
+	div.appendChild(span);
+
+	let figurename = getGeneric(graph.getSelectionCell(),"figurename",graph);
+	if(figurename != null){
+		var input = this.addTextInput(div, 20, 120, figurename);
+	}else{
+		try {
+			var name = getNameStencil(graph.getSelectionCell(),graph);
+		}catch (e){
+			var name = getNameConnector(graph.getSelectionCell(),graph);
+		}
+		var input = this.addTextInput(div, 20, 120, name);
+	}
+
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var cell = graph.getSelectionCell();
+		saveFigureName(input.value)
 		graph.getSelectionModel().clear();
 		graph.refresh();
 	})

@@ -1,8 +1,7 @@
-var tempGraph;
-var stencilList;
-var connectorList;
+let tempGraph;
+let stencilList;
+let connectorList;
 let globalGraph;
-//TODO Creare un tasto X per uscire senza salvare
 
 function showTable(graph) {
     tempGraph = graph;
