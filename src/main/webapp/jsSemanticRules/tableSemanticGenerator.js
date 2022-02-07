@@ -516,6 +516,7 @@ function createConfirmButton(){
 
     let divd = document.createElement("div");
     divd.setAttribute("class","rowinline");
+    divd.setAttribute("id","tableconfirmdiv");
     //WIP - Da finre
     let confirmButton = document.createElement("p");
     confirmButton.setAttribute("class","pop-x");

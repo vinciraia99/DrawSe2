@@ -120,7 +120,7 @@ function showTableString(name){
         var div = document.getElementById("overlay1");
 
 
-        div.insertBefore(br,document.getElementById("confirmbutton"));
+        div.insertBefore(br,document.getElementById("tableconfirmdiv"));
         div.insertBefore(tbl,document.getElementById("blankspace"));
         div.insertBefore(br2,document.getElementById("stringtable"));
 

@@ -714,7 +714,7 @@ var locomotiveurl;
 
 		var finalxml = new XMLSerializer().serializeToString(doc);
 
-		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + finalxml.replaceAll("connectnum","connectNum");
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + finalxml.replaceAll("connectnum","connectNum").replaceAll("xmlns=\"http://www.w3.org/1999/xhtml\"" , "");
 	}
 
 	/**
@@ -935,7 +935,7 @@ var locomotiveurl;
 		}
 
 		xml = xml + '</shapes>';
-
+		xml = xml.replaceAll("xmlns=\"http://www.w3.org/1999/xhtml\"" , "");
 		console.log(xml);
 		return xml;
 
@@ -1051,6 +1051,7 @@ var locomotiveurl;
 	 * Questa funzione crea il json per tutte le shape per le quali è definito uno stencil all'interno del grafo corrente
 	 */
 	EditorUi.prototype.createShapesJSON = function(shapes) {
+		//TODO fixare le reference degli shape aggregati e le occorrenze, uno deve essere ==0 e l'altro ==1
 		var graph = this.editor.graph;
 		var json = '{\n' +
 			'    "language": {\n' +
@@ -1058,8 +1059,10 @@ var locomotiveurl;
 
 		var i;
 		var j;
+		var figurenameex;
 		for(i=0;i<shapes.length;i++){
-
+			let listattacchpointname = new Array();
+			let listype = new Array();
 			var shape = shapes[i];
 			var stencil = shape.getStyle();
 			var base64 = stencil.substring(14, stencil.length-2)
@@ -1070,27 +1073,56 @@ var locomotiveurl;
 
 			var occurrences = shapeXml.getAttribute('occurrences' , '');
 			var name = shapeXml.getAttribute('name' , '');
+			debugger;
+			var figurename = shapeXml.getElementsByTagName("figurename")[0].innerText;
 
 			var connectionsNode = shapeXml.getElementsByTagName('connections')[0];
 			var connectionChildNodes = this.getAllElementChildNodes(connectionsNode);
 
 			if(connectionChildNodes.length>0)
 				json = json + '                "ap": [\n'
+			let exconnectNum = "";
+			if(figurenameex != null && figurenameex.figurename == figurename){
+				for(j=0; j<connectionChildNodes.length; j++) {
+					let node = connectionChildNodes[j];
+					if(node.tagName == 'constraint' &&  node.getAttribute('name','P')[0] == 'P'){
+							var nameChild = node.getAttribute('name' , '');
+							var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
+							if(nameInsert == '') {
+								nameInsert = nameChild;
+							}
+							for(let k=0;k<figurenameex.type.length;k++){
+								if(figurenameex.type[k] == node.getAttribute('label' , '')){
+									node.setAttribute("name",figurenameex.list[k]);
+								}
+							}
+						}
 
+				}
+			}
 			for(j=0; j<connectionChildNodes.length; j++) {
 				var node = connectionChildNodes[j];
 				if(node.tagName == 'constraint' &&  node.getAttribute('name','P')[0] == 'P'){
+					debugger;
 					var nameChild = node.getAttribute('name' , '');
 					var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
 					if(nameInsert == '')
 						nameInsert = nameChild;
-					json = json + '                    {\n' +
-						'                        "_type": "' + node.getAttribute('label' , '') + '",\n' +
-						'                        "_name": "' + nameInsert + '",\n' +
-						'                        "_ref": "' + nameInsert + '",\n' +
-						'                        "_numLoop": "' + node.getAttribute('numLoop') + '",\n' +
-						'                        "_connectNum": "' + node.getAttribute('connectNum') + '"\n' +
-						'                    },\n'
+					if(exconnectNum == node.getAttribute('connectNum')){
+						alert("The connection number of each point of the" +  name + "stencil must be different from the other");
+						return;
+					}else{
+						exconnectNum = node.getAttribute('connectNum');
+						listattacchpointname.push(nameInsert);
+						listype.push(node.getAttribute('label' , ''));
+						json = json + '                    {\n' +
+							'                        "_type": "' + node.getAttribute('label' , '') + '",\n' +
+							'                        "_name": "' + nameInsert + '",\n' +
+							'                        "_ref": "' + nameInsert + '",\n' +
+							'                        "_numLoop": "' + node.getAttribute('numLoop') + '",\n' +
+							'                        "_connectNum": "' + node.getAttribute('connectNum') + '"\n' +
+							'                    },\n';
+					}
 				}
 				else if(node.tagName == 'attachmentcurve' || node.tagName == 'attachmentline' ||  node.tagName == 'attachmentarea'){
 					var nameChild = connectionChildNodes[j+1].getAttribute('name' , '');
@@ -1103,9 +1135,14 @@ var locomotiveurl;
 						'                        "_ref": "' + nameInsert + '",\n' +
 						'                        "_numLoop": "' + node.getAttribute('numLoop') + '",\n' +
 						'                        "_connectNum": "' + node.getAttribute('connectNum') + '"\n' +
-						'                    },\n'
+						'                    },\n';
 				}
 			}
+			figurenameex = {
+				figurename : figurename,
+				list : listattacchpointname,
+				type : listype
+			};
 
 			json = json.slice(0, -2);
 			if(getGeneric(shape,"figurename",graph) != null){
