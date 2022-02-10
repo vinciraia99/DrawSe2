@@ -43,6 +43,8 @@ function savePrintXML(text){
         var print = shapeXml.getElementsByTagName("print")[0];
         if(print == null){
             var xml = document.createElement("print");
+            text = text.replaceAll("<","frecciasinistra");
+            text = text.replaceAll("<","frecciadestra");
             xml.innerHTML = text;
             shapeXml.appendChild(xml);
         }else{
@@ -73,7 +75,10 @@ function getPrintXML(){
         var shapeXml = mxUtils.parseXml(desc).documentElement;
         var print =  shapeXml.getElementsByTagName("print")[0];
         if(print != null){
-            return print.innerHTML;
+            let output = print.innerHTML;
+            output = output.replaceAll("frecciasinistra","<");
+            output = output.replaceAll("frecciadestra","<");
+            return output;
         }else{
             return null;
         }

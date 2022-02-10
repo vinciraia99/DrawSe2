@@ -25,6 +25,7 @@ function autocompletitiontrigger(){
     })
     $(".print").click(function () {
         var list = new Array();
+        list.push("Id");
         for (let i = 0; i < document.getElementsByClassName("property").length; i++) {
             if(document.getElementsByClassName("property")[i].value.replaceAll('$', '') != ""){
                 list.push(document.getElementsByClassName("property")[i].value.replaceAll('$', ''));

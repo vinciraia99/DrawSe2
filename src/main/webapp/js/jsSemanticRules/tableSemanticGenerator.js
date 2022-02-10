@@ -705,9 +705,9 @@ function checkInput(input,array){
     var tot = 0;
     var splitting = input.split(/\s+|\(|\)|;/gm);
     for(var i=0;i<splitting.length;i++){
-        if(splitting[i].includes("$")){tot++;}
+        if(splitting[i].includes("$") && (!splitting[i].includes("Id"))){tot++;}
         for (var j=0;j<array.length;j++){
-            if(splitting[i].includes("$")){
+            if(splitting[i].includes("$") && (!splitting[i].includes("Id"))){
                 if(array[j]["property"] == splitting[i]){
                     splitting.splice(i, 1);
                     if(i>0){i=i-1;}
@@ -718,7 +718,7 @@ function checkInput(input,array){
         }
     }
     for(var i=0;i<splitting.length;i++){
-        if(splitting[i].includes("$")){
+        if(splitting[i].includes("$") && (!splitting[i].includes("Id"))){
             createRow(splitting[i]);
         }
     }

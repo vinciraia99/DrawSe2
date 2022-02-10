@@ -1077,7 +1077,12 @@ var locomotiveurl;
 			var occurrences = shapeXml.getAttribute('occurrences' , '');
 			var name = shapeXml.getAttribute('name' , '');
 			debugger;
-			var figurename = shapeXml.getElementsByTagName("figurename")[0].innerText;
+			try{
+				var figurename = shapeXml.getElementsByTagName("figurename")[0].innerText;
+			}catch (e){
+				var figurename = null;
+			}
+
 
 			var connectionsNode = shapeXml.getElementsByTagName('connections')[0];
 			var connectionChildNodes = this.getAllElementChildNodes(connectionsNode);
@@ -1085,34 +1090,35 @@ var locomotiveurl;
 			if(connectionChildNodes.length>0)
 				json = json + '                "ap": [\n'
 			let exconnectNum = "";
-			if(figurenameex != null && figurenameex.figurename == figurename){
-				for(j=0; j<connectionChildNodes.length; j++) {
-					let node = connectionChildNodes[j];
-					if(node.tagName == 'constraint' &&  node.getAttribute('name','P')[0] == 'P'){
-							var nameChild = node.getAttribute('name' , '');
-							var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
-							if(nameInsert == '') {
+			if(figurename != null) {
+				if (figurenameex != null && figurenameex.figurename == figurename) {
+					for (j = 0; j < connectionChildNodes.length; j++) {
+						let node = connectionChildNodes[j];
+						if (node.tagName == 'constraint' && node.getAttribute('name', 'P')[0] == 'P') {
+							var nameChild = node.getAttribute('name', '');
+							var nameInsert = nameChild.substring(nameChild.indexOf('_') + 1, nameChild.length);
+							if (nameInsert == '') {
 								nameInsert = nameChild;
 							}
-							for(let k=0;k<figurenameex.type.length;k++){
-								if(figurenameex.type[k] == node.getAttribute('label' , '')){
-									node.setAttribute("name",figurenameex.list[k]);
+							for (let k = 0; k < figurenameex.type.length; k++) {
+								if (figurenameex.type[k] == node.getAttribute('label', '')) {
+									node.setAttribute("name", figurenameex.list[k]);
 								}
 							}
 						}
 
+					}
 				}
 			}
 			for(j=0; j<connectionChildNodes.length; j++) {
 				var node = connectionChildNodes[j];
 				if(node.tagName == 'constraint' &&  node.getAttribute('name','P')[0] == 'P'){
-					debugger;
 					var nameChild = node.getAttribute('name' , '');
 					var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
 					if(nameInsert == '')
 						nameInsert = nameChild;
-					if(exconnectNum == node.getAttribute('connectNum')){
-						alert("The connection number of each point of the" +  name + "stencil must be different from the other");
+					if(figurename != null && figurenameex !=null && figurename != figurenameex && exconnectNum == node.getAttribute('connectNum')){
+						alert("The connection number of each point of the " +  name + " stencil must be different from the other");
 						return;
 					}else{
 						exconnectNum = node.getAttribute('connectNum');
@@ -1150,7 +1156,9 @@ var locomotiveurl;
 
 			json = json.slice(0, -2);
 			json = json + '\n                ],\n';
-			json = json + '"localConstraint": "(connectNum(Up) + connectNum(Down) + connectNum(Left) + connectNum(Right)) == 2",\n';
+			if(getGeneric(shape,"localConstraint",graph) !=null){
+				json = json + '"localConstraint":'+ getGeneric(shape,"localConstraint",graph)+ '",\n';
+			}
 			if(getGeneric(shape,"figurename",graph) != null){
 				json = json +
 					'                        "_name": "' + name + '",\n' +

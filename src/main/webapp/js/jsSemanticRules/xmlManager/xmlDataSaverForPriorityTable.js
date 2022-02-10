@@ -9,6 +9,8 @@ function saveGenericValue(element,text,type){
         if(text != null){
             if(print == null || print == undefined){
                 var xml = document.createElement(type);
+                text = text.replaceAll("<","frecciasinistra");
+                text = text.replaceAll("<","frecciadestra");
                 xml.innerHTML = text;
                 shapeXml.appendChild(xml);
             }else{
@@ -76,7 +78,10 @@ function getGeneric(element,type,graph){
             var shapeXml = mxUtils.parseXml(desc).documentElement;
             var print =  shapeXml.getElementsByTagName(type)[0];
             if(print != null){
-                return print.innerHTML;
+                let output = print.innerHTML;
+                output = output.replaceAll("frecciasinistra","<");
+                output = output.replaceAll("frecciadestra","<");
+                return output
             }else{
                 return null;
             }

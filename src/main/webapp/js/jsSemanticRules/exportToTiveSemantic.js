@@ -60,6 +60,8 @@ function generateXMLSemanticRules(graph,languageName){
             }else if(alltable[i]["visit"] != null && checkIsSelected() == false){
                 let visit = document.createElement("visit");
                 visit.setAttribute("priority",alltable[i]["visit"]["priority"]);
+                debugger;
+                //TODO Fixare order in xml output
                 let increment = parseInt(alltable[i]["visit"]["order"]) +1;
                 visit.setAttribute("order",increment + "");
                 for(let k=0;k<alltable[i]["visit"]["path"].length;k++){
