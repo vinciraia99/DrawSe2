@@ -36,6 +36,30 @@ function saveGenericValue(element,text,type){
     }
 }
 
+function removeGenericValue(element,type){
+    try {
+        let cell = element;
+        let stencil = cell.getStyle();
+        let base64 = stencil.substring(14, stencil.length-2);
+        let desc = tempGraph.decompress(base64);
+        let shapeXml = mxUtils.parseXml(desc).documentElement;
+        let print = shapeXml.getElementsByTagName(type)[0];
+        if(print != null){
+                print.remove();
+        }
+        let xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
+        cell.setStyle('shape=stencil(' + xmlBase64 + ');')
+    }catch (e){
+        let edge = element
+        let edgeStyle = edge.getStyle();
+        let initCut = edgeStyle.indexOf(type+"=");
+        if(initCut != -1){
+            edgeStyle = removeTableInfo(edge,type+"=");
+            edge.setStyle(edgeStyle);
+        }
+    }
+}
+
 function getGeneric(element,type,graph){
     if(tempGraph == null && graph == null){
         return null

@@ -267,9 +267,9 @@ function createSingleTable(nome,reference,inputstring,figurename){
     row3.setAttribute("colspan","3");
     var print = getPrintXML();
     if(print != null){
-        row3.innerHTML="<textarea  type=\"text\" placeholder=\"print param (optional)\" class=\"print\">" + print + "</textarea>";
+        row3.innerHTML="<textarea type=\"text\" placeholder=\"print param (optional)\" class=\"print\">" + print + "</textarea>";
     }else{
-        row3.innerHTML="<textarea placeholder=\"print param(optional)\"  class='print'></textarea>";
+        row3.innerHTML="<textarea  placeholder=\"print param(optional)\"  class='print'></textarea>";
     }
     var printpath = getGeneric(tempGraph.getSelectionCell(),"printpath");
     if(printpath != null){
@@ -548,7 +548,17 @@ function createConfirmButton(){
 }
 
 function hideTableRemoveReference(){
-    alert("wip");
+        removeGenericValue(tempGraph.getSelectionCell(),"reference");
+        removeGenericValue(tempGraph.getSelectionCell(),"print");
+        removeGenericValue(tempGraph.getSelectionCell(),"inputstring");
+        removeGenericValue(tempGraph.getSelectionCell(),"inputstringtype");
+        removeGenericValue(tempGraph.getSelectionCell(),"printpath");
+        removeGenericValue(tempGraph.getSelectionCell(),"pathlist");
+        removeGenericValue(tempGraph.getSelectionCell(),"tableinfo");
+        removeGenericValue(tempGraph.getSelectionCell(),"priority");
+        removeGenericValue(tempGraph.getSelectionCell(),"order");
+        removeGenericValue(tempGraph.getSelectionCell(),"figurename");
+        removeGenericValue(tempGraph.getSelectionCell(),"localcontext");
     var div = document.getElementById("overlay1");
     div.innerHTML ="";
     document.getElementById("overlay").style.display = "none";

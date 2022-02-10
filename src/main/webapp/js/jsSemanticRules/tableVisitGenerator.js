@@ -203,7 +203,7 @@ function generateHTMLTablePiority() {
 
     let divd = document.createElement("div");
     divd.setAttribute("class","rowinline");
-    //TODO WIP - Da finire
+
     let confirmButton2 = document.createElement("p");
     confirmButton2.setAttribute("class", "pop-x");
     confirmButton2.setAttribute("onclick", "hideTablePriority()");
@@ -238,7 +238,7 @@ function hideTablePriority() {
         }else{
             removeTableInfo(elementOrderedFigureList[i]["element"],"pathlist=");
         }
-        saveGenericValue(elementOrderedFigureList[i]["element"],i+"","order");
+        saveGenericValue(elementOrderedFigureList[i]["element"],(i+1)+"","order");
         elementOrderedFigureList[i]["element"].parent.backup =  elementOrderedFigureList[i]["element"].style;
     }
 

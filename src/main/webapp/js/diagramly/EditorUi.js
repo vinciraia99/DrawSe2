@@ -395,6 +395,7 @@ var locomotiveurl;
 		//document.getElementById("expButton").style.display = "none";
 		//document.getElementById("expButton2").style.display = "none";
 		document.getElementById("exportShape2").style.display = "none";
+		document.getElementById("exportShape4").style.display = "none";
 		document.getElementById("checkboxpriority").style.display = "none";
 		if(graph.isShapeMode()) {
 			globalGraph = saveData(this.editor.graph);
@@ -439,6 +440,7 @@ var locomotiveurl;
 			//document.getElementById("expButton").style.display = "inline-block";
 			//document.getElementById("expButton2").style.display = "inline-block";
 			document.getElementById("exportShape2").style.display = "inline-block";
+			document.getElementById("exportShape4").style.display = "inline-block";
 			document.getElementById("checkboxpriority").style.display = "inline-block";
 			/*graph.editorMode = mxResources.get('shapeMode');
 			graph.hideConstraints();
@@ -617,6 +619,7 @@ var locomotiveurl;
 
 	//Questo metodo adatta il file xml delle rules per il tive servlet
 	function xmlConversionTive(xml){
+		debugger;
 		xml = xml.replaceAll("<=","&lt;=");
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(xml, "application/xml");
@@ -1138,6 +1141,7 @@ var locomotiveurl;
 						'                    },\n';
 				}
 			}
+
 			figurenameex = {
 				figurename : figurename,
 				list : listattacchpointname,
@@ -1145,14 +1149,16 @@ var locomotiveurl;
 			};
 
 			json = json.slice(0, -2);
+			json = json + '\n                ],\n';
+			json = json + '"localConstraint": "(connectNum(Up) + connectNum(Down) + connectNum(Left) + connectNum(Right)) == 2",\n';
 			if(getGeneric(shape,"figurename",graph) != null){
-				json = json + '\n                ],\n' +
+				json = json +
 					'                        "_name": "' + name + '",\n' +
 					'                        "_ref": "symbols/General/' + getGeneric(shape,"figurename",graph) + '.xml",\n' +
 					'                        "_occurrences": "' + occurrences + '"\n' +
 					'            },\n';
 			}else{
-				json = json + '\n                ],\n' +
+				json = json +
 					'                        "_name": "' + name + '",\n' +
 					'                        "_ref": "symbols/General/' + name + '.xml",\n' +
 					'                        "_occurrences": "' + occurrences + '"\n' +

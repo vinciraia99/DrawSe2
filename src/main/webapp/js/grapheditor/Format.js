@@ -1583,6 +1583,7 @@ ArrangePanel.prototype.init = function()
 		this.container.appendChild(this.addShapeName(this.createPanel()));
 		this.container.appendChild(this.addShapeOccurrences(this.createPanel()));
 		this.container.appendChild(this.addStencilName(this.createPanel()));
+		this.container.appendChild(this.addLocalConstraint(this.createPanel()));
 	}
 
 	if(graph.isShapeMode() && graph.getSelectionCount()==1 && graph.getSelectionCell().style.includes('endArrow=') ){
@@ -2123,6 +2124,40 @@ ArrangePanel.prototype.addStencilName = function(div) {
 	{
 		var cell = graph.getSelectionCell();
 		saveFigureName(input.value)
+		graph.getSelectionModel().clear();
+		graph.refresh();
+	})
+	div.appendChild(button);
+	return div;
+}
+
+ArrangePanel.prototype.addLocalConstraint = function(div) {
+	var ui = this.editorUi;
+	var graph = ui.editor.graph;
+	tempGraph = graph;
+	div.style.paddingBottom = '8px';
+
+	var span = document.createElement('div');
+
+	span.style.width = '70px';
+	span.style.marginTop = '0px';
+	span.style.marginBottom = '2px';
+	span.style.fontWeight = 'bold';
+
+	mxUtils.write(span, 'Local Constraint');
+	div.appendChild(span);
+
+	let figurename = getGeneric(graph.getSelectionCell(),"localcontext",graph);
+	if(figurename != null){
+		var input = this.addTextInput(div, 20, 120, figurename);
+	}else{
+		var input = this.addTextInput(div, 20, 120, "");
+	}
+
+	var button  = mxUtils.button('Add', function(evt)
+	{
+		var cell = graph.getSelectionCell();
+		saveGenericValue(cell,input.value,"localcontext");
 		graph.getSelectionModel().clear();
 		graph.refresh();
 	})
