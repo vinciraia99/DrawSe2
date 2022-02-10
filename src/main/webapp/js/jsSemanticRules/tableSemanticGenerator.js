@@ -431,6 +431,7 @@ function createProcedureRow(t,paramselement,element){
             "        <option value=\"addAll\">addAll</option>\n" +
             "        <option value=\"size\">size</option>\n" +
             "        <option value=\"exist\">exist</option>\n" +
+            "        <option value=\"print\">print</option>\n" +
             "    </datalist>"
         tablee.innerHTML = s;
         let tr  = document.createElement("tr");

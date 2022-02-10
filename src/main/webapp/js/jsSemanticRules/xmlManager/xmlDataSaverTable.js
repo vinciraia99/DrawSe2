@@ -11,11 +11,11 @@ function semanticTableToXml(object) {
             for(let k=0;k<object[i]["params"].length;k++){
                 let id2 = document.createElement("id" + k);
                 let param = document.createElement("param");
-                param.innerHTML = object[i]["params"][k]["param"];
+                param.innerHTML = encodeURI(object[i]["params"][k]["param"]);
                 let procedure = document.createElement("procedure");
-                procedure.innerHTML =  object[i]["params"][k]["procedure"];
+                procedure.innerHTML =  encodeURI(object[i]["params"][k]["procedure"]);
                 let param2 = document.createElement("param2");
-                param2.innerHTML = object[i]["params"][k]["param2"];
+                param2.innerHTML = encodeURI(object[i]["params"][k]["param2"]);
                 id2.appendChild(param);
                 id2.appendChild(procedure);
                 id2.appendChild(param2);
@@ -43,8 +43,8 @@ function savePrintXML(text){
         var print = shapeXml.getElementsByTagName("print")[0];
         if(print == null){
             var xml = document.createElement("print");
-            text = text.replaceAll("<","frecciasinistra");
-            text = text.replaceAll("<","frecciadestra");
+            text = text.replace("<","frecciasinistra");
+            text = text.replace("<","frecciadestra");
             xml.innerHTML = text;
             shapeXml.appendChild(xml);
         }else{
@@ -76,8 +76,8 @@ function getPrintXML(){
         var print =  shapeXml.getElementsByTagName("print")[0];
         if(print != null){
             let output = print.innerHTML;
-            output = output.replaceAll("frecciasinistra","<");
-            output = output.replaceAll("frecciadestra","<");
+            output = output.replace("frecciasinistra","<");
+            output = output.replace("frecciadestra","<");
             return output;
         }else{
             return null;
@@ -217,9 +217,10 @@ function getFunctionXML(id){
     if(params!=null){
         for(let i=0;i<params.childElementCount;i++){
             let ids = params.getElementsByTagName("id" + i)[0];
-            let procedure = ids.getElementsByTagName("procedure")[0].innerHTML;
-            let param = ids.getElementsByTagName("param")[0].innerHTML;
-            let param2 = ids.getElementsByTagName("param2")[0].innerHTML;
+            //TODO - Da finire
+            let procedure = decodeURI(ids.getElementsByTagName("procedure")[0].innerHTML);
+            let param = decodeURI(ids.getElementsByTagName("param")[0].innerHTML);
+            let param2 = decodeURI(ids.getElementsByTagName("param2")[0].innerHTML);
             var data ={
                 procedure: procedure,
                 param: param,
@@ -374,8 +375,14 @@ function getInputString(){
         var elem1 =  shapeXml.getElementsByTagName("inputstring")[0];
         var elem2 =  shapeXml.getElementsByTagName("inputstringtype")[0];
         if(elem1 != null && elem2 !=null){
-            ar.push(elem1.innerHTML);
-            ar.push(elem2.innerHTML);
+            let e1 = elem1.innerHTML;
+            e1 = e1.replace("frecciasinistra","<");
+            e1 = e1.replace("frecciadestra","<");
+            let e2 = elem2.innerHTML;
+            e2 = e2.replace("frecciasinistra","<");
+            e2 = e2.replace("frecciadestra","<");
+            ar.push(e1);
+            ar.push(e2);
             return ar;
         }else{
             return null;
@@ -411,6 +418,8 @@ function saveInputStringXML(text,type){
         if(text != null && type != null){
             if(print == null){
                 let xml = document.createElement("inputstring");
+                text = text.replace("<","frecciasinistra");
+                text = text.replace("<","frecciadestra");
                 xml.innerHTML = text;
                 shapeXml.appendChild(xml);
             }else{

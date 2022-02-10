@@ -62,7 +62,7 @@ function generateXMLSemanticRules(graph,languageName){
                 visit.setAttribute("priority",alltable[i]["visit"]["priority"]);
                 debugger;
                 //TODO Fixare order in xml output
-                let increment = parseInt(alltable[i]["visit"]["order"]) +1;
+                let increment = parseInt(alltable[i]["visit"]["order"]);
                 visit.setAttribute("order",increment + "");
                 for(let k=0;k<alltable[i]["visit"]["path"].length;k++){
                     let path = document.createElement("path");

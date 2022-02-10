@@ -59,8 +59,11 @@ function semantictable(semantic){
     var row3 = document.createElement("td");
     row3.setAttribute("class","tg-0pky");
     row3.setAttribute("colspan","3");
-    row3.innerHTML= semantic["print"];
-    row3.innerHTML=row3.innerHTML + "<br>" + semantic["printpath"];
+    let textnode = document.createTextNode(semantic["print"]);
+    row3.appendChild(textnode);
+    row3.innerHTML= row3.innerHTML + "<br>";
+    let textnode2 = document.createTextNode(semantic["printpath"]);
+    row3.appendChild(textnode2);
 
     var rowproperty =document.createElement("tr");
     var rowproperty1 =document.createElement("td");
@@ -125,11 +128,13 @@ function createRowSemanticProperty(table){
         let trs  = document.createElement("tr");
         let tds = document.createElement("td");
         tds.setAttribute("style","border-color:transparent");
-        tds.innerHTML = table["params"][i]["procedure"];
+        let textnode = document.createTextNode(table["params"][i]["procedure"]);
+        tds.appendChild(textnode);
         trs.appendChild(tds);
 
         let td2s = tds.cloneNode(true);
-        td2s.innerHTML = table["params"][i]["param"];
+        let textnode2 = document.createTextNode(table["params"][i]["param"]);
+        td2s.appendChild(textnode2);
         trs.appendChild(td2s);
 
         let td3s = tds.cloneNode(true);
@@ -197,14 +202,17 @@ function visitTable(alltable){
 function createRowVisitTable(reference,order,patharray,priority){
     let row2 = document.createElement("tr");
     let row3 = document.createElement("td");
+    let t1 = document.createTextNode(reference);
+    let t2 = document.createTextNode(order);
+    let t4 = document.createTextNode(priority);
     row3.setAttribute("class", "tg-0pky");
-    row3.innerHTML = order;
+    row3.appendChild(t2);
     let row4 = row3.cloneNode(true);
-    row4.innerHTML = priority;
+    row4.appendChild(t4);
     let row5 = row3.cloneNode(true);
     row5.innerHTML = "";
     let row6 = row3.cloneNode(true);
-    row6.innerHTML = reference;
+    row6.appendChild(t1);
 
     row5.appendChild(createRowPathVisitTable(patharray));
 
@@ -239,7 +247,8 @@ function createRowPathVisitTable(patharray){
         tr.appendChild(td);
         let td2 = document.createElement("td");
         td2.setAttribute("style","border-color:transparent");
-        td2.innerHTML=patharray[i]["path"];
+        let textnode4 = document.createTextNode(patharray[i]["path"]);
+        td2.appendChild(textnode4);
         tr.appendChild(td2);
         tablee.appendChild(tr);
     }
