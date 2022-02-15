@@ -123,7 +123,6 @@ function getPathForElementXML(xml){
     if(typeof xml == "undefined" || xml == null) return null;
     xml = xml.replaceAll("&gt;",">");
     xml = xml.replaceAll("&lt;","<");
-    debugger;
     var array = new Array();
     const parser = new DOMParser();
     let doc = parser.parseFromString(xml, "application/xml");

@@ -200,7 +200,6 @@ function visitTable(alltable){
 }
 
 function createRowVisitTable(reference,order,patharray,priority){
-    debugger;
     let row2 = document.createElement("tr");
     let row3 = document.createElement("td");
     let t1 = document.createTextNode(reference);
@@ -362,7 +361,6 @@ function loadAllTable(graph){
                     }
                 }
 
-                debugger;
                 if ((typeof priority != 'undefined' && priority != null) && (typeof order != 'undefined' && order != null) && (typeof path != 'undefined' && path != null)) {
                     data2={
                         priority : priority,

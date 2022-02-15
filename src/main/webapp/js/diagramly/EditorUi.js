@@ -495,7 +495,6 @@ var locomotiveurl;
 	}
 
 	function saveData(graph){
-		debugger;
 		var allShapes = graph.getModel().filterDescendants(function (cell) {
 			if ((cell.vertex || cell.edge)) {
 				if (cell.getStyle().includes('stencil')) {
@@ -515,7 +514,6 @@ var locomotiveurl;
 	}
 
 	function restoreSemanticData(graph){
-		debugger;
 		var allShapes = graph.getModel().filterDescendants(function (cell) {
 			if ((cell.vertex || cell.edge)) {
 				if (cell.getStyle().includes('stencil')) {
@@ -544,8 +542,9 @@ var locomotiveurl;
 							i=f;
 							break;
 						}
-
+						i=-1;
 					}
+					if(i<0)  break;
 					let t = globalGraph[i]["xml"];
 					let base642 = t.substring(14, globalGraph[i]["xml"].length-2);
 					let xml2 = mxUtils.parseXml(graph.decompress(base642));
@@ -640,7 +639,6 @@ var locomotiveurl;
 
 	//Questo metodo adatta il file xml delle rules per il tive servlet
 	function xmlConversionTive(xml){
-		debugger;
 		xml = xml.replaceAll("<=","&lt;=");
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(xml, "application/xml");
@@ -782,11 +780,20 @@ var locomotiveurl;
 			var defaultStencil = this.createStencilXml(allShapes, this.title);
 			var defaultConnectors = this.createConnectorsXml(allConns, this.title);
 
+			let semanticrules = generateJSONSemanticRules(graph,this.title);
+			if(semanticrules != null && semanticrules == false){
+				this.title = null;
+				return;
+			}
+
 			console.log("\n\nJson File:\n" + json);
 
 			localStorage.setItem('STENCIL', defaultStencil);
 			localStorage.setItem('CONNECTOR', defaultConnectors);
 			localStorage.setItem('RULES', json);
+			if(semanticrules != null && semanticrules == "") {
+				localStorage.setItem('SEMANTIC_RULES', semanticrules);
+			}
 
 
 			if (this.locomotiveurl == null) {
@@ -1019,7 +1026,6 @@ var locomotiveurl;
 		xml = xml + '</connectors>';
 		let splitting = xml.split(";");
 		xml = splitting[0] +";";
-		debugger;
 		for(let i=1;i<splitting.length;i++){
 			if(splitting[i].includes("pathlist=") == false && splitting[i].includes("print=") == false && splitting[i].includes("inputstringtype=") == false && splitting[i].includes("tableinfo=") == false ){
 				xml = xml + splitting[i];
@@ -1113,7 +1119,6 @@ var locomotiveurl;
 
 			var occurrences = shapeXml.getAttribute('occurrences' , '');
 			var name = shapeXml.getAttribute('name' , '');
-			debugger;
 			try{
 				var figurename = shapeXml.getElementsByTagName("figurename")[0].innerText;
 			}catch (e){
@@ -1154,7 +1159,7 @@ var locomotiveurl;
 					var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
 					if(nameInsert == '')
 						nameInsert = nameChild;
-					if(figurename != null && figurenameex !=null && figurename != figurenameex && exconnectNum == node.getAttribute('connectNum')){
+					if(figurename != null && figurenameex !=null && figurename == figurenameex.figurename && exconnectNum == node.getAttribute('connectNum')){
 						alert("The connection number of each point of the " +  name + " stencil must be different from the other");
 					}
 						exconnectNum = node.getAttribute('connectNum');
@@ -1171,8 +1176,6 @@ var locomotiveurl;
 				}
 				else if(node.tagName == 'attachmentcurve' || node.tagName == 'attachmentline' ||  node.tagName == 'attachmentarea'){
 					var nameChild = connectionChildNodes[j+1].getAttribute('name' , '');
-					//var nameInsert = nameChild.substring(nameChild.indexOf('_')+1,nameChild.length);
-					//if(nameInsert == '')
 					var	nameInsert = nameChild;
 					json = json + '                    {\n' +
 						'                        "_type": "' + connectionChildNodes[j+1].getAttribute('label' , '') + '",\n' +

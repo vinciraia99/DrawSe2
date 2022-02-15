@@ -22,7 +22,6 @@ function showPriorityTable(graph) {
             }
         }
     });
-    debugger;
     if (allShapes.length > 0 || allConns.length > 0) {
         for (var i = 0; i < allShapes.length; i++) {
             var reference = getGeneric(allShapes[i], "reference");
@@ -243,7 +242,6 @@ function hideTablePriority() {
         }else{
             removeTableInfo(elementOrderedFigureList[i]["element"],"pathlist=");
         }
-        debugger;
         saveGenericValue(elementOrderedFigureList[i]["element"],(i+1)+"","order");
         elementOrderedFigureList[i]["element"].parent.backup =  elementOrderedFigureList[i]["element"].style;
     }

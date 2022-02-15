@@ -94,7 +94,6 @@ function hideTable() {
     var name =  document.getElementById("nameshape").value;
     if(checkNameIsNotUsed(name)){
         if(saveDataTable()){
-            debugger;
             try{
             if(saveNameStencil(name) != true) {
                 saveNameConnector(name);

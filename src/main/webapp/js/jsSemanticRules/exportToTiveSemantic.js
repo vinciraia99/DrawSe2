@@ -60,8 +60,6 @@ function generateXMLSemanticRules(graph,languageName){
             }else if(alltable[i]["visit"] != null && checkIsSelected() == false){
                 let visit = document.createElement("visit");
                 visit.setAttribute("priority",alltable[i]["visit"]["priority"]);
-                debugger;
-                //TODO Fixare order in xml output
                 let increment = parseInt(alltable[i]["visit"]["order"]);
                 visit.setAttribute("order",increment + "");
                 for(let k=0;k<alltable[i]["visit"]["path"].length;k++){
@@ -83,4 +81,12 @@ function generateXMLSemanticRules(graph,languageName){
     finalxml = finalxml.replaceAll("graphicref=","graphicRef=");
     console.log(finalxml);
     return finalxml;
+}
+
+function generateJSONSemanticRules(graph,languageName){
+        let xmlText = generateXMLSemanticRules(graph,languageName);
+        if(xmlText == false) return false;
+        let x2js = new X2JS();
+        let jsonObj = x2js.xml_str2json( xmlText );
+        return  JSON.stringify(jsonObj);
 }
