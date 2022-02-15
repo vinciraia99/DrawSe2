@@ -94,8 +94,11 @@ function hideTable() {
     var name =  document.getElementById("nameshape").value;
     if(checkNameIsNotUsed(name)){
         if(saveDataTable()){
+            debugger;
             try{
-                saveNameStencil(name);
+            if(saveNameStencil(name) != true) {
+                saveNameConnector(name);
+            }
             }catch (error){
                 saveNameConnector(name);
             }
@@ -143,13 +146,18 @@ function saveNameStencil(name){
     cell.setAttribute('name', name);
     var stencil = cell.getStyle();
     var base64 = stencil.substring(14, stencil.length-2);
-    var desc = tempGraph.decompress(base64);
+    try{
+        var desc = tempGraph.decompress(base64);
+    }catch (e) {
+        return false;
+    }
     var shapeXml = mxUtils.parseXml(desc).documentElement;
     shapeXml.setAttribute("name" ,name);
     var xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
     cell.setStyle('shape=stencil(' + xmlBase64 + ');');
     tempGraph.getSelectionModel().clear();
     tempGraph.refresh();
+    return true;
 }
 
 function saveNameConnector(name){
@@ -432,6 +440,7 @@ function createProcedureRow(t,paramselement,element){
             "        <option value=\"size\">size</option>\n" +
             "        <option value=\"exist\">exist</option>\n" +
             "        <option value=\"print\">print</option>\n" +
+            "        <option value=\"isset\">isset</option>\n" +
             "    </datalist>"
         tablee.innerHTML = s;
         let tr  = document.createElement("tr");
@@ -794,7 +803,11 @@ function checkNameIsNotUsed(name){
             let stencil = elements[i].getStyle();
             let base64 = stencil.substring(14, stencil.length-2);
             if(elements[i].style.search("stencil") > 0){
-                nomeOggetto = mxUtils.parseXml(tempGraph.decompress(base64)).documentElement.getAttribute('name');
+                try {
+                    let decompress = tempGraph.decompress(base64);
+                    nomeOggetto = mxUtils.parseXml(decompress).documentElement.getAttribute('name');
+                }catch (e){
+                }
             }else if(elements[i].style.search("endArrow")!= -1){
                 nomeOggetto= getNameConnector(elements[i]);
             }

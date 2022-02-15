@@ -224,6 +224,7 @@ DropboxFile.prototype.saveFile = function(title, revision, success, error)
 					
 					var doSave = mxUtils.bind(this, function(data)
 					{
+						debugger;
 						var index = this.stat.path_display.lastIndexOf('/');
 						var folder = (index > 1) ? this.stat.path_display.substring(1, index + 1) : null;
 						

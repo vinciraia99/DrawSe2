@@ -78,18 +78,23 @@ function showPriorityTable(graph) {
         }
         var order = 1;
         for (var i = 0; i < elementFigureList.length; i++) {
+            let exorder = order;
             for (var k = 0; k < elementFigureList.length; k++) {
-                if (elementFigureList[k].order != null && order == elementFigureList[k].order) {
+                if (elementFigureList[k].order != null && order == parseInt(elementFigureList[k].order)) {
                     order++;
                     elementOrderedFigureList.push(elementFigureList[k]);
                     break;
                 }
             }
+            if(order == exorder){
+                order++;
+            }
         }
         if (order != elementFigureList.length) {
             var l = elementFigureList.length;
             for (var i = 0; i < l; i++) {
-                if (elementFigureList[i].order != null && order == elementFigureList[i].order) {
+                if (elementFigureList[i].order != null && order == parseInt(elementFigureList[i].order)) {
+                    elementFigureList.splice(i, 1);
                     elementFigureList.splice(i, 1);
                     l--;
                     i = 0;
@@ -159,7 +164,7 @@ function generateHTMLTablePiority() {
 
                 var confirmButton = document.createElement("p");
                 confirmButton.setAttribute("class", "plusbutton");
-                confirmButton.setAttribute("onclick", "createPathRow(this,"+ i +")");
+                confirmButton.setAttribute("onclick", "createPathRow(this)");
                 confirmButton.innerHTML = "+"
                 row5.appendChild(confirmButton);
 
@@ -230,9 +235,9 @@ function generateHTMLTablePiority() {
 }
 
 function hideTablePriority() {
-    for(var i=0;i<elementOrderedFigureList.length;i++){
+    for(let i=0;i<elementOrderedFigureList.length;i++){
         saveGenericValue(elementOrderedFigureList[i]["element"],document.getElementsByClassName("trmain")[i].getElementsByClassName("priority")[0].value,"priority");
-        var array = createPathArray(i);
+        let array = createPathArray(i);
         if(array != null){
             saveGenericValue(elementOrderedFigureList[i]["element"],visitTableToXML(array),"pathlist");
         }else{

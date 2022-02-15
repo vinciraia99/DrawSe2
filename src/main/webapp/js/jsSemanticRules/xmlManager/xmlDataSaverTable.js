@@ -285,6 +285,9 @@ function saveFigureName(text){
 }
 
 function compareForeground(t1,t2){
+    if(t1 == null || t2 == null){
+        return false;
+    }
     let t3 = t1.split(/(<| |\>)/gm);
     let t4 = t2.split(/(<| |\>)/gm);
     let max;

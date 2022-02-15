@@ -302,7 +302,7 @@ Editor.prototype.modified = false;
  * Specifies if the diagram should be saved automatically if possible. Default
  * is true.
  */
-Editor.prototype.autosave = true;
+Editor.prototype.autosave = false;
 
 /**
  * Specifies the top spacing for the initial page view. Default is 0.

@@ -8,9 +8,6 @@ function setOrderUpBex(i){
         tablenew.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ i +")");
         tablenew.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ i +")");
 
-        tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ i +")");
-        tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ j +")");
-
         document.getElementsByTagName("tbody")[0].insertBefore(tableold,tablenew);
         arraymove(elementOrderedFigureList,i,j);
 
@@ -29,8 +26,8 @@ function setOrderDownBex(i){
         tablenew.getElementsByClassName("btnup")[0].setAttribute("onclick","setOrderUpBex("+ i +")");
         tablenew.getElementsByClassName("btndown")[0].setAttribute("onclick","setOrderDownBex("+ i +")");
 
-        tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ i +")");
-        tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this,"+ j +")");
+        tablenew.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this)");
+        tableold.getElementsByClassName("plusbutton")[0].setAttribute("onclick","createPathRow(this)");
 
         document.getElementsByTagName("tbody")[0].insertBefore(tablenew,tableold);
         arraymove(elementOrderedFigureList,i,j);
@@ -132,14 +129,15 @@ function showTableString(name){
 
 }
 
-function createPathRow(th,index){
+function createPathRow(th){
     for(var k=0;k<document.getElementsByTagName("td").length;k++){
         if(document.getElementsByTagName("td")[k].getElementsByClassName("plusbutton")[0] != null && document.getElementsByTagName("td")[k].getElementsByClassName("plusbutton")[0] == th){
             var t = document.getElementsByTagName("td")[k];
             break;
         }
     }
-    var table = document.getElementsByClassName("tablepath")[index];
+
+    var table = th.parentNode.getElementsByClassName("tablepath")[0];
     if(table == null){
         var tablee = document.createElement("table");
         tablee.setAttribute("class","tablepath");

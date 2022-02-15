@@ -23,7 +23,7 @@ function autocompletitiontrigger(){
         data: abstractsentence2,
         limit: abstractsentence2.length
     })
-    $(".print").click(function () {
+    $('#tabella .print, .params2').click(function () {
         var list = new Array();
         list.push("Id");
         for (let i = 0; i < document.getElementsByClassName("property").length; i++) {
@@ -31,7 +31,7 @@ function autocompletitiontrigger(){
                 list.push(document.getElementsByClassName("property")[i].value.replaceAll('$', ''));
             }
         }
-        $('.print').atwho({
+        $('#tabella .print, .params2').atwho({
             at: "$",
             data: list,
             limit: list.length

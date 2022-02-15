@@ -336,7 +336,7 @@ var mxSettings =
 			
 			if (mxSettings.settings.autosave == null)
 			{
-				mxSettings.settings.autosave = true;
+				mxSettings.settings.autosave = false;
 			}
 			
 			if (mxSettings.settings.scratchpadSeen != null)

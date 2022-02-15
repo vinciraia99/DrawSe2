@@ -108,9 +108,9 @@ function visitTableToXML(object) {
         if(object[i]["path"] != "") {
             var id = document.createElement("id" + i);
             var patht = document.createElement("patht");
-            patht.innerHTML = object[i]["patht"];
+            patht.innerHTML = encodeURI(object[i]["patht"]);
             var path = document.createElement("path");
-            path.innerHTML = object[i]["path"];
+            path.innerHTML = encodeURI(object[i]["path"]);
             id.appendChild(patht);
             id.appendChild(path);
             xml.appendChild(id);
@@ -120,19 +120,25 @@ function visitTableToXML(object) {
 }
 
 function getPathForElementXML(xml){
+    if(typeof xml == "undefined" || xml == null) return null;
+    xml = xml.replaceAll("&gt;",">");
+    xml = xml.replaceAll("&lt;","<");
+    debugger;
     var array = new Array();
     const parser = new DOMParser();
     let doc = parser.parseFromString(xml, "application/xml");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) {
+        console.error(errorNode);
+        console.error(xml);
         return null;
     }else {
         doc = doc.getElementsByTagName("pathinfo")[0];
-        for (var i = 0; i < doc.childElementCount; i++) {
-            var id = doc.getElementsByTagName("id" + i)[0];
-            var patht = id.getElementsByTagName("patht")[0].innerHTML;
-            var path = id.getElementsByTagName("path")[0].innerHTML;
-            var data = {
+        for (let i = 0; i < doc.childElementCount; i++) {
+            let id = doc.getElementsByTagName("id" + i)[0];
+            let patht = decodeURI(id.getElementsByTagName("patht")[0].innerHTML);
+            let path = decodeURI(id.getElementsByTagName("path")[0].innerHTML);
+            let data = {
                 patht: patht,
                 path: path,
             };

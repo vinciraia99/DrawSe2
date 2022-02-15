@@ -1703,7 +1703,7 @@ Draw.loadPlugin(function(ui)
 		ui.remoteInvoke('getFileDescriptor', null, null, success, error);
 	};
 	
-	var allowAutoSave = true;
+	var allowAutoSave = false;
 	
 	EmbedFile.prototype.isAutosaveNow = function(success, error)
 	{
@@ -1782,7 +1782,9 @@ Draw.loadPlugin(function(ui)
 			if (curFile.isModified())
 			{
 				//Save file (draft) first
-				ui.saveFile(null, doActions);
+				if(typeof tempGraph == "undefined" ||tempGraph == null) {
+					ui.saveFile(null, doActions);
+				}
 			}
 			else if (exit) //Save descriptor only to update the viewer settings
 			{

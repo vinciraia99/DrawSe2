@@ -389,6 +389,7 @@ var locomotiveurl;
 	/**
 	 * Questa funzione permette di cambiare la modalità dell'editor
 	 */
+
 	EditorUi.prototype.switchMode = function() {
 		var graph = this.editor.graph;
 		var connectionMode = graph.isConstraintMode();
@@ -398,6 +399,7 @@ var locomotiveurl;
 		document.getElementById("exportShape4").style.display = "none";
 		document.getElementById("checkboxpriority").style.display = "none";
 		if(graph.isShapeMode()) {
+			tempGraph = graph;
 			globalGraph = saveData(this.editor.graph);
 			graph.editorMode = mxResources.get('connectionMode');
 			graph.showConstraints();
@@ -437,6 +439,7 @@ var locomotiveurl;
 				}
 			};*/
 		} else if(graph.isConstraintMode()) {
+			tempGraph = null;
 			//document.getElementById("expButton").style.display = "inline-block";
 			//document.getElementById("expButton2").style.display = "inline-block";
 			document.getElementById("exportShape2").style.display = "inline-block";
@@ -492,6 +495,7 @@ var locomotiveurl;
 	}
 
 	function saveData(graph){
+		debugger;
 		var allShapes = graph.getModel().filterDescendants(function (cell) {
 			if ((cell.vertex || cell.edge)) {
 				if (cell.getStyle().includes('stencil')) {
@@ -511,6 +515,7 @@ var locomotiveurl;
 	}
 
 	function restoreSemanticData(graph){
+		debugger;
 		var allShapes = graph.getModel().filterDescendants(function (cell) {
 			if ((cell.vertex || cell.edge)) {
 				if (cell.getStyle().includes('stencil')) {
@@ -520,11 +525,27 @@ var locomotiveurl;
 		});
 		var k = allShapes.length-1;
 		if(globalGraph.length != 0){
-			for(let i=globalGraph.length-1;i>=0 && k>=0;i--){
+			for(let i=globalGraph.length-1;i>=0 && k>=0;){
 				if(typeof allShapes[k] != "undefined" ){
 					var stencil = allShapes[k].getStyle();
 					let base64 = stencil.substring(14, stencil.length-2);
-					let xml = mxUtils.parseXml(graph.decompress(base64));
+					try{
+						var xml = mxUtils.parseXml(graph.decompress(base64));
+					}catch (e) {
+						return;
+					}
+					console.log(xml.getElementsByTagName("shape")[0].getAttribute("name"));
+					for(let f=0;f<globalGraph.length;f++){
+						let ts = globalGraph[f]["xml"];
+						let base64s2 = ts.substring(14, globalGraph[f]["xml"].length-2);
+						let xml2ss = mxUtils.parseXml(graph.decompress(base64s2));
+
+						if(xml2ss.getElementsByTagName("shape")[0].getAttribute("name") == xml.getElementsByTagName("shape")[0].getAttribute("name")){
+							i=f;
+							break;
+						}
+
+					}
 					let t = globalGraph[i]["xml"];
 					let base642 = t.substring(14, globalGraph[i]["xml"].length-2);
 					let xml2 = mxUtils.parseXml(graph.decompress(base642));
@@ -534,7 +555,7 @@ var locomotiveurl;
 					xml2.getElementsByTagName("shape")[0].setAttribute("w",xml.getElementsByTagName("shape")[0].getAttribute("w"));
 					xml2.getElementsByTagName("shape")[0].setAttribute("aspect",xml.getElementsByTagName("shape")[0].getAttribute("aspect"));
 					xml2.getElementsByTagName("shape")[0].setAttribute("strokewidth",xml.getElementsByTagName("shape")[0].getAttribute("strokewidth"));
-					xml2.getElementsByTagName("shape")[0].setAttribute("occurrences",xml.getElementsByTagName("shape")[0].getAttribute("occurrences"));
+					//xml2.getElementsByTagName("shape")[0].setAttribute("occurrences",xml.getElementsByTagName("shape")[0].getAttribute("occurrences"));
 					xml2.getElementsByTagName("shape")[0].setAttribute("name",xml.getElementsByTagName("shape")[0].getAttribute("name"));
 					let xmlBase64 = graph.compress(mxUtils.getXml(xml2));
 					allShapes[k].setStyle('shape=stencil(' + xmlBase64 + ');');
@@ -996,6 +1017,18 @@ var locomotiveurl;
 		}
 
 		xml = xml + '</connectors>';
+		let splitting = xml.split(";");
+		xml = splitting[0] +";";
+		debugger;
+		for(let i=1;i<splitting.length;i++){
+			if(splitting[i].includes("pathlist=") == false && splitting[i].includes("print=") == false && splitting[i].includes("inputstringtype=") == false && splitting[i].includes("tableinfo=") == false ){
+				xml = xml + splitting[i];
+				if(splitting.length-1 != i){
+					xml = xml + ";";
+				}
+
+			}
+		}
 		console.log(xml);
 		return xml;
 	}
@@ -1068,8 +1101,12 @@ var locomotiveurl;
 			let listype = new Array();
 			var shape = shapes[i];
 			var stencil = shape.getStyle();
-			var base64 = stencil.substring(14, stencil.length-2)
-			var desc = graph.decompress(base64);
+			var base64 = stencil.substring(14, stencil.length-2);
+			try{
+				var desc = graph.decompress(base64);
+			}catch (e) {
+				continue;
+			}
 			var shapeXml = mxUtils.parseXml(desc).documentElement;
 
 			json = json + '            {\n';
@@ -1119,8 +1156,7 @@ var locomotiveurl;
 						nameInsert = nameChild;
 					if(figurename != null && figurenameex !=null && figurename != figurenameex && exconnectNum == node.getAttribute('connectNum')){
 						alert("The connection number of each point of the " +  name + " stencil must be different from the other");
-						return;
-					}else{
+					}
 						exconnectNum = node.getAttribute('connectNum');
 						listattacchpointname.push(nameInsert);
 						listype.push(node.getAttribute('label' , ''));
@@ -1131,7 +1167,7 @@ var locomotiveurl;
 							'                        "_numLoop": "' + node.getAttribute('numLoop') + '",\n' +
 							'                        "_connectNum": "' + node.getAttribute('connectNum') + '"\n' +
 							'                    },\n';
-					}
+
 				}
 				else if(node.tagName == 'attachmentcurve' || node.tagName == 'attachmentline' ||  node.tagName == 'attachmentarea'){
 					var nameChild = connectionChildNodes[j+1].getAttribute('name' , '');

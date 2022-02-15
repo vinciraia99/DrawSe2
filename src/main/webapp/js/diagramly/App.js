@@ -4312,6 +4312,8 @@ App.prototype.saveFile = function(forceDialog, success)
 		if (!forceDialog && file.getTitle() != null && file.invalidFileHandle == null && this.mode != null)
 		{
 			this.save(file.getTitle(), done);
+
+
 		}
 		else if (file != null && file.constructor == LocalFile && file.fileHandle != null)
 		{

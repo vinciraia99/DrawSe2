@@ -200,6 +200,7 @@ function visitTable(alltable){
 }
 
 function createRowVisitTable(reference,order,patharray,priority){
+    debugger;
     let row2 = document.createElement("tr");
     let row3 = document.createElement("td");
     let t1 = document.createTextNode(reference);
@@ -207,11 +208,14 @@ function createRowVisitTable(reference,order,patharray,priority){
     let t4 = document.createTextNode(priority);
     row3.setAttribute("class", "tg-0pky");
     row3.appendChild(t2);
-    let row4 = row3.cloneNode(true);
+    let row4 = document.createElement("td");
+    row4.setAttribute("class", "tg-0pky");
     row4.appendChild(t4);
-    let row5 = row3.cloneNode(true);
+    let row5 = document.createElement("td");
+    row5.setAttribute("class", "tg-0pky");
     row5.innerHTML = "";
-    let row6 = row3.cloneNode(true);
+    let row6 = document.createElement("td");
+    row6.setAttribute("class", "tg-0pky");
     row6.appendChild(t1);
 
     row5.appendChild(createRowPathVisitTable(patharray));
@@ -357,14 +361,18 @@ function loadAllTable(graph){
                         }
                     }
                 }
-            }
-            if ((typeof priority != 'undefined' && priority != null) && (typeof order != 'undefined' && order != null) && (typeof path != 'undefined' && path != null)) {
-                data2={
-                    priority : priority,
-                    order :  order,
-                    path : path
+
+                debugger;
+                if ((typeof priority != 'undefined' && priority != null) && (typeof order != 'undefined' && order != null) && (typeof path != 'undefined' && path != null)) {
+                    data2={
+                        priority : priority,
+                        order :  order,
+                        path : path
+                    }
+                }else if((typeof priority == 'undefined' || priority == null) || (typeof order == 'undefined' || order == null) || (typeof path == 'undefined' || path == null)){
+                    mxUtils.alert("Define the priority table for the object " + name);
+                    return null;
                 }
-            }
 
             if((typeof data != 'undefined' && data != null) && (typeof data2 != 'undefined' && data2 != null)){
                 all ={
@@ -380,7 +388,7 @@ function loadAllTable(graph){
             if(typeof all != 'undefined' && all != null){
                 array.push(all);
             }
-
+            }
         }
     }
     if(array.length ==0){
