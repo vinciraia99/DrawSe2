@@ -347,6 +347,7 @@ fullscreen=fullscreen
 gap=gap
 gcp=gcp
 general=general
+tive=Compatible with Old Tive
 github=github
 gitlab=gitlab
 gliffy=gliffy

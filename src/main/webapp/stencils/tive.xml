@@ -1,0 +1,31 @@
+<shapes name="mxgraph.tive">
+    <shape name="square" h="100" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+        </background>
+        <foreground>
+            <fillstroke/>
+            <rect x="0" y="0" w="100" h="100"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="circle" h="100" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+        </background>
+        <foreground>
+            <fillstroke/>
+            <ellipse x="0" y="0" w="100" h="100"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="rectangle" h="100" w="100" aspect="variable" strokewidth="inherit">
+        <background>
+        </background>
+        <foreground>
+            <fillstroke/>
+            <rect x="0" y="0" w="100" h="100"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+
+
+</shapes>

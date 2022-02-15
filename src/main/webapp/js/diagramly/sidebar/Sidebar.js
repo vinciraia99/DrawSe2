@@ -1,5 +1,6 @@
 (function()
 {
+
 	/**
 	 * Download from following URL as TSV and convert using https://jgraph.github.io/drawio-tools/tools/convert.html:
 	 * https://docs.google.com/spreadsheets/d/1sAL1zn-UtmJtKPH4cLApGjRX-TRSJa5dYdfZ9NKYfRs
@@ -159,7 +160,7 @@
 	 * Adds hint for quick tutorial video for certain search terms.
 	 */
 	var siderbarInsertSearchHint = Sidebar.prototype.insertSearchHint;
-	
+
 	Sidebar.prototype.insertSearchHint = function(div, searchTerm, count, page, results, len, more, terms)
 	{
 		if (terms != null && page == 1)
@@ -452,6 +453,7 @@
 	 */
 	Sidebar.prototype.init = function()
 	{
+		debugger;
 		// Defines all entries for the sidebar. This is used in the MoreShapes dialog. Create screenshots using the savesidebar URL parameter and
 		// http://www.alderg.com/merge.html for creating a vertical stack of PNG images if multiple sidebars are part of an entry.
 		this.entries = [{title: mxResources.get('standard'),
@@ -1062,7 +1064,9 @@
 		var palettesName = ['arrows', 'atlassian', 'basic', 'bootstrap','bpmn','cabinets','citrix','eip','floorplan','flowchart','gmdl','lean_mapping','networks'];
 		this.addSearchPalette(true);
 		this.addNewPaletteButton();
-		this.addGeneralPalette(true);
+		this.addTivePalette(true);
+		this.addGeneralPalette(false);
+		debugger;
 		var i;
 		for(i=0; i<palettesName.length; i++) {
 			this.addStencilPalette(palettesName[i], palettesName[i], STENCIL_PATH+'/'+palettesName[i]+'.xml',';html=1;fillColor=#FFFFFF;strokeColor=#000000;');
