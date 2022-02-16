@@ -367,7 +367,7 @@ function loadAllTable(graph){
                         order :  order,
                         path : path
                     }
-                }else if((typeof priority == 'undefined' || priority == null) || (typeof order == 'undefined' || order == null) || (typeof path == 'undefined' || path == null)){
+                }else if(checkIsSelected() == false &&(typeof priority == 'undefined' || priority == null) || (typeof order == 'undefined' || order == null) || (typeof path == 'undefined' || path == null)){
                     mxUtils.alert("Define the visit table for the object " + name);
                     return null;
                 }
