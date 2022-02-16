@@ -453,7 +453,6 @@
 	 */
 	Sidebar.prototype.init = function()
 	{
-		debugger;
 		// Defines all entries for the sidebar. This is used in the MoreShapes dialog. Create screenshots using the savesidebar URL parameter and
 		// http://www.alderg.com/merge.html for creating a vertical stack of PNG images if multiple sidebars are part of an entry.
 		this.entries = [{title: mxResources.get('standard'),
@@ -1066,7 +1065,6 @@
 		this.addNewPaletteButton();
 		this.addTivePalette(true);
 		this.addGeneralPalette(false);
-		debugger;
 		var i;
 		for(i=0; i<palettesName.length; i++) {
 			this.addStencilPalette(palettesName[i], palettesName[i], STENCIL_PATH+'/'+palettesName[i]+'.xml',';html=1;fillColor=#FFFFFF;strokeColor=#000000;');
