@@ -2157,7 +2157,29 @@ ArrangePanel.prototype.addLocalConstraint = function(div) {
 	var button  = mxUtils.button('Add', function(evt)
 	{
 		var cell = graph.getSelectionCell();
-		saveGenericValue(cell,input.value,"localcontext");
+		var stencil = cell.getStyle();
+		let base64 = stencil.substring(14, stencil.length-2);
+		let desc = tempGraph.decompress(base64);
+		var shapeXml = mxUtils.parseXml(desc).documentElement;
+		var print = shapeXml.getElementsByTagName("localcontext")[0];
+		var text = input.value;
+		if(text != null){
+			if(print == null || print == undefined){
+				var xml = document.createElement("localcontext");
+				text = text.replaceAll("<","frecciasinistra");
+				text = text.replaceAll("<","frecciadestra");
+				xml.innerHTML = text;
+				shapeXml.appendChild(xml);
+			}else{
+				print.innerHTML = text;
+			}
+		}else{
+			if(print != null){
+				print.remove();
+			}
+		}
+		let xmlBase64 = tempGraph.compress(mxUtils.getXml(shapeXml));
+		cell.setStyle('shape=stencil(' + xmlBase64 + ');');
 		graph.getSelectionModel().clear();
 		graph.refresh();
 	})

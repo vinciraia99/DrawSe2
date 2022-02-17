@@ -604,8 +604,8 @@ function saveDataTable(){
             if(saveFigureName(document.getElementById("figurename").value) == false){
                 return false;
             }
-            saveReference();
-            return true;
+            //saveReference();
+            //return true;
         }
         if(saveFigureName(document.getElementById("figurename").value) == false){
             return false;
@@ -717,7 +717,7 @@ function checkInput(input,array){
         if(splitting[i].includes("$") && (!splitting[i].includes("Id"))){tot++;}
         for (var j=0;j<array.length;j++){
             if(splitting[i].includes("$") && (!splitting[i].includes("Id"))){
-                if(array[j]["property"] == splitting[i]){
+                if(splitting[i].includes(array[j]["property"])){
                     splitting.splice(i, 1);
                     if(i>0){i=i-1;}
                     find++;
@@ -728,30 +728,18 @@ function checkInput(input,array){
     }
     for(var i=0;i<splitting.length;i++){
         if(splitting[i].includes("$") && (!splitting[i].includes("Id"))){
-            createRow(splitting[i]);
+            let index = splitting[i].indexOf("$");
+            let split = splitting[i].substr(index).split(/[^a-zA-Z0-9]/gm);
+            let find;
+            for(let k=0;k<split.length;k++){
+                if(split[k].length>0){
+                    find=split[k];
+                    break;
+                }
+            }
+            createRow(find);
         }
     }
-    /*
-    if(stencilList != null || connectorList != null){
-        for(var i=0;i<stencilList.length;i++){
-            for(var k=0;k<array.length;k++){
-                if(array[k]["reference"] == getNameStencil(stencilList[i],tempGraph)){
-                    mxUtils.alert("The reference value entered is already present in another stencil or connector")
-                    return false;
-                }
-            }
-        }
-        for(var i=0;i<connectorList.length;i++){
-            for(var k=0;k<array.length;k++){
-                if(array[k]["reference"] == getNameConnector(connectorList[i],tempGraph)){
-                    mxUtils.alert("The reference value entered is already present in another stencil or connector")
-                    return false;
-                }
-            }
-        }
-
-    }*/
-
 
     if(find == tot){
         return true;

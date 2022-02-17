@@ -13,7 +13,7 @@ function autocompletitiontrigger(){
         }
 
 
-        $('#tabella .print, .params2').atwho({
+        $('#tabella .print, .params2, .postcondition').atwho({
             at: "$",
             data: list,
             limit: list.length
