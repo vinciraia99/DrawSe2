@@ -898,6 +898,7 @@ var locomotiveurl;
 
 				form.method = "POST";
 				form.action = this.locomotiveurl;
+				form.setAttribute("target","_blank");
 
 				element1.value = defaultStencil;
 				element1.name = "stencil";
