@@ -3,7 +3,9 @@ function generateXMLSemanticRules(graph,languageName){
         tempGraph = graph;
         let alltable = loadAllTable(graph);
         if(alltable == null) {
-            return null;
+            mxUtils.alert("You have not entered any elements in the language");
+            return false;
+
         }
         if(languageName == null){
             mxUtils.alert("A language name has not been defined");
