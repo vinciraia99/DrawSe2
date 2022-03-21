@@ -1160,6 +1160,18 @@ Actions.prototype.init = function()
 		this.editorUi.exportShapeJSON();
 	}));
 
+	this.addAction('flowchart', mxUtils.bind(this, function(evt) {
+		this.editorUi.loadExamples("FlowChart","FlowChart");
+	}));
+
+	this.addAction('er', mxUtils.bind(this, function(evt) {
+		this.editorUi.loadExamples("Entity Relation","ER");
+	}));
+
+	this.addAction('root', mxUtils.bind(this, function(evt) {
+		this.editorUi.loadExamples("Tree","Root");
+	}));
+
 	this.addAction('exporttotivexml', mxUtils.bind(this, function(evt) {
 		this.editorUi.exportShapeXML();
 	}));

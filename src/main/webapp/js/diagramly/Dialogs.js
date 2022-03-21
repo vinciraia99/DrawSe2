@@ -428,7 +428,7 @@ var SplashDialog = function(editorUi)
 	btn.style.fontSize = '18px';
 	btn.style.padding = '10px';
 	btn.style.width = '340px';
-	
+
 	mxUtils.write(btn, mxResources.get('openExistingDiagram'));
 	
 	mxEvent.addListener(btn, 'click', function()

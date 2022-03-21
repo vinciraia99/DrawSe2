@@ -3662,6 +3662,19 @@ App.prototype.addLanguageMenu = function(elt, addLabel)
 };
 
 /**
+ * Permette di caricare linguaggi presenti nella cartella examples
+*/
+App.prototype.loadExamples = function(name,file)
+{
+	let request = new XMLHttpRequest();
+	request.open('GET', window.location.href.split('?')[0] + "examples/" + file +".drawio", false);
+	request.send( null );
+	let e = request.responseText;
+	let f = new File( [e], name + ".drawio");
+	this.openFileHandle(e, name + ".drawio", f, false, null);
+}
+
+/**
  * Loads the given file handle as a local file.
  */
 App.prototype.loadFileSystemEntry = function(fileHandle, success, error)

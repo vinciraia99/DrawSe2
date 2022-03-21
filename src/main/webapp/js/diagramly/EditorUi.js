@@ -883,7 +883,7 @@ var locomotiveurl;
 
 
 			if (this.locomotiveurl == null) {
-				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://localhost:8077/DiagramEditor_war_exploded/');
+				this.locomotiveurl = mxUtils.prompt('Insert locomotive url ', 'http://water.cluelab.di.unisa.it:8080/oldtive/');
 			}
 
 			if(this.locomotiveurl != null) {

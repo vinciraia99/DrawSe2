@@ -1145,3 +1145,7 @@ editTable=Define semantic Rules
 exporttotive=Export To Tive
 exporttotivejson=Export JSON
 exporttotivexml=Export XML
+languagexample=Language Example
+flowchart=FlowChart
+er=Entity-Relation
+root=Tree
