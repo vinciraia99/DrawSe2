@@ -3671,7 +3671,7 @@ App.prototype.loadExamples = function(name,file)
 	request.send( null );
 	let e = request.responseText;
 	let f = new File( [e], name + ".drawio");
-	this.openFileHandle(e, name + ".drawio", f, false, null);
+	this.openFileHandle(e, name, f, false, null);
 }
 
 /**
